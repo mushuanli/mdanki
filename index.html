@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>层级式会话管理 - Markdown学习工具</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 引入外部CSS文件 -->
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-folder-tree"></i> 层级式会话管理系统</h1>
+            <p class="subtitle">创建、组织和预览带有层级目录结构的Markdown笔记</p>
+        </header>
+        <div class="audio-controls" id="audioControls">
+            <div class="audio-title" id="audioTitle">音频播放</div>
+            <div class="audio-progress">
+                <div class="audio-progress-bar" id="audioProgress"></div>
+            </div>
+            <div class="audio-buttons">
+                <button class="audio-btn" id="playBtn"><i class="fas fa-play"></i> 播放</button>
+                <button class="audio-btn" id="pauseBtn"><i class="fas fa-pause"></i> 暂停</button>
+                <button class="audio-btn" id="stopBtn"><i class="fas fa-stop"></i> 停止</button>
+            </div>
+        </div>
+        <div class="main-layout">
+            <div class="session-sidebar">
+                <div class="session-header">
+                    <div class="session-title">
+                        <span><i class="fas fa-layer-group"></i> 会话管理</span>
+                    </div>
+                    <div class="session-controls">
+                        <button id="newFileBtn" class="session-btn" title="新建文件"><i class="fas fa-file"></i></button>
+                        <button id="newFolderBtn" class="session-btn" title="新建目录"><i class="fas fa-folder-plus"></i></button>
+                        <button id="openFileBtn" class="session-btn" title="打开文件"><i class="fas fa-folder-open"></i></button>
+                        <button id="moveSelectedBtn" class="session-btn" title="移动选中"><i class="fas fa-people-arrows"></i></button>
+                        <button id="deleteSelectedBtn" class="session-btn" title="删除选中"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <div class="select-controls">
+                        <label class="select-all">
+                            <input type="checkbox" id="selectAllCheckbox"> 全选
+                        </label>
+                    </div>
+                    <div class="current-folder" id="currentFolderContainer"></div>
+                </div>
+                <div class="session-content">
+                    <div class="session-list-container">
+                        <ul class="session-list" id="sessionList"></ul>
+                        <div class="empty-session" id="emptySession">
+                            <i class="fas fa-folder-open"></i>
+                            <p>没有打开的会话</p>
+                            <p>点击"新建文件"或"打开文件"开始</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="app-container">
+                <div class="panel" id="editorPanel">
+                    <div class="editor-toolbar">
+                        <div class="toolbar-left">
+                            <button id="toggleSessionBtn" class="editor-btn" title="显示/隐藏会话栏"><i class="fas fa-arrow-left"></i></button>
+                            <button id="toggleEditorBtn" class="editor-btn" title="收起编辑器"><i class="fas fa-chevron-up"></i></button>
+                        </div>
+                        <div class="toolbar-middle">
+                            <button id="clozeBtn" class="editor-btn" title="转换为Cloze"><i class="fas fa-square"></i></button>
+                            <button id="boldBtn" class="editor-btn" title="加粗"><i class="fas fa-bold"></i></button>
+                            <button id="italicBtn" class="editor-btn" title="斜体"><i class="fas fa-italic"></i></button>
+                            <button id="codeBtn" class="editor-btn" title="代码"><i class="fas fa-code"></i></button>
+                            <button id="linkBtn" class="editor-btn" title="链接"><i class="fas fa-link"></i></button>
+                            <button id="audioBtn" class="editor-btn" title="编辑声音"><i class="fas fa-music"></i></button>
+                        </div>
+                        <div class="toolbar-right">
+                            <button id="saveBtn" class="editor-btn editor-btn-text" title="保存"><i class="fas fa-save"></i> 保存</button>
+                            <button id="exportFileBtn" class="editor-btn editor-btn-text" title="导出"><i class="fas fa-download"></i> 导出</button>
+                            <button id="helpBtn" class="editor-btn editor-btn-text" title="帮助"><i class="fas fa-question-circle"></i> 帮助</button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div class="editor-container">
+                            <textarea id="editor" class="editor"># 层级式会话管理系统
+
+## 使用说明
+
+### 目录结构
+- 创建目录来组织您的会话
+- 在目录中创建文件
+- 将文件移动到不同的目录
+
+### 操作指南
+1. 点击"新建目录"按钮创建新目录
+2. 选择一个目录后，新建的文件会自动放入该目录
+3. 使用移动按钮将项目移动到其他目录
+4. 选中目录时会选中其下所有内容
+5. 删除目录时会删除其下所有内容
+
+### 数学公式示例
+行内公式：\\( E = mc^2 \\)
+
+块级公式：
+\\[ 
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} 
+\\]
+
+### Cloze 记忆卡片
+牛顿第二定律：--\\( F = ma \\)--
+量子力学基础：--\\( \psi = \psi(x,t) \\)--
+相对论：--\\( E = \gamma m c^2 \\)--
+电磁学：--\\( \nabla \times \mathbf{B} = \mu_0 \mathbf{J} + \mu_0 \epsilon_0 \frac{\partial \mathbf{E}}{\partial t} \\)--</textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title"><i class="fas fa-eye"></i> 预览</div>
+                        <div class="panel-actions">
+            <button id="toggleAllClozeBtn" class="panel-btn" title="全部打开/关闭">
+                <i class="fas fa-expand-arrows-alt"></i>
+            </button>
+            <button id="showAllClozeBtn" class="panel-btn" title="全部打开">
+                <i class="fas fa-eye"></i>
+            </button>
+            <button id="hideAllClozeBtn" class="panel-btn" title="全部关闭">
+                <i class="fas fa-eye-slash"></i>
+            </button>
+            <button id="invertClozeBtn" class="panel-btn" title="反向显示/隐藏">
+                <i class="fas fa-exchange-alt"></i>
+            </button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div id="preview"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+             <h2><i class="fas fa-info-circle"></i> 使用说明</h2>
+            <div class="instructions-grid">
+                <div class="instruction-card">
+                    <h3><i class="fas fa-folder"></i> 目录管理</h3>
+                    <p>• <strong>新建目录</strong>：点击文件夹+图标创建新目录<br>
+                    • <strong>选择目录</strong>：点击目录名称设为当前目录<br>
+                    • <strong>移动项目</strong>：使用移动按钮将项目移动到其他目录<br>
+                    • <strong>删除目录</strong>：删除目录会同时删除其下所有内容</p>
+                </div>
+                
+                <div class="instruction-card">
+                    <h3><i class="fas fa-file"></i> 文件管理</h3>
+                    <p>• <strong>新建文件</strong>：在当前目录下创建新文件<br>
+                    • <strong>打开文件</strong>：导入外部文件到当前目录<br>
+                    • <strong>移动文件</strong>：可将文件移动到其他目录<br>
+                    • <strong>编辑内容</strong>：点击文件名称编辑其内容</p>
+                </div>
+                
+                <div class="instruction-card">
+                    <h3><i class="fas fa-check-square"></i> 批量操作</h3>
+                    <p>• <strong>全选</strong>：选中所有可见项目<br>
+                    • <strong>目录选择</strong>：选中目录会自动选中其下所有内容<br>
+                    • <strong>批量删除</strong>：删除所有选中的项目<br>
+                    • <strong>跨目录操作</strong>：可同时选择不同目录下的项目</p>
+                </div>
+                
+                <div class="instruction-card">
+                    <h3><i class="fas fa-edit"></i> 编辑器工具</h3>
+                    <p>• <strong>转换为Cloze</strong>：将选中文本转换为记忆卡片<br>
+                    • <strong>格式工具</strong>：支持加粗、斜体、代码块等格式<br>
+                    • <strong>保存/导出</strong>：保存当前内容或导出为Markdown文件<br>
+                    • <strong>收起/展开</strong>：优化工作区空间管理</p>
+                </div>
+            </div>
+        </div>
+        
+        <input type="file" id="fileInput" class="file-input" accept=".md, .txt">
+        
+        <div class="move-modal" id="moveModal">
+            <div class="move-modal-content">
+                <div class="move-modal-header">
+                    <div class="move-modal-title">移动到目录</div>
+                    <button class="move-modal-close" id="closeMoveModalBtn">×</button>
+                </div>
+                <p>请选择目标目录：</p>
+                <div class="folder-list" id="folderList"></div>
+                <div class="move-modal-actions">
+                    <button class="move-modal-btn cancel" id="cancelMoveBtn">取消</button>
+                    <button class="move-modal-btn confirm" id="confirmMoveBtn">确认移动</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© 2024 层级式会话管理系统 | 数据保存在浏览器本地存储中</p>
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>

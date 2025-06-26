@@ -1,0 +1,2446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>层级式会话管理 - Markdown学习工具</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --border-radius: 8px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+            --session-width: 300px;
+            --folder-color: #ffd166;
+            --file-color: #a1c4fd;
+            
+            /* Cloze 颜色定义 */
+            --cloze-1d: #FFCCCC;   /* 1天 */
+            --cloze-2d: #FFDDAA;   /* 2天 */
+            --cloze-3d: #FFFF99;   /* 3天 */
+            --cloze-5d: #CCFFCC;   /* 5天 */
+            --cloze-7d: #CCEEFF;   /* 7天 */
+            --cloze-14d: #DDCCFF;  /* 14天 */
+            --cloze-28d: #E0E0E0;  /* 28天 */
+            --cloze-28plus: #F0F0F0; /* >28天 */
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7f1 100%);
+            color: var(--dark-color);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+        
+        h1 {
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+        
+        .subtitle {
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .main-layout {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        /* 会话侧边栏样式 */
+        .session-sidebar {
+            width: var(--session-width);
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+        }
+        
+        .session-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .session-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .session-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        
+        .session-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            transition: var(--transition);
+        }
+        
+        .session-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .session-content {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            max-height: 750px;
+        }
+        
+        .session-list {
+            list-style: none;
+            margin-top: 10px;
+        }
+        
+        .session-item {
+            padding: 12px 15px 12px 30px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 1px solid #e0e0e0;
+            position: relative;
+        }
+        
+        .session-item.folder {
+            background: rgba(255, 209, 102, 0.1);
+            border-left: 4px solid var(--folder-color);
+            padding-left: 26px;
+        }
+        
+        .session-item.file {
+            background: rgba(161, 196, 253, 0.1);
+            border-left: 4px solid var(--file-color);
+            padding-left: 26px;
+        }
+        
+        .session-item:hover {
+            background: #eef2ff;
+            transform: translateX(3px);
+        }
+        
+        .session-item.active {
+            background: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
+            border-color: var(--accent-color);
+            font-weight: 600;
+        }
+        
+        .session-item .name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding-right: 60px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .session-item .actions {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 8px;
+        }
+        
+        .session-item .edit-btn,
+        .session-item .delete-btn,
+        .session-item .move-btn {
+            color: #666;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: var(--transition);
+            background: rgba(255, 255, 255, 0.6);
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .session-item .edit-btn:hover {
+            background: var(--accent-color);
+            color: white;
+        }
+        
+        .session-item .delete-btn:hover {
+            background: var(--danger-color);
+            color: white;
+        }
+        
+        .session-item .move-btn:hover {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .session-item input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+        
+        .app-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+        }
+        
+        .panel.collapsed .panel-content {
+            display: none;
+        }
+        
+        .panel-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+        }
+        
+        .panel-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .panel-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .panel-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            transition: var(--transition);
+        }
+        
+        .panel-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .panel-btn-text {
+            width: auto;
+            padding: 8px 15px;
+        }
+        
+        .panel-content {
+            flex: 1;
+            padding: 18px;
+            overflow: auto;
+            transition: var(--transition);
+        }
+        
+        .editor-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .editor {
+            width: 100%;
+            height: 100%;
+            min-height: 280px;
+            padding: 14px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            resize: none;
+            line-height: 1.5;
+        }
+        
+        .editor:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(72, 149, 239, 0.2);
+        }
+        
+        #preview {
+            min-height: 280px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background: #fcfcfc;
+        }
+        
+        #preview h1, #preview h2, #preview h3 {
+            margin-top: 1.1em;
+            margin-bottom: 0.7em;
+            color: var(--secondary-color);
+        }
+        
+        #preview p {
+            margin-bottom: 0.9em;
+        }
+        
+        #preview code {
+            background: #f5f5f5;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        #preview pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 14px;
+            border-radius: 6px;
+            overflow: auto;
+            margin: 1.4em 0;
+        }
+        
+        #preview blockquote {
+            border-left: 4px solid var(--accent-color);
+            padding: 10px 18px;
+            background: #f9f9f9;
+            margin: 1.4em 0;
+        }
+        
+        .cloze {
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+            transition: var(--transition);
+            border: 1px dashed rgba(67, 97, 238, 0.3);
+            font-weight: bold;
+            background: var(--cloze-28plus); /* 默认背景色 */
+        }
+        
+        .cloze.hidden .cloze-content {
+            display: none;
+        }
+        
+        .cloze.hidden .placeholder {
+            display: inline;
+        }
+        
+        .cloze:not(.hidden) .placeholder {
+            display: none;
+        }
+        
+        .placeholder {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        
+        .cloze.temporary {
+            animation: highlight 0.5s ease;
+        }
+        
+        .cloze.shown {
+            background: linear-gradient(120deg, #d4fc79 0%, #96e6a1 100%);
+        }
+        
+        .cloze.permanent {
+            border: 1px solid var(--success-color);
+        }
+        
+        /* Cloze 时间相关样式 */
+        .cloze-1d { background: var(--cloze-1d) !important; }
+        .cloze-2d { background: var(--cloze-2d) !important; }
+        .cloze-3d { background: var(--cloze-3d) !important; }
+        .cloze-5d { background: var(--cloze-5d) !important; }
+        .cloze-7d { background: var(--cloze-7d) !important; }
+        .cloze-14d { background: var(--cloze-14d) !important; }
+        .cloze-28d { background: var(--cloze-28d) !important; }
+        .cloze-28plus { background: var(--cloze-28plus) !important; }
+        
+        @keyframes highlight {
+            0% { background: #fff9c4; }
+            100% { background: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%); }
+        }
+        
+        .editor-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 18px;
+            background: #f0f4ff;
+            border-bottom: 1px solid #d0d9ff;
+        }
+        
+        .toolbar-left, .toolbar-right {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .toolbar-middle {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .editor-btn {
+            background: #eef2ff;
+            border: 1px solid #d0d9ff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+        
+        .editor-btn:hover:not(:disabled) {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+        
+        .editor-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .editor-btn-text {
+            width: auto;
+            padding: 8px 15px;
+        }
+        
+        .hidden-session {
+            transform: translateX(calc(-1 * var(--session-width) - 25px));
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+        }
+        
+        .instructions {
+            background: white;
+            padding: 22px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-top: 25px;
+        }
+        
+        .instructions h2 {
+            color: var(--secondary-color);
+            margin-bottom: 18px;
+            text-align: center;
+            font-size: 1.4rem;
+        }
+        
+        .instructions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 22px;
+        }
+        
+        .instruction-card {
+            background: #f8f9ff;
+            border-radius: var(--border-radius);
+            padding: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: var(--transition);
+        }
+        
+        .instruction-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+        
+        .instruction-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+        }
+        
+        .instruction-card h3 i {
+            background: var(--primary-color);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+        
+        .example {
+            background: #f0f4ff;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 12px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 35px;
+            padding: 18px;
+            color: #666;
+            font-size: 0.85rem;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .empty-session {
+            text-align: center;
+            padding: 28px;
+            color: #666;
+        }
+        
+        .empty-session i {
+            font-size: 2.8rem;
+            margin-bottom: 14px;
+            color: #c3cfe2;
+        }
+        
+        .select-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 8px 0;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .select-all {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: white;
+            font-size: 0.85rem;
+        }
+        
+        .session-item .select-checkbox {
+            margin-right: 8px;
+        }
+        
+        .session-item .name-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .folder-icon {
+            color: var(--folder-color);
+        }
+        
+        .file-icon {
+            color: var(--file-color);
+        }
+        
+        .nested-items {
+            margin-left: 20px;
+            margin-top: 8px;
+            border-left: 2px solid #e0e0e0;
+            padding-left: 15px;
+        }
+        
+        .current-folder {
+            margin-top: 10px;
+            padding: 8px;
+            background: #eef2ff;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        
+        .current-folder i {
+            margin-right: 5px;
+            color: var(--folder-color);
+        }
+
+        .breadcrumb-link {
+            color: var(--primary-color);
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .breadcrumb-link:hover {
+            text-decoration: underline;
+        }
+
+        .breadcrumb-separator {
+            margin: 0 4px;
+            color: #6c757d;
+        }
+
+        .breadcrumb-current {
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+        
+        .move-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition);
+        }
+        
+        .move-modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .move-modal-content {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            width: 400px;
+            max-width: 90%;
+            box-shadow: var(--shadow);
+        }
+        
+        .move-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .move-modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .move-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .folder-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: var(--border-radius);
+            padding: 10px;
+        }
+        
+        .folder-item {
+            padding: 8px 10px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .folder-item:hover {
+            background: #eef2ff;
+        }
+        
+        .folder-item.selected {
+            background: rgba(67, 97, 238, 0.1);
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        .move-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .move-modal-btn {
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        
+        .move-modal-btn.confirm {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .move-modal-btn.cancel {
+            background: #f0f0f0;
+            color: var(--dark-color);
+        }
+        
+        @media (max-width: 1200px) {
+            .main-layout {
+                flex-direction: column;
+            }
+            
+            .session-sidebar {
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .app-container {
+                flex-direction: column;
+            }
+            
+            .panel {
+                min-height: 280px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .panel-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+                height: auto;
+                padding: 10px;
+            }
+            
+            .panel-actions {
+                width: 100%;
+                justify-content: flex-end;
+                flex-wrap: wrap;
+            }
+            
+            .editor-toolbar {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .toolbar-left, .toolbar-middle, .toolbar-right {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        /* 新增媒体图标样式 */
+        .media-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            margin-right: 5px;
+            background: rgba(67, 97, 238, 0.1);
+            border-radius: 50%;
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .media-icon:hover {
+            background: rgba(67, 97, 238, 0.2);
+            transform: scale(1.1);
+        }
+        
+        /* 新增音频控制条样式 */
+        .audio-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 15px;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .audio-title {
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+        
+        .audio-progress {
+            width: 300px;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .audio-progress-bar {
+            height: 100%;
+            background: var(--primary-color);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+        
+        .audio-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .audio-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        /* 添加声音编辑按钮样式 */
+        .audio-edit-btn {
+            background: rgba(67, 97, 238, 0.1);
+            border: 1px solid rgba(67, 97, 238, 0.3);
+            color: var(--primary-color);
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            transition: var(--transition);
+        }
+        
+        .audio-edit-btn:hover {
+            background: rgba(67, 97, 238, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-folder-tree"></i> 层级式会话管理系统</h1>
+            <p class="subtitle">创建、组织和预览带有层级目录结构的Markdown笔记</p>
+        </header>
+        <div class="audio-controls" id="audioControls">
+            <div class="audio-title" id="audioTitle">音频播放</div>
+            <div class="audio-progress">
+                <div class="audio-progress-bar" id="audioProgress"></div>
+            </div>
+            <div class="audio-buttons">
+                <button class="audio-btn" id="playBtn"><i class="fas fa-play"></i> 播放</button>
+                <button class="audio-btn" id="pauseBtn"><i class="fas fa-pause"></i> 暂停</button>
+                <button class="audio-btn" id="stopBtn"><i class="fas fa-stop"></i> 停止</button>
+            </div>
+        </div>
+        <div class="main-layout">
+            <div class="session-sidebar">
+                <div class="session-header">
+                    <div class="session-title">
+                        <span><i class="fas fa-layer-group"></i> 会话管理</span>
+                    </div>
+                    <div class="session-controls">
+                        <button id="newFile" class="session-btn" title="新建文件">
+                            <i class="fas fa-file"></i>
+                        </button>
+                        <button id="newFolder" class="session-btn" title="新建目录">
+                            <i class="fas fa-folder-plus"></i>
+                        </button>
+                        <button id="openFile" class="session-btn" title="打开文件">
+                            <i class="fas fa-folder-open"></i>
+                        </button>
+                        <!-- ADDED: Move Selected Button -->
+                        <button id="moveSelected" class="session-btn" title="移动选中">
+                            <i class="fas fa-people-arrows"></i>
+                        </button>
+                        <button id="deleteSelected" class="session-btn" title="删除选中">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="select-controls">
+                        <label class="select-all">
+                            <input type="checkbox" id="selectAllCheckbox"> 全选
+                        </label>
+                    </div>
+                    <!-- CHANGED: This div is now a container for the breadcrumbs -->
+                    <div class="current-folder" id="currentFolderContainer">
+                        <!-- Breadcrumbs will be dynamically inserted here -->
+                    </div>
+                </div>
+                <div class="session-content">
+                    <div class="session-list-container">
+                        <ul class="session-list" id="sessionList">
+                            <!-- Sessions will be added here -->
+                        </ul>
+                        <div class="empty-session" id="emptySession">
+                            <i class="fas fa-folder-open"></i>
+                            <p>没有打开的会话</p>
+                            <p>点击"新建文件"或"打开文件"开始</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="app-container">
+                <div class="panel" id="editorPanel">
+                    <div class="editor-toolbar">
+                        <div class="toolbar-left">
+                            <button id="toggleSessionBtn" class="editor-btn" title="显示/隐藏会话栏">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                            <button id="toggleEditorBtn" class="editor-btn" title="收起编辑器">
+                                <i class="fas fa-chevron-up"></i>
+                            </button>
+                        </div>
+                        <div class="toolbar-middle">
+                            <button id="clozeBtn" class="editor-btn" title="转换为Cloze">
+                                <i class="fas fa-square"></i>
+                            </button>
+                            <button id="boldBtn" class="editor-btn" title="加粗">
+                                <i class="fas fa-bold"></i>
+                            </button>
+                            <button id="italicBtn" class="editor-btn" title="斜体">
+                                <i class="fas fa-italic"></i>
+                            </button>
+                            <button id="codeBtn" class="editor-btn" title="代码">
+                                <i class="fas fa-code"></i>
+                            </button>
+                            <button id="linkBtn" class="editor-btn" title="链接">
+                                <i class="fas fa-link"></i>
+                            </button>
+                        </div>
+                        <div class="toolbar-right">
+                            <button id="saveBtn" class="editor-btn editor-btn-text" title="保存">
+                                <i class="fas fa-save"></i> 保存
+                            </button>
+                            <button id="exportFileBtn" class="editor-btn editor-btn-text" title="导出">
+                                <i class="fas fa-download"></i> 导出
+                            </button>
+                            <button id="helpBtn" class="editor-btn editor-btn-text" title="帮助">
+                                <i class="fas fa-question-circle"></i> 帮助
+                            </button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div class="editor-container">
+                            <textarea id="editor" class="editor"># 层级式会话管理系统
+
+## 使用说明
+
+### 目录结构
+- 创建目录来组织您的会话
+- 在目录中创建文件
+- 将文件移动到不同的目录
+
+### 操作指南
+1. 点击"新建目录"按钮创建新目录
+2. 选择一个目录后，新建的文件会自动放入该目录
+3. 使用移动按钮将项目移动到其他目录
+4. 选中目录时会选中其下所有内容
+5. 删除目录时会删除其下所有内容
+
+### 数学公式示例
+行内公式：\\( E = mc^2 \\)
+
+块级公式：
+\\[ 
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} 
+\\]
+
+### Cloze 记忆卡片
+牛顿第二定律：--\\( F = ma \\)--
+量子力学基础：--\\( \psi = \psi(x,t) \\)--
+相对论：--\\( E = \gamma m c^2 \\)--
+电磁学：--\\( \nabla \times \mathbf{B} = \mu_0 \mathbf{J} + \mu_0 \epsilon_0 \frac{\partial \mathbf{E}}{\partial t} \\)--</textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title"><i class="fas fa-eye"></i> 预览</div>
+                        <div class="panel-actions">
+                            <button id="toggleAllCloze" class="panel-btn" title="全部打开/关闭">
+                                <i class="fas fa-expand-arrows-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div id="preview"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h2><i class="fas fa-info-circle"></i> 使用说明</h2>
+            <div class="instructions-grid">
+                <div class="instruction-card">
+                    <h3><i class="fas fa-folder"></i> 目录管理</h3>
+                    <p>• <strong>新建目录</strong>：点击文件夹+图标创建新目录<br>
+                    • <strong>选择目录</strong>：点击目录名称设为当前目录<br>
+                    • <strong>移动项目</strong>：使用移动按钮将项目移动到其他目录<br>
+                    • <strong>删除目录</strong>：删除目录会同时删除其下所有内容</p>
+                </div>
+                
+                <div class="instruction-card">
+                    <h3><i class="fas fa-file"></i> 文件管理</h3>
+                    <p>• <strong>新建文件</strong>：在当前目录下创建新文件<br>
+                    • <strong>打开文件</strong>：导入外部文件到当前目录<br>
+                    • <strong>移动文件</strong>：可将文件移动到其他目录<br>
+                    • <strong>编辑内容</strong>：点击文件名称编辑其内容</p>
+                </div>
+                
+                <div class="instruction-card">
+                    <h3><i class="fas fa-check-square"></i> 批量操作</h3>
+                    <p>• <strong>全选</strong>：选中所有可见项目<br>
+                    • <strong>目录选择</strong>：选中目录会自动选中其下所有内容<br>
+                    • <strong>批量删除</strong>：删除所有选中的项目<br>
+                    • <strong>跨目录操作</strong>：可同时选择不同目录下的项目</p>
+                </div>
+                
+                <div class="instruction-card">
+                    <h3><i class="fas fa-edit"></i> 编辑器工具</h3>
+                    <p>• <strong>转换为Cloze</strong>：将选中文本转换为记忆卡片<br>
+                    • <strong>格式工具</strong>：支持加粗、斜体、代码块等格式<br>
+                    • <strong>保存/导出</strong>：保存当前内容或导出为Markdown文件<br>
+                    • <strong>收起/展开</strong>：优化工作区空间管理</p>
+                </div>
+            </div>
+        </div>
+        
+        <input type="file" id="fileInput" class="file-input" accept=".md, .txt">
+        
+        <!-- Move Modal -->
+        <div class="move-modal" id="moveModal">
+            <div class="move-modal-content">
+                <div class="move-modal-header">
+                    <div class="move-modal-title">移动到目录</div>
+                    <button class="move-modal-close" id="closeMoveModal">×</button>
+                </div>
+                <p>请选择目标目录：</p>
+                <div class="folder-list" id="folderList">
+                    <!-- Folders will be listed here -->
+                </div>
+                <div class="move-modal-actions">
+                    <button class="move-modal-btn cancel" id="cancelMove">取消</button>
+                    <button class="move-modal-btn confirm" id="confirmMove">确认移动</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© 2023 层级式会话管理系统 | 数据保存在浏览器本地存储中</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const editor = document.getElementById('editor');
+            const preview = document.getElementById('preview');
+            const newFileBtn = document.getElementById('newFile');
+            const newFolderBtn = document.getElementById('newFolder');
+            const openFileBtn = document.getElementById('openFile');
+            const saveBtn = document.getElementById('saveBtn');
+            const exportFileBtn = document.getElementById('exportFileBtn');
+            const clozeBtn = document.getElementById('clozeBtn');
+            const boldBtn = document.getElementById('boldBtn');
+            const italicBtn = document.getElementById('italicBtn');
+            const codeBtn = document.getElementById('codeBtn');
+            const linkBtn = document.getElementById('linkBtn');
+            const toggleEditorBtn = document.getElementById('toggleEditorBtn');
+            const helpBtn = document.getElementById('helpBtn');
+            const fileInput = document.getElementById('fileInput');
+            const sessionList = document.getElementById('sessionList');
+            const toggleSessionBtn = document.getElementById('toggleSessionBtn');
+            const sessionSidebar = document.querySelector('.session-sidebar');
+            const emptySession = document.getElementById('emptySession');
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const deleteSelectedBtn = document.getElementById('deleteSelected');
+            const editorPanel = document.getElementById('editorPanel');
+            // CHANGED: Get the container for breadcrumbs
+            const currentFolderContainer = document.getElementById('currentFolderContainer');
+            const moveModal = document.getElementById('moveModal');
+            const folderList = document.getElementById('folderList');
+            const closeMoveModal = document.getElementById('closeMoveModal');
+            const cancelMove = document.getElementById('cancelMove');
+            const confirmMove = document.getElementById('confirmMove');
+            const toggleAllClozeBtn = document.getElementById('toggleAllCloze');
+            const backButton = document.createElement('button'); // 创建返回按钮
+            // ADDED: Get the new move selected button
+            const moveSelectedBtn = document.getElementById('moveSelected');
+            
+            // 会话管理
+            let sessions = [];
+            let folders = [];
+            let currentSessionId = null;
+            let previewNeedsUpdate = false;
+            let sessionHidden = false;
+            let currentFolderId = null; // 当前选中的目录ID
+            // CHANGED: movingItems is now an array to support multi-select
+            let movingItems = []; 
+            let selectedFolder = null; // 移动时选中的目标目录
+            let folderStack = []; // 目录堆栈，用于返回上级
+            let fileSubsessions = {}; // 存储文件的子会话信息
+            let currentSubsessionId = null; // 当前选中的子会话ID
+            let allClozeOpen = false; // 全部打开状态
+            let clozeAccessTimes = {}; // 存储每个Cloze内容的最后访问时间
+
+            // 新增音频相关变量
+            let currentAudio = null;
+            let audioProgressInterval = null;
+            const audioControls = document.getElementById('audioControls');
+            const audioTitle = document.getElementById('audioTitle');
+            const audioProgress = document.getElementById('audioProgress');
+            const playBtn = document.getElementById('playBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            const stopBtn = document.getElementById('stopBtn');
+
+            // 初始化marked
+            marked.setOptions({
+                breaks: true,
+                highlight: function(code, lang) {
+                    return code;
+                }
+            });
+            
+            // 初始化应用
+            function initApp() {
+                // 添加返回按钮到标题区域
+                backButton.id = 'backButton';
+                backButton.className = 'session-btn';
+                backButton.title = '返回上级目录';
+                backButton.innerHTML = '<i class="fas fa-arrow-left"></i>';
+                backButton.style.display = 'none';
+                document.querySelector('.session-title').prepend(backButton);
+                
+                // 为返回按钮添加事件监听
+                backButton.addEventListener('click', goBack);
+                
+                // 从本地存储加载会话
+                loadSessionsFromStorage();
+                
+                // 加载Cloze访问时间
+                const savedClozeAccessTimes = localStorage.getItem('clozeAccessTimes');
+                if (savedClozeAccessTimes) {
+                    clozeAccessTimes = JSON.parse(savedClozeAccessTimes);
+                }
+                
+                // 设置初始内容
+                if (sessions.length > 0) {
+                    currentSessionId = sessions[0].id;
+                    editor.value = sessions[0].content;
+                } else {
+                    // 添加初始会话
+                    addSession(editor.value, '初始会话');
+                }
+                
+                // 更新预览
+                previewNeedsUpdate = true;
+                updatePreview();
+                
+                // 更新会话按钮图标
+                updateSessionButtonIcon();
+            }
+            
+            // 生成唯一ID
+            function generateId() {
+                return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            }
+            
+            // 根据时间差获取Cloze颜色类
+            function getClozeColorClass(lastAccessTime) {
+                if (!lastAccessTime) return 'cloze-28plus';
+                
+                const now = Date.now();
+                const diffInDays = Math.floor((now - lastAccessTime) / (1000 * 60 * 60 * 24));
+                
+                if (diffInDays < 1) return 'cloze-1d';
+                if (diffInDays < 2) return 'cloze-2d';
+                if (diffInDays < 3) return 'cloze-3d';
+                if (diffInDays < 5) return 'cloze-5d';
+                if (diffInDays < 7) return 'cloze-7d';
+                if (diffInDays < 14) return 'cloze-14d';
+                if (diffInDays < 28) return 'cloze-28d';
+                return 'cloze-28plus';
+            }
+            
+            // 更新预览函数
+            function updatePreview() {
+                if (!previewNeedsUpdate) return;
+                
+                let markdownText = editor.value;
+                
+                // 如果选择了子会话，只显示该子会话的内容
+                if (currentSubsessionId) {
+                    const subsession = fileSubsessions[currentSessionId]?.find(s => s.id === currentSubsessionId);
+                    if (subsession) {
+                        markdownText = subsession.content;
+                    }
+                }
+                
+                // 使用marked解析Markdown
+                preview.innerHTML = marked.parse(markdownText);
+                
+                // 后处理：查找并替换所有Cloze内容
+                processClozeElements();
+                
+                // 添加Cloze事件监听器
+                addClozeEventListeners();
+                
+                // 渲染数学公式
+                if (window.MathJax) {
+                    MathJax.typesetPromise([preview]).catch(err => console.log('MathJax error:', err));
+                }
+                
+                previewNeedsUpdate = false;
+            }
+            
+            // 处理Cloze元素
+            function processClozeElements() {
+                // 创建临时容器
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = preview.innerHTML;
+                
+                // 递归遍历所有文本节点
+                function processNode(node) {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        // 修改正则表达式以匹配多媒体部分
+                        const clozeRegex = /--(.*?)--(\^\^audio:(.*?)\^\^)?/g;
+                        let match;
+                        let lastIndex = 0;
+                        let result = '';
+                        
+                        while ((match = clozeRegex.exec(node.nodeValue)) !== null) {
+                            result += node.nodeValue.substring(lastIndex, match.index);
+                            
+                            const content = match[1];
+                            const multimedia = match[3] ? match[3].trim() : null; // 多媒体部分
+                            
+                            const clozeSpan = document.createElement('span');
+                            clozeSpan.className = 'cloze hidden';
+                            clozeSpan.dataset.content = escapeHTML(content);
+                            
+                            // 存储多媒体信息
+                            if (multimedia) {
+                                clozeSpan.dataset.multimedia = escapeHTML(multimedia);
+                            }
+                            
+                            const lastAccessTime = clozeAccessTimes[content];
+                            const colorClass = getClozeColorClass(lastAccessTime);
+                            clozeSpan.classList.add(colorClass);
+                            
+                            const contentSpan = document.createElement('span');
+                            contentSpan.className = 'cloze-content';
+                            contentSpan.textContent = content;
+                            
+                            const placeholder = document.createElement('span');
+                            placeholder.className = 'placeholder';
+                            placeholder.textContent = '[...]';
+                            
+                            // 添加多媒体图标（如果有）
+                            if (multimedia) {
+                                const mediaIcon = document.createElement('span');
+                                mediaIcon.className = 'media-icon';
+                                mediaIcon.innerHTML = '<i class="fas fa-volume-up"></i>';
+                                mediaIcon.title = '播放音频';
+                                clozeSpan.appendChild(mediaIcon);
+                                
+                                // 添加编辑声音按钮
+                                const editBtn = document.createElement('button');
+                                editBtn.className = 'audio-edit-btn';
+                                editBtn.innerHTML = '<i class="fas fa-edit"></i> 编辑声音';
+                                editBtn.onclick = function(e) {
+                                    e.stopPropagation();
+                                    editAudioForCloze(clozeSpan, content, multimedia);
+                                };
+                                clozeSpan.appendChild(editBtn);
+                            }
+                            
+                            clozeSpan.appendChild(contentSpan);
+                            clozeSpan.appendChild(placeholder);
+                            
+                            const tempContainer = document.createElement('div');
+                            tempContainer.appendChild(clozeSpan);
+                            result += tempContainer.innerHTML;
+                            
+                            lastIndex = clozeRegex.lastIndex;
+                        }
+                        
+                        result += node.nodeValue.substring(lastIndex);
+                        
+                        if (result !== node.nodeValue) {
+                            const parent = node.parentNode;
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = result;
+                            
+                            while (tempDiv.firstChild) {
+                                parent.insertBefore(tempDiv.firstChild, node);
+                            }
+                            
+                            parent.removeChild(node);
+                        }
+                    } 
+                    else if (node.nodeType === Node.ELEMENT_NODE) {
+                        // 跳过代码块和数学公式区域
+                        if (node.tagName === 'CODE' || node.tagName === 'PRE' || 
+                            node.classList.contains('MathJax') || 
+                            node.classList.contains('math')) {
+                            return;
+                        }
+                        
+                        // 递归处理子节点
+                        for (let i = 0; i < node.childNodes.length; i++) {
+                            processNode(node.childNodes[i]);
+                        }
+                    }
+                }
+                
+                // 处理临时容器中的所有节点
+                for (let i = 0; i < tempDiv.childNodes.length; i++) {
+                    processNode(tempDiv.childNodes[i]);
+                }
+                
+                // 更新预览
+                preview.innerHTML = tempDiv.innerHTML;
+            }
+            function playMultimedia(text, manual = false) {
+                if ('speechSynthesis' in window) {
+                    // 停止当前正在播放的语音
+                    window.speechSynthesis.cancel();
+                    
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'en-US'; // 设置为英语
+                    utterance.rate = 1.0; // 正常语速
+                    
+                    // 如果是手动播放，显示控制界面
+                    if (manual) {
+                        showAudioControls(text);
+                    }
+                    
+                    // 开始播放
+                    window.speechSynthesis.speak(utterance);
+                    currentAudio = utterance;
+                    
+                    // 更新进度条
+                    if (audioProgressInterval) clearInterval(audioProgressInterval);
+                    audioProgressInterval = setInterval(updateAudioProgress, 100);
+                    
+                    // 播放结束事件
+                    utterance.onend = function() {
+                        clearInterval(audioProgressInterval);
+                        audioProgress.style.width = '100%';
+                    };
+                }
+            }
+
+            // 显示音频控制界面
+            function showAudioControls(text) {
+                audioTitle.textContent = `正在播放: ${text.substring(0, 40)}${text.length > 40 ? '...' : ''}`;
+                audioControls.style.display = 'block';
+            }
+            
+            // 更新音频进度
+            function updateAudioProgress() {
+                if (!currentAudio) return;
+                
+                // 计算播放进度百分比
+                const elapsed = (Date.now() - currentAudio.startTime) / 1000;
+                const progress = Math.min(100, (elapsed / (currentAudio.text.length / 10)) * 100);
+                audioProgress.style.width = `${progress}%`;
+            }
+            
+            // 暂停音频
+            function pauseAudio() {
+                if (window.speechSynthesis.speaking) {
+                    window.speechSynthesis.pause();
+                    clearInterval(audioProgressInterval);
+                }
+            }
+            
+            // 继续播放音频
+            function resumeAudio() {
+                if (window.speechSynthesis.paused) {
+                    window.speechSynthesis.resume();
+                    audioProgressInterval = setInterval(updateAudioProgress, 100);
+                }
+            }
+            
+            // 停止音频
+            function stopAudio() {
+                window.speechSynthesis.cancel();
+                clearInterval(audioProgressInterval);
+                audioControls.style.display = 'none';
+                audioProgress.style.width = '0%';
+                currentAudio = null;
+            }
+
+            // 编辑Cloze音频的函数
+            function editAudioForCloze(clozeElement, content, currentAudio) {
+                const newAudio = prompt(`编辑"${content}"的音频文本:`, currentAudio || '');
+                if (newAudio !== null) {
+                    // 更新数据属性
+                    clozeElement.dataset.multimedia = newAudio;
+                    
+                    // 更新编辑器中的Markdown
+                    updateMarkdownWithAudio(clozeElement, content, newAudio);
+                    
+                    // 更新预览
+                    previewNeedsUpdate = true;
+                    updatePreview();
+                }
+            }
+            
+            // 更新Markdown中的音频文本
+            function updateMarkdownWithAudio(clozeElement, content, audioText) {
+                const editorContent = editor.value;
+                
+                // 查找原始的Cloze文本
+                const originalCloze = `--${content}--`;
+                const originalClozeWithAudio = `--${content}--^^audio:${audioText}^^`;
+                
+                // 查找当前Cloze在编辑器中的位置
+                const startIndex = editorContent.indexOf(originalCloze);
+                if (startIndex !== -1) {
+                    // 替换为新的带音频的Cloze
+                    const newContent = editorContent.substring(0, startIndex) + 
+                                       `--${content}--^^audio:${audioText}^^` + 
+                                       editorContent.substring(startIndex + originalCloze.length);
+                    
+                    editor.value = newContent;
+                    
+                    // 保存更改
+                    saveCurrentSession();
+                }
+            }
+			
+            // 添加Cloze事件监听器
+            function addClozeEventListeners() {
+                const clozeElements = preview.querySelectorAll('.cloze');
+                
+                clozeElements.forEach(cloze => {
+                    // 确保每个元素只有一个事件监听器
+                    const newCloze = cloze.cloneNode(true);
+                    cloze.parentNode.replaceChild(newCloze, cloze);
+                });
+                
+                // 重新获取元素
+                const newClozeElements = preview.querySelectorAll('.cloze');
+                const mediaIcons = preview.querySelectorAll('.media-icon');
+		        mediaIcons.forEach(icon => {
+		            icon.addEventListener('click', function(e) {
+		                e.stopPropagation();
+		                const multimedia = this.parentElement.dataset.multimedia;
+		                if (multimedia) {
+		                    playMultimedia(multimedia);
+		                }
+		            });
+		        });
+                newClozeElements.forEach(cloze => {
+                    let timer = null;
+                    
+                    // 单击事件 - 显示15秒
+                    cloze.addEventListener('click', function(e) {
+                        if (this.dataset.multimedia && !e.target.closest('.media-icon')) {
+		                    playMultimedia(this.dataset.multimedia);
+		                }
+                        e.stopPropagation();
+                        
+                        // 如果已经是永久显示状态，不做任何操作
+                        if (this.classList.contains('permanent')) {
+                            return;
+                        }
+                        
+                        // 如果当前是临时显示状态，转为永久显示
+                        if (this.classList.contains('temporary')) {
+                            this.classList.remove('temporary');
+                            this.classList.add('permanent');
+                            if (timer) {
+                                clearTimeout(timer);
+                                timer = null;
+                            }
+                            return;
+                        }
+                        
+                        // 清除之前的计时器
+                        if (timer) {
+                            clearTimeout(timer);
+                        }
+                        
+                        // 显示内容
+                        this.classList.remove('hidden');
+                        this.classList.add('temporary');
+                        
+                        // 更新访问时间
+                        const content = this.dataset.content;
+                        clozeAccessTimes[content] = Date.now();
+                        localStorage.setItem('clozeAccessTimes', JSON.stringify(clozeAccessTimes));
+                        
+                        // 更新颜色类
+                        const colorClass = getClozeColorClass(clozeAccessTimes[content]);
+                        this.className = 'cloze temporary ' + colorClass;
+                        
+                        // 15秒后隐藏
+                        timer = setTimeout(() => {
+                            if (this.classList.contains('temporary')) {
+                                this.classList.remove('temporary');
+                                this.classList.add('hidden');
+                                
+                                // 更新颜色类
+                                this.className = 'cloze hidden ' + colorClass;
+                            }
+                        }, 15000);
+                    });
+                    
+                    // 双击事件 - 关闭Cloze
+                    cloze.addEventListener('dblclick', function(e) {
+                        e.stopPropagation();
+                        
+                        // 清除计时器
+                        if (timer) {
+                            clearTimeout(timer);
+                            timer = null;
+                        }
+                        
+                        // 关闭Cloze
+                        this.classList.remove('temporary', 'permanent');
+                        this.classList.add('hidden');
+                        
+                        // 更新颜色类
+                        const content = this.dataset.content;
+                        const lastAccessTime = clozeAccessTimes[content] || 0;
+                        const colorClass = getClozeColorClass(lastAccessTime);
+                        this.className = 'cloze hidden ' + colorClass;
+                    });
+                });
+            }
+			
+            // 在HTML编辑窗口中增加编辑声音按钮
+            const audioBtn = document.createElement('button');
+            audioBtn.id = 'audioBtn';
+            audioBtn.className = 'editor-btn';
+            audioBtn.title = '编辑声音';
+            audioBtn.innerHTML = '<i class="fas fa-music"></i>';
+            document.querySelector('.toolbar-middle').appendChild(audioBtn);
+            
+            // 为编辑声音按钮添加事件监听
+            audioBtn.addEventListener('click', function() {
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                
+                if (start === end) {
+                    alert('请先选择要编辑音频的Cloze卡片');
+                    return;
+                }
+                
+                const selectedText = editor.value.substring(start, end);
+                
+                // 检查选中的是否是Cloze卡片
+                const clozeRegex = /--(.*?)--(\^\^audio:(.*?)\^\^)?/;
+                const match = selectedText.match(clozeRegex);
+                
+                if (match) {
+                    const content = match[1];
+                    const currentAudio = match[3] ? match[3].trim() : '';
+                    
+                    // 弹出编辑对话框
+                    const newAudio = prompt(`编辑"${content}"的音频文本:`, currentAudio || '');
+                    if (newAudio !== null) {
+                        // 构建新的Cloze文本
+                        const newCloze = `--${content}--^^audio:${newAudio}^^`;
+                        
+                        // 替换选中文本
+                        editor.value = editor.value.substring(0, start) + 
+                                       newCloze + 
+                                       editor.value.substring(end);
+                        
+                        // 更新选择位置
+                        editor.selectionStart = start;
+                        editor.selectionEnd = start + newCloze.length;
+                        
+                        // 聚焦编辑器
+                        editor.focus();
+                        
+                        // 标记需要更新预览
+                        previewNeedsUpdate = true;
+                        updatePreview();
+                    }
+                } else {
+                    alert('选中的内容不是有效的Cloze卡片');
+                }
+            });
+            
+            // 为音频控制按钮添加事件监听
+            playBtn.addEventListener('click', resumeAudio);
+            pauseBtn.addEventListener('click', pauseAudio);
+            stopBtn.addEventListener('click', stopAudio);
+			
+            // 解析Markdown内容提取标题
+            function parseHeadings(content) {
+                const headingRegex = /^(#{1,2})\s+(.+)$/gm;
+                const headings = [];
+                let match;
+                
+                while ((match = headingRegex.exec(content)) !== null) {
+                    headings.push({
+                        level: match[1].length,
+                        text: match[2],
+                        start: match.index,
+                        end: match.index + match[0].length
+                    });
+                }
+                
+                // 为每个标题定义内容范围
+                for (let i = 0; i < headings.length; i++) {
+                    const start = headings[i].end + 1;
+                    const end = i < headings.length - 1 ? headings[i + 1].start : content.length;
+                    headings[i].content = content.substring(start, end).trim();
+                }
+                
+                return headings;
+            }
+            
+            // 为文件创建子会话
+            function createSubsessionsForFile(fileId, content) {
+                const headings = parseHeadings(content);
+                const subsessions = [];
+                
+                headings.forEach((heading, index) => {
+                    if (heading.level === 1 || heading.level === 2) {
+                        subsessions.push({
+                            id: generateId(),
+                            parentId: fileId,
+                            title: heading.text,
+                            content: `# ${heading.text}\n\n${heading.content}`,
+                            level: heading.level
+                        });
+                    }
+                });
+                
+                fileSubsessions[fileId] = subsessions;
+                return subsessions;
+            }
+            
+            // 会话管理函数
+            function addSession(content, name = null, folderId = null) {
+                const id = generateId();
+                const sessionName = name || '新文件 ' + (sessions.length + 1);
+                
+                const session = {
+                    id,
+                    name: sessionName,
+                    content,
+                    createdAt: new Date(),
+                    lastActive: new Date(),
+                    type: 'file',
+                    folderId: folderId || currentFolderId
+                };
+                
+                sessions.push(session);
+                currentSessionId = id;
+                
+                // 解析标题创建子会话
+                createSubsessionsForFile(id, content);
+                
+                // 更新会话列表
+                renderSessionList();
+                
+                // 设置编辑器内容
+                editor.value = content;
+                previewNeedsUpdate = true;
+                updatePreview();
+                
+                // 保存到本地存储
+                saveSessionsToStorage();
+                
+                return session;
+            }
+            
+            function addFolder(name = null) {
+                const id = generateId();
+                const folderName = name || '新目录 ' + (folders.length + 1);
+                
+                const folder = {
+                    id,
+                    name: folderName,
+                    type: 'folder',
+                    createdAt: new Date(),
+                    folderId: currentFolderId
+                };
+                
+                folders.push(folder);
+                
+                // 更新会话列表
+                renderSessionList();
+                
+                // 保存到本地存储
+                saveSessionsToStorage();
+                
+                return folder;
+            }
+            
+            function removeSession(id) {
+                sessions = sessions.filter(session => session.id !== id);
+                
+                // 删除相关的子会话
+                if (fileSubsessions[id]) {
+                    delete fileSubsessions[id];
+                }
+                
+                if (currentSessionId === id) {
+                    if (sessions.length > 0) {
+                        currentSessionId = sessions[0].id;
+                        const session = sessions.find(s => s.id === currentSessionId);
+                        editor.value = session.content;
+                        previewNeedsUpdate = true;
+                        updatePreview();
+                    } else {
+                        currentSessionId = null;
+                        editor.value = '# 欢迎使用层级式会话管理系统\n\n创建新文件或打开文件开始使用';
+                        previewNeedsUpdate = true;
+                        updatePreview();
+                    }
+                }
+                
+                renderSessionList();
+                saveSessionsToStorage();
+            }
+            
+            function removeFolder(id) {
+                // 删除目录本身
+                folders = folders.filter(folder => folder.id !== id);
+                
+                // 删除该目录下的所有文件和子目录
+                sessions = sessions.filter(session => session.folderId !== id);
+                folders = folders.filter(folder => folder.folderId !== id);
+                
+                // 删除相关的子会话
+                sessions.forEach(session => {
+                    if (fileSubsessions[session.id]) {
+                        delete fileSubsessions[session.id];
+                    }
+                });
+                
+                // 如果当前目录是删除的目录，重置为根目录
+                if (currentFolderId === id) {
+                    currentFolderId = null;
+                    folderStack = [];
+                }
+                
+                renderSessionList();
+                renderBreadcrumbs();
+                saveSessionsToStorage();
+            }
+            
+            function switchSession(id, isSubsession = false, subsessionId = null) {
+                const session = sessions.find(s => s.id === id);
+                if (session) {
+                    currentSessionId = id;
+                    
+                    if (isSubsession) {
+                        currentSubsessionId = subsessionId;
+                    } else {
+                        currentSubsessionId = null;
+                    }
+                    
+                    // 解析标题创建子会话（如果还没有）
+                    if (!fileSubsessions[id]) {
+                        createSubsessionsForFile(id, session.content);
+                    }
+                    
+                    editor.value = session.content;
+                    previewNeedsUpdate = true;
+                    updatePreview();
+                    renderSessionList();
+                }
+            }
+            
+            // ADDED: Function to render breadcrumb navigation
+            function renderBreadcrumbs() {
+                currentFolderContainer.innerHTML = '';
+                
+                // Root link
+                const rootLink = document.createElement('a');
+                rootLink.href = '#';
+                rootLink.className = 'breadcrumb-link';
+                rootLink.innerHTML = '<i class="fas fa-folder-open"></i> 根目录';
+                rootLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentFolderId = null;
+                    folderStack = [];
+                    renderSessionList();
+                    renderBreadcrumbs();
+                });
+                currentFolderContainer.appendChild(rootLink);
+
+                // Path links from stack
+                folderStack.forEach((folderId, index) => {
+                    const separator = document.createElement('span');
+                    separator.className = 'breadcrumb-separator';
+                    separator.innerHTML = '>';
+                    currentFolderContainer.appendChild(separator);
+
+                    const folder = folders.find(f => f.id === folderId);
+                    if (folder) {
+                        const pathLink = document.createElement('a');
+                        pathLink.href = '#';
+                        pathLink.className = 'breadcrumb-link';
+                        pathLink.textContent = folder.name;
+                        pathLink.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            // Navigate to this folder
+                            currentFolderId = folderId;
+                            folderStack = folderStack.slice(0, index + 1);
+                            renderSessionList();
+                            renderBreadcrumbs();
+                        });
+                        currentFolderContainer.appendChild(pathLink);
+                    }
+                });
+
+                // Current folder name (if not root)
+                if (currentFolderId) {
+                    const folder = folders.find(f => f.id === currentFolderId);
+                    if(folder) {
+                        const separator = document.createElement('span');
+                        separator.className = 'breadcrumb-separator';
+                        separator.innerHTML = '>';
+                        currentFolderContainer.appendChild(separator);
+
+                        const currentSpan = document.createElement('span');
+                        currentSpan.className = 'breadcrumb-current';
+                        currentSpan.textContent = folder.name;
+                        currentFolderContainer.appendChild(currentSpan);
+                    }
+                }
+                
+                backButton.style.display = folderStack.length > 0 ? 'inline-block' : 'none';
+            }
+
+            function selectFolder(id) {
+                if(currentFolderId !== id) {
+                    if (currentFolderId !== null) {
+                        folderStack.push(currentFolderId);
+                    }
+                    currentFolderId = id;
+                    renderSessionList();
+                    renderBreadcrumbs();
+                }
+            }
+            
+            function goBack() {
+                if (folderStack.length > 0) {
+                    currentFolderId = folderStack.pop();
+                } else {
+                    currentFolderId = null;
+                }
+                renderSessionList();
+                renderBreadcrumbs();
+            }
+            
+            function updateItemName(id, newName, type) {
+                if (type === 'file') {
+                    const session = sessions.find(s => s.id === id);
+                    if (session) session.name = newName;
+                } else if (type === 'folder') {
+                    const folder = folders.find(f => f.id === id);
+                    if (folder) folder.name = newName;
+                }
+                renderSessionList();
+                renderBreadcrumbs(); // Name might have changed in breadcrumbs
+                saveSessionsToStorage();
+            }
+            
+            function moveItem(itemId, targetFolderId, itemType) {
+                if (itemType === 'file') {
+                    const session = sessions.find(s => s.id === itemId);
+                    if (session) session.folderId = targetFolderId;
+                } else if (itemType === 'folder') {
+                    const folder = folders.find(f => f.id === itemId);
+                    if (folder) folder.folderId = targetFolderId;
+                }
+                // No need to call render/save here, will be done in bulk
+            }
+            
+            function renderSessionList() {
+                sessionList.innerHTML = '';
+                
+                if (sessions.length === 0 && folders.length === 0 && currentFolderId === null) {
+                    emptySession.style.display = 'block';
+                    return;
+                }
+                
+                emptySession.style.display = 'none';
+                
+                // 获取当前目录下的项目
+                const currentFolderItems = [
+                    ...folders.filter(f => f.folderId === currentFolderId),
+                    ...sessions.filter(s => s.folderId === currentFolderId)
+                ];
+                
+                // 按类型排序：文件夹在前
+                currentFolderItems.sort((a, b) => {
+                    if (a.type === 'folder' && b.type === 'file') return -1;
+                    if (a.type === 'file' && b.type === 'folder') return 1;
+                    return a.name.localeCompare(b.name);
+                });
+                
+                if (currentFolderItems.length === 0) {
+                    const li = document.createElement('li');
+                    li.className = 'empty-folder';
+                    li.innerHTML = '<div class="empty-message"><i class="fas fa-inbox"></i> 此目录为空</div>';
+                    sessionList.appendChild(li);
+                    return;
+                }
+                
+                currentFolderItems.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = `session-item ${item.type} ${item.id === currentSessionId ? 'active' : ''}`;
+                    li.dataset.id = item.id;
+                    li.dataset.type = item.type; // ADDED: Add type to dataset for easier access
+
+                    // CHANGED: Always show move button
+                    li.innerHTML = `
+                        <div class="name-container">
+                            <input type="checkbox" class="select-checkbox" data-id="${item.id}" data-type="${item.type}">
+                            <span class="name">
+                                <i class="${item.type === 'folder' ? 'fas fa-folder folder-icon' : 'fas fa-file file-icon'}"></i>
+                                <span class="item-name">${escapeHTML(item.name)}</span>
+                            </span>
+                        </div>
+                        <div class="actions">
+                            <span class="move-btn" title="移动"><i class="fas fa-arrows-alt"></i></span>
+                            <span class="edit-btn" title="编辑名称"><i class="fas fa-pencil-alt"></i></span>
+                            <span class="delete-btn" title="删除"><i class="fas fa-trash"></i></span>
+                        </div>
+                    `;
+                    
+                    // 添加点击事件
+                    li.addEventListener('click', (e) => {
+                        if (!e.target.closest('.actions') && !e.target.closest('.select-checkbox')) {
+                            if (item.type === 'file') {
+                                switchSession(item.id);
+                            } else if (item.type === 'folder') {
+                                selectFolder(item.id);
+                            }
+                        }
+                    });
+                    
+                    // 添加编辑事件 - 修复重命名功能
+                    const editBtn = li.querySelector('.edit-btn');
+                    const nameSpan = li.querySelector('.item-name'); // 修改点：选择正确的名称元素
+                    
+                    editBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        
+                        // 修改点：直接从数据模型获取名称，而不是从DOM
+                        const originalName = item.name;
+                        nameSpan.innerHTML = `<input type="text" value="${originalName}" class="name-edit-input">`;
+                        const input = nameSpan.querySelector('.name-edit-input');
+                        input.focus();
+                        input.addEventListener('blur', () => updateItemName(item.id, input.value, item.type));
+                        input.addEventListener('keyup', (e) => {
+                            if (e.key === 'Enter') updateItemName(item.id, input.value, item.type);
+                        });
+                    });
+                    
+                    // 添加删除事件
+                    const deleteBtn = li.querySelector('.delete-btn');
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (confirm(`确定要删除 ${item.type === 'folder' ? '目录' : '文件'} "${item.name}" 吗？${item.type === 'folder' ? ' 这会删除其下所有内容。' : ''}`)) {
+                            item.type === 'file' ? removeSession(item.id) : removeFolder(item.id);
+                        }
+                    });
+                    
+                    // CHANGED: Move button logic
+                    const moveBtn = li.querySelector('.move-btn');
+                    moveBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        // Set movingItems to this single item and open modal
+                        movingItems = [{ id: item.id, type: item.type }];
+                        openMoveModal();
+                    });
+                    
+                    sessionList.appendChild(li);
+                    
+                    // 如果是当前选中的文件且有子会话，显示子会话
+                    if (item.type === 'file' && item.id === currentSessionId && fileSubsessions[item.id] && fileSubsessions[item.id].length > 0) {
+                        const subsessions = fileSubsessions[item.id];
+                        const nestedList = document.createElement('ul');
+                        nestedList.className = 'nested-items';
+                        
+                        subsessions.forEach(subsession => {
+                            const subLi = document.createElement('li');
+                            subLi.className = `session-item subsession ${subsession.id === currentSubsessionId ? 'active' : ''}`;
+                            subLi.dataset.id = subsession.id;
+                            subLi.dataset.parent = item.id;
+                            
+                            subLi.innerHTML = `
+                                <div class="name-container">
+                                    <span class="name">
+                                        <i class="fas fa-stream"></i>
+                                        ${escapeHTML(subsession.title)}
+                                    </span>
+                                </div>
+                            `;
+                            
+                            subLi.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                switchSession(item.id, true, subsession.id);
+                            });
+                            
+                            nestedList.appendChild(subLi);
+                        });
+                        
+                        sessionList.appendChild(nestedList);
+                    }
+                });
+            }
+            
+            // 文件操作函数
+            function newFile() {
+                const content = '# 新文件\n\n开始编写您的内容...\n\n使用 --内容-- 创建Cloze记忆卡片';
+                addSession(content);
+            }
+            
+            function newFolder() {
+                addFolder();
+            }
+            
+            function openFile() {
+                fileInput.click();
+            }
+            
+            function saveCurrentSession() {
+                if (!currentSessionId) return;
+                
+                const session = sessions.find(s => s.id === currentSessionId);
+                if (!session) return;
+                
+                session.content = editor.value;
+                session.lastActive = new Date();
+                
+                // 更新子会话
+                createSubsessionsForFile(currentSessionId, editor.value);
+                
+                previewNeedsUpdate = true;
+                updatePreview();
+                
+                // 保存到本地存储
+                saveSessionsToStorage();
+                
+                // 显示保存成功反馈
+                saveBtn.innerHTML = '<i class="fas fa-check"></i> 已保存';
+                
+                setTimeout(() => {
+                    saveBtn.innerHTML = '<i class="fas fa-save"></i> 保存';
+                }, 2000);
+            }
+            
+            function exportFile() {
+                if (!currentSessionId) return;
+                
+                const session = sessions.find(s => s.id === currentSessionId);
+                if (!session) return;
+                
+                const content = editor.value;
+                session.content = content; // 更新会话内容
+                
+                const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${session.name.replace(/\s+/g, '_')}.md` || 'anki-md-notes.md';
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            }
+            
+            // 转换选中文本为Cloze
+            function convertToCloze() {
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                
+                if (start === end) {
+                    alert('请先选择要转换为Cloze的文本');
+                    return;
+                }
+                
+                const selectedText = editor.value.substring(start, end);
+                const newText = `--${selectedText}--`;
+                
+                // 替换选中文本
+                editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
+                
+                // 更新选择位置
+                editor.selectionStart = start;
+                editor.selectionEnd = start + newText.length;
+                
+                // 聚焦编辑器
+                editor.focus();
+                
+                // 标记需要更新预览
+                previewNeedsUpdate = true;
+            }
+            
+            // 切换所有Cloze状态
+            function toggleAllCloze() {
+                allClozeOpen = !allClozeOpen;
+                const clozeElements = preview.querySelectorAll('.cloze');
+                
+                toggleAllClozeBtn.innerHTML = allClozeOpen ? '<i class="fas fa-compress-arrows-alt"></i>' : '<i class="fas fa-expand-arrows-alt"></i>';
+                
+                clozeElements.forEach(cloze => {
+                    if (allClozeOpen) {
+                        // 全部打开
+                        cloze.classList.remove('hidden', 'temporary');
+                        cloze.classList.add('permanent');
+                    } else {
+                        // 全部关闭
+                        cloze.classList.remove('temporary', 'permanent');
+                        cloze.classList.add('hidden');
+                    }
+                    
+                    // 更新颜色类
+                    const content = cloze.dataset.content;
+                    const lastAccessTime = clozeAccessTimes[content] || 0;
+                    const colorClass = getClozeColorClass(lastAccessTime);
+                    
+                    // 清除所有颜色类
+                    const classes = ['cloze-1d', 'cloze-2d', 'cloze-3d', 'cloze-5d', 'cloze-7d', 'cloze-14d', 'cloze-28d', 'cloze-28plus'];
+                    classes.forEach(cls => {
+                        if (cloze.classList.contains(cls)) {
+                            cloze.classList.remove(cls);
+                        }
+                    });
+                    
+                    // 添加新的颜色类
+                    cloze.classList.add(colorClass);
+                });
+            }
+            
+            // 本地存储函数
+            function saveSessionsToStorage() {
+                localStorage.setItem('ankiSessions', JSON.stringify(sessions));
+                localStorage.setItem('ankiFolders', JSON.stringify(folders));
+                localStorage.setItem('currentSessionId', currentSessionId);
+                localStorage.setItem('currentFolderId', currentFolderId);
+                localStorage.setItem('currentSubsessionId', currentSubsessionId);
+                localStorage.setItem('folderStack', JSON.stringify(folderStack));
+            }
+            
+            function loadSessionsFromStorage() {
+                const savedSessions = localStorage.getItem('ankiSessions');
+                const savedFolders = localStorage.getItem('ankiFolders');
+                
+                if (savedSessions) sessions = JSON.parse(savedSessions);
+                if (savedFolders) folders = JSON.parse(savedFolders);
+                
+                currentSessionId = localStorage.getItem('currentSessionId');
+                currentSubsessionId = localStorage.getItem('currentSubsessionId');
+                folderStack = JSON.parse(localStorage.getItem('folderStack') || '[]');
+                currentFolderId = localStorage.getItem('currentFolderId') || null;
+                // Ensure null is not a string "null"
+                if (currentFolderId === 'null') currentFolderId = null;
+
+                sessions.forEach(session => createSubsessionsForFile(session.id, session.content));
+                
+                renderSessionList();
+                renderBreadcrumbs();
+            }
+            
+            // 全选功能
+            function setupSelectAll() {
+                selectAllCheckbox.addEventListener('change', function() {
+                    const checkboxes = document.querySelectorAll('.select-checkbox');
+                    checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+                });
+            }
+            
+            // 删除选中会话
+            function deleteSelectedSessions() {
+                const checkboxes = document.querySelectorAll('.select-checkbox:checked');
+                if (checkboxes.length === 0) {
+                    alert('请先选择要删除的项目');
+                    return;
+                }
+                
+                if (!confirm(`确定要删除选中的 ${checkboxes.length} 个项目吗？`)) return;
+                
+                checkboxes.forEach(checkbox => {
+                    const itemId = checkbox.dataset.id;
+                    const itemType = checkbox.dataset.type;
+                    
+                    if (itemType === 'file') removeSession(itemId);
+                    else if (itemType === 'folder') removeFolder(itemId);
+                });
+                
+                selectAllCheckbox.checked = false;
+            }
+            
+            // 更新会话按钮图标
+            function updateSessionButtonIcon() {
+                sessionHidden = sessionSidebar.classList.contains('hidden-session');
+                toggleSessionBtn.innerHTML = sessionHidden ? '<i class="fas fa-arrow-right"></i>' : '<i class="fas fa-arrow-left"></i>';
+                toggleSessionBtn.title = sessionHidden ? "显示会话栏" : "隐藏会话栏";
+            }
+            
+            // 切换格式按钮状态
+            function toggleFormatButtons(disabled) {
+                [clozeBtn, boldBtn, italicBtn, codeBtn, linkBtn].forEach(btn => btn.disabled = disabled);
+            }
+            
+            // ADDED: Recursive function to get all descendant folder IDs
+            function getDescendantFolderIds(folderId) {
+                let descendants = [];
+                const children = folders.filter(f => f.folderId === folderId);
+                for (const child of children) {
+                    descendants.push(child.id);
+                    descendants = descendants.concat(getDescendantFolderIds(child.id));
+                }
+                return descendants;
+            }
+
+            // CHANGED: Move modal function updated to handle invalid targets
+            function openMoveModal() {
+                // 清空文件夹列表
+                folderList.innerHTML = '';
+                
+                // Get all folders being moved and their descendants to exclude them from the target list
+                const movedFolderIds = movingItems.filter(item => item.type === 'folder').map(item => item.id);
+                let exclusionIds = new Set(movedFolderIds);
+                movedFolderIds.forEach(id => {
+                    getDescendantFolderIds(id).forEach(descId => exclusionIds.add(descId));
+                });
+
+                const rootFolder = document.createElement('div');
+                rootFolder.className = 'folder-item';
+                rootFolder.dataset.id = 'root';
+                rootFolder.innerHTML = '<i class="fas fa-folder-open"></i> 根目录';
+                folderList.appendChild(rootFolder);
+                
+                // 添加所有文件夹
+                folders.forEach(folder => {
+                    if (!exclusionIds.has(folder.id)) {
+                        const folderItem = document.createElement('div');
+                        folderItem.className = 'folder-item';
+                        folderItem.dataset.id = folder.id;
+                        folderItem.innerHTML = `<i class="fas fa-folder"></i> ${escapeHTML(folder.name)}`;
+                        folderList.appendChild(folderItem);
+                    }
+                });
+                
+                // 添加文件夹选择事件
+                const folderItems = document.querySelectorAll('.folder-item');
+                folderItems.forEach(item => {
+                    item.addEventListener('click', function() {
+                        // 移除之前的选择
+                        folderItems.forEach(i => i.classList.remove('selected'));
+                        // 添加当前选择
+                        this.classList.add('selected');
+                        selectedFolder = this.dataset.id;
+                    });
+                });
+                
+                // 显示模态框
+                moveModal.classList.add('active');
+            }
+            
+            function closeModal() {
+                moveModal.classList.remove('active');
+                movingItems = [];
+                selectedFolder = null;
+            }
+            
+            // HTML转义函数
+            function escapeHTML(str) {
+                return str.replace(/[&<>"']/g, 
+                    tag => ({
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&quot;',
+                        "'": '&#39;'
+                    }[tag] || tag));
+            }
+            
+            // 事件监听器
+            newFileBtn.addEventListener('click', newFile);
+            newFolderBtn.addEventListener('click', newFolder);
+            openFileBtn.addEventListener('click', openFile);
+            saveBtn.addEventListener('click', saveCurrentSession);
+            exportFileBtn.addEventListener('click', exportFile);
+            clozeBtn.addEventListener('click', convertToCloze);
+            helpBtn.addEventListener('click', () => document.querySelector('.instructions').scrollIntoView({ behavior: 'smooth' }));
+            toggleAllClozeBtn.addEventListener('click', toggleAllCloze);
+            
+            // 会话显示/隐藏控制
+            toggleSessionBtn.addEventListener('click', function() {
+                sessionSidebar.classList.toggle('hidden-session');
+                sessionHidden = sessionSidebar.classList.contains('hidden-session');
+                updateSessionButtonIcon();
+            });
+            
+            // 编辑器收起/展开控制
+            toggleEditorBtn.addEventListener('click', function() {
+                editorPanel.classList.toggle('collapsed');
+                const isCollapsed = editorPanel.classList.contains('collapsed');
+                toggleEditorBtn.innerHTML = isCollapsed ? '<i class="fas fa-chevron-down"></i>' : '<i class="fas fa-chevron-up"></i>';
+                toggleEditorBtn.title = isCollapsed ? "展开编辑器" : "收起编辑器";
+                toggleFormatButtons(isCollapsed);
+                if (isCollapsed) saveCurrentSession();
+            });
+            
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => addSession(e.target.result, file.name);
+                reader.readAsText(file);
+                
+                // 重置文件输入
+                fileInput.value = '';
+            });
+            
+            // 设置全选功能
+            setupSelectAll();
+            deleteSelectedBtn.addEventListener('click', deleteSelectedSessions);
+            
+            // ADDED: Event listener for the new "Move Selected" button
+            moveSelectedBtn.addEventListener('click', () => {
+                const checkboxes = document.querySelectorAll('.select-checkbox:checked');
+                if (checkboxes.length === 0) {
+                    alert('请先选择要移动的项目');
+                    return;
+                }
+                movingItems = Array.from(checkboxes).map(cb => ({
+                    id: cb.dataset.id,
+                    type: cb.dataset.type
+                }));
+                openMoveModal();
+            });
+
+            closeMoveModal.addEventListener('click', closeModal);
+            cancelMove.addEventListener('click', closeModal);
+            
+            // CHANGED: Confirm move logic to handle multiple items
+            confirmMove.addEventListener('click', function() {
+                if (selectedFolder && movingItems.length > 0) {
+                    const targetFolderId = selectedFolder === 'root' ? null : selectedFolder;
+                    movingItems.forEach(item => {
+                        moveItem(item.id, targetFolderId, item.type);
+                    });
+                    
+                    renderSessionList();
+                    saveSessionsToStorage();
+                    closeModal();
+                } else {
+                    alert('请选择目标目录');
+                }
+            });
+            
+            // 初始化应用
+            initApp();
+        });
+    </script>
+</body>
+</html>
