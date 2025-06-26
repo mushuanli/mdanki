@@ -28,7 +28,6 @@ export const italicBtn = $id('italicBtn');
 export const codeBtn = $id('codeBtn');
 export const linkBtn = $id('linkBtn');
 export const audioBtn = $id('audioBtn');
-export const toggleAllClozeBtn = $id('toggleAllClozeBtn');
 
 // Panels & Sidebars
 export const sessionSidebar = $('.session-sidebar');
@@ -56,6 +55,5 @@ export const stopBtn = $id('stopBtn');
 export const sessionTitleContainer = $('.session-title');
 export const instructionsSection = $('.instructions');
 
-export const showAllClozeBtn = $id('showAllClozeBtn');
-export const hideAllClozeBtn = $id('hideAllClozeBtn');
+export const toggleVisibilityClozeBtn = $id('toggleVisibilityClozeBtn');
 export const invertClozeBtn = $id('invertClozeBtn');

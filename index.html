@@ -14,8 +14,8 @@
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-folder-tree"></i> 层级式会话管理系统</h1>
-            <p class="subtitle">创建、组织和预览带有层级目录结构的Markdown笔记</p>
+            <h1><i class="fas fa-folder-tree"></i> Anki管理系统</h1>
+            <p class="subtitle">创建、组织和预览的Markdown类型Anki笔记</p>
         </header>
         <div class="audio-controls" id="audioControls">
             <div class="audio-title" id="audioTitle">音频播放</div>
@@ -120,13 +120,8 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
                     <div class="panel-header">
                         <div class="panel-title"><i class="fas fa-eye"></i> 预览</div>
                         <div class="panel-actions">
-            <button id="toggleAllClozeBtn" class="panel-btn" title="全部打开/关闭">
-                <i class="fas fa-expand-arrows-alt"></i>
-            </button>
-            <button id="showAllClozeBtn" class="panel-btn" title="全部打开">
-                <i class="fas fa-eye"></i>
-            </button>
-            <button id="hideAllClozeBtn" class="panel-btn" title="全部关闭">
+            <!-- 新的合并后的按钮 -->
+            <button id="toggleVisibilityClozeBtn" class="panel-btn" title="全部隐藏">
                 <i class="fas fa-eye-slash"></i>
             </button>
             <button id="invertClozeBtn" class="panel-btn" title="反向显示/隐藏">

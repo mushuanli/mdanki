@@ -11,7 +11,8 @@ let state = {
     folderStack: [],
     movingItems: [],      // {id, type}[]
     selectedMoveTarget: null,
-    isAllClozeOpen: false,
+    // 新增状态，更明确
+    areAllClozeVisible: false,
 
     // UI state
     isSessionSidebarHidden: false,

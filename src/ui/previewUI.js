@@ -1,3 +1,4 @@
+// src/ui/previewUI.js
 import * as dom from '../dom.js';
 import { appState, setState } from '../state.js';
 import { saveStateToStorage } from '../services/storageManager.js';
@@ -124,51 +125,71 @@ function addClozeEventListeners() {
     });
 }
 
-// --- 新增的 Cloze 控制函数 ---
+// --- 新的核心 Cloze 控制函数 ---
 /**
- * 控制所有 Cloze 元素的状态。
- * @param {'show' | 'hide' | 'invert'} mode - 控制模式。
+ * 切换所有 Cloze 的可见性。
  */
-function controlAllCloze(mode) {
+export function toggleAllClozeVisibility() {
+    // 1. 读取当前状态的反向作为目标状态
+    const shouldShow = !appState.areAllClozeVisible;
+    
     const clozeElements = dom.preview.querySelectorAll('.cloze');
     clozeElements.forEach(cloze => {
-        clearTimeout(cloze.timer); // 清除可能存在的临时显示计时器
+        clearTimeout(cloze.timer);
         
-        switch (mode) {
-            case 'show':
-                cloze.classList.remove('hidden', 'temporary');
-                cloze.classList.add('permanent');
-                break;
-            case 'hide':
-                cloze.classList.remove('permanent', 'temporary');
-                cloze.classList.add('hidden');
-                break;
-            case 'invert':
-                if (cloze.classList.contains('hidden')) {
-                    cloze.classList.remove('hidden');
-                    cloze.classList.add('permanent');
-                } else {
-                    cloze.classList.remove('permanent', 'temporary');
-                    cloze.classList.add('hidden');
-                }
-                break;
+        if (shouldShow) {
+            cloze.classList.remove('hidden', 'temporary');
+            cloze.classList.add('permanent');
+        } else {
+            cloze.classList.remove('permanent', 'temporary');
+            cloze.classList.add('hidden');
         }
     });
+
+    // 2. 更新按钮的 UI
+    updateToggleVisibilityButton(shouldShow);
+
+    // 3. 更新应用状态
+    setState({ areAllClozeVisible: shouldShow });
 }
 
-// 导出这些函数，以便 main.js 可以调用它们
-export function showAllCloze() {
-    controlAllCloze('show');
-}
-
-export function hideAllCloze() {
-    controlAllCloze('hide');
-}
-
+/**
+ * 反转所有 Cloze 的可见性。
+ */
 export function invertAllCloze() {
-    controlAllCloze('invert');
+    const clozeElements = dom.preview.querySelectorAll('.cloze');
+    let allVisibleAfterInvert = true; // 假设反转后都是可见的
+
+    clozeElements.forEach(cloze => {
+        clearTimeout(cloze.timer);
+        if (cloze.classList.contains('hidden')) {
+            cloze.classList.remove('hidden');
+            cloze.classList.add('permanent');
+        } else {
+            cloze.classList.remove('permanent', 'temporary');
+            cloze.classList.add('hidden');
+            allVisibleAfterInvert = false; // 只要有一个被隐藏，全局状态就不是“全部可见”
+        }
+    });
+    
+    // 更新主切换按钮的状态和 UI
+    updateToggleVisibilityButton(allVisibleAfterInvert);
+    setState({ areAllClozeVisible: allVisibleAfterInvert });
 }
-// --- 结束新增部分 ---
+
+/**
+ * 根据状态更新切换按钮的图标和标题。
+ * @param {boolean} isVisible - 当前是否为全部可见模式。
+ */
+export function updateToggleVisibilityButton(isVisible) {
+    if (isVisible) {
+        dom.toggleVisibilityClozeBtn.innerHTML = '<i class="fas fa-eye"></i>';
+        dom.toggleVisibilityClozeBtn.title = '全部隐藏';
+    } else {
+        dom.toggleVisibilityClozeBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+        dom.toggleVisibilityClozeBtn.title = '全部显示';
+    }
+}
 
 export function updatePreview() {
     const { currentSessionId, currentSubsessionId, fileSubsessions, sessions } = appState;

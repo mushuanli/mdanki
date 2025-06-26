@@ -7,8 +7,7 @@ import { renderSessionList } from './ui/sessionListUI.js';
 import { 
     updatePreview, 
     setupPreview,
-    showAllCloze,
-    hideAllCloze,
+    toggleAllClozeVisibility,
     invertAllCloze
 } from './ui/previewUI.js';
 import { renderBreadcrumbs, createBackButton } from './ui/breadcrumbsUI.js';
@@ -308,11 +307,9 @@ function setupEventListeners() {
     dom.audioBtn.addEventListener('click', handleEditAudioForCloze);
     // -------------------------------------------------
     // --- ADDED EVENT LISTENERS FOR PREVIEW CONTROLS ---
-    dom.showAllClozeBtn.addEventListener('click', showAllCloze);
-    dom.hideAllClozeBtn.addEventListener('click', hideAllCloze);
+    dom.toggleVisibilityClozeBtn.addEventListener('click', toggleAllClozeVisibility);
     dom.invertClozeBtn.addEventListener('click', invertAllCloze);
-    // 为了兼容，让旧按钮执行“反转”操作
-    dom.toggleAllClozeBtn.addEventListener('click', invertAllCloze);
+
     // --------------------------------------------------
 
     // Audio controls
