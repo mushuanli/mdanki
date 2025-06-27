@@ -1,15 +1,15 @@
-// The single source of truth for the application's runtime state.
+// src/common/state.js
+// // The single source of truth for the application's runtime state.
 let state = {
     // --- Core Data State ---
     // These are loaded from the database on startup.
+    // --- Router State ---
+    activeView: 'anki', // 'anki' or 'agent'
+
     sessions: [], // Array of file objects
     folders: [],  // Array of folder objects
     clozeAccessTimes: {}, // { [content]: timestamp }
-
-    // --- AI Agent Data State (for future use) ---
-    agents: [],
-    topics: [],
-    history: [],
+    fileSubsessions: {}, // This can be generated at runtime, maybe not persisted
 
     // --- UI/Session State ---
     // These reflect the current user interaction.
@@ -20,13 +20,21 @@ let state = {
     
     folderStack: [],
     
-    // --- Transient UI State ---
-    // This state is not saved and resets on page load.
+    // --- AI Agent Data State ---
+    agents: [],  // { id, name, avatar, config }
+    topics: [],  // { id, agentId, title, icon }
+    history: [], // { id, topicId, role, content, images, timestamp }
+
+    // --- AI Agent UI State ---
+    currentAgentId: null,
+    currentTopicId: null,
+    
+    // --- Transient UI State (not saved) ---
+    isLoading: true,
     isSessionSidebarHidden: false,
     areAllClozeVisible: false,
     movingItems: [], // {id, type}[]
     selectedMoveTarget: null,
-    isLoading: true, // Useful for showing a loading spinner on startup
 };
 
 // Provides a read-only view of the state to the rest of the app.

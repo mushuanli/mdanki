@@ -1,5 +1,5 @@
 // src/ui/audioUI.js
-import * as dom from '../dom.js';
+import * as dom from './anki_dom.js';
 
 let currentAudioUtterance = null;
 let audioProgressInterval = null;

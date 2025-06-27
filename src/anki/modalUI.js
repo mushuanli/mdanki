@@ -1,7 +1,7 @@
 //  src/ui/modalUI.js
-import * as dom from '../dom.js';
-import { appState, setState } from '../state.js';
-import { escapeHTML } from '../utils.js';
+import * as dom from './anki_dom.js';
+import { appState, setState } from '../common/state.js';
+import { escapeHTML } from '../common/utils.js';
 
 function getDescendantFolderIds(folderId) {
     let descendants = [];

@@ -14,9 +14,52 @@
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-folder-tree"></i> Anki管理系统</h1>
-            <p class="subtitle">创建、组织、预览的Markdown类型Anki笔记</p>
+            <h1><i class="fas fa-folder-tree"></i> Anki / AI Agent 系统</h1>
+            <!-- NEW NAVIGATION BUTTONS -->
+            <div class="app-nav">
+                <button id="nav-anki-btn" class="app-nav-btn active">
+                    <i class="fas fa-book-open"></i> Anki 笔记
+                </button>
+                <button id="nav-agent-btn" class="app-nav-btn">
+                    <i class="fas fa-robot"></i> AI Agents
+                </button>
+            </div>
+            <p class="subtitle">创建、组织、预览Markdown笔记, 并与AI助手互动</p>
         </header>
+        
+        <!-- 新增的AI Agent导航栏 -->
+        <nav class="ai-agent-nav">
+            <div class="nav-title">
+                <i class="fas fa-robot"></i> AI Agent管理
+            </div>
+            <div class="agent-list">
+                <div class="agent-item active" data-agent="1">
+                    <div class="agent-avatar">AI</div>
+                    <span>数学学习助手</span>
+                </div>
+                <div class="agent-item" data-agent="2">
+                    <div class="agent-avatar">MD</div>
+                    <span>语言学习助手</span>
+                </div>
+                <div class="agent-item" data-agent="3">
+                    <div class="agent-avatar">CS</div>
+                    <span>计算机科学助手</span>
+                </div>
+                <div class="agent-item">
+                    <div class="agent-avatar">+</div>
+                    <span>添加新Agent</span>
+                </div>
+            </div>
+            <div class="nav-actions">
+                <button class="nav-action-btn">
+                    <i class="fas fa-history"></i> 历史记录
+                </button>
+                <button class="nav-action-btn">
+                    <i class="fas fa-cog"></i> 设置
+                </button>
+            </div>
+        </nav>
+        
         <div class="audio-controls" id="audioControls">
             <div class="audio-title" id="audioTitle">音频播放</div>
             <div class="audio-progress">
@@ -28,6 +71,132 @@
                 <button class="audio-btn" id="stopBtn"><i class="fas fa-stop"></i> 停止</button>
             </div>
         </div>
+        
+        <!-- AI Agent内容区域 -->
+        <div class="agent-content-container">
+            <div class="topics-panel">
+                <div class="topics-header">
+                    <i class="fas fa-book"></i> 聊天主题
+                </div>
+                <div class="topics-content">
+                    <ul class="topic-list">
+                        <li class="topic-item active">
+                            <div class="topic-icon"><i class="fas fa-calculator"></i></div>
+                            <span>线性代数</span>
+                        </li>
+                        <li class="topic-item">
+                            <div class="topic-icon"><i class="fas fa-infinity"></i></div>
+                            <span>微积分</span>
+                        </li>
+                        <li class="topic-item">
+                            <div class="topic-icon"><i class="fas fa-project-diagram"></i></div>
+                            <span>概率统计</span>
+                        </li>
+                        <li class="topic-item">
+                            <div class="topic-icon"><i class="fas fa-cube"></i></div>
+                            <span>几何学</span>
+                        </li>
+                        <li class="topic-item">
+                            <div class="topic-icon"><i class="fas fa-plus-circle"></i></div>
+                            <span>添加新主题</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="history-panel">
+                <div class="history-header">
+                    <div class="history-title">
+                        <i class="fas fa-comments"></i> 历史对话记录
+                    </div>
+                    <input type="text" class="history-search" placeholder="搜索历史记录...">
+                </div>
+                <div class="history-content">
+                    <div class="history-item">
+                        <div class="history-item-header">
+                            <span>2023-10-15 14:30</span>
+                            <span>线性代数 - 矩阵运算</span>
+                        </div>
+                        <div class="history-item-content">
+                            <p><strong>用户:</strong> 请解释矩阵的逆是什么？</p>
+                            <p><strong>AI助手:</strong> 矩阵的逆类似于数字的倒数。对于一个n×n矩阵A，如果存在另一个n×n矩阵B，使得AB = BA = I（单位矩阵），那么B就是A的逆矩阵，记作A⁻¹。只有方阵且行列式不为零的矩阵才有逆矩阵。</p>
+                            <img src="https://via.placeholder.com/600x150/4361ee/ffffff?text=矩阵逆运算示例" alt="矩阵逆运算示例">
+                        </div>
+                        <div class="history-item-actions">
+                            <button class="history-action-btn"><i class="fas fa-redo"></i> 重新生成</button>
+                            <button class="history-action-btn"><i class="fas fa-edit"></i> 编辑</button>
+                            <button class="history-action-btn"><i class="fas fa-trash"></i> 删除</button>
+                        </div>
+                    </div>
+                    
+                    <div class="history-item">
+                        <div class="history-item-header">
+                            <span>2023-10-14 09:15</span>
+                            <span>线性代数 - 特征值与特征向量</span>
+                        </div>
+                        <div class="history-item-content">
+                            <p><strong>用户:</strong> 特征值和特征向量有什么实际应用？</p>
+                            <p><strong>AI助手:</strong> 特征值和特征向量在多个领域有广泛应用：</p>
+                            <ol>
+                                <li>物理学：分析振动系统的主振动模式</li>
+                                <li>计算机图形学：用于图像压缩和特征提取</li>
+                                <li>机器学习：主成分分析(PCA)的核心</li>
+                                <li>工程学：结构稳定性分析</li>
+                            </ol>
+                            <p>例如，在PCA中，我们通过计算协方差矩阵的特征值和特征向量来降低数据维度。</p>
+                        </div>
+                        <div class="history-item-actions">
+                            <button class="history-action-btn"><i class="fas fa-redo"></i> 重新生成</button>
+                            <button class="history-action-btn"><i class="fas fa-edit"></i> 编辑</button>
+                            <button class="history-action-btn"><i class="fas fa-trash"></i> 删除</button>
+                        </div>
+                    </div>
+                    
+                    <div class="history-item">
+                        <div class="history-item-header">
+                            <span>2023-10-12 16:45</span>
+                            <span>微积分 - 极限与连续</span>
+                        </div>
+                        <div class="history-item-content">
+                            <p><strong>用户:</strong> 请证明lim(x→0) sin(x)/x = 1</p>
+                            <p><strong>AI助手:</strong> 这个重要极限可以通过几何方法或泰勒级数证明。几何证明如下：</p>
+                            <p>考虑单位圆中的扇形OAB，其中OA和OB是半径，角AOB为x弧度。三角形OAB的面积小于扇形OAB的面积，后者又小于直角三角形OAC的面积（AC是切线）。</p>
+
+                        </div>
+                        <div class="history-item-actions">
+                            <button class="history-action-btn"><i class="fas fa-redo"></i> 重新生成</button>
+                            <button class="history-action-btn"><i class="fas fa-edit"></i> 编辑</button>
+                            <button class="history-action-btn"><i class="fas fa-trash"></i> 删除</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- ==================== 新增的聊天输入区域 ==================== -->
+                <div class="chat-input-area">
+                    <div class="attachment-preview-container" id="attachmentPreview">
+                        <!-- 附件预览将动态添加到这里 -->
+                        <!-- 示例: 
+                        <div class="attachment-preview-item">
+                            <span><i class="fas fa-file-image"></i> image_01.jpg</span>
+                            <button class="remove-attachment-btn">×</button>
+                        </div> 
+                        -->
+                    </div>
+                    <div class="input-controls">
+                        <textarea id="chatInput" class="chat-textarea" rows="3" placeholder="输入消息... (Shift + Enter 换行)"></textarea>
+                        <!-- 隐藏的文件输入框，通过JS点击附件按钮来触发 -->
+                        <input type="file" id="attachmentInput" multiple style="display: none;">
+                        <button id="attachFileBtn" class="chat-action-btn" title="添加附件" onclick="document.getElementById('attachmentInput').click();">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                        <button id="sendMessageBtn" class="chat-action-btn send" title="发送">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- ==================== 聊天输入区域结束 ==================== -->
+            </div>
+        </div>
+        
         <div class="main-layout">
             <div class="session-sidebar">
                 <div class="session-header">

@@ -1,4 +1,5 @@
-import { db } from '../db.js';
+// src/services/storageService.js
+import { db } from '../common/db.js';
 
 /**
  * Loads all core data collections from the database.

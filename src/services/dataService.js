@@ -1,9 +1,9 @@
 // src/services/dataService.js
 
-import { appState, setState } from '../state.js';
+import { appState, setState } from '../common/state.js';
 import * as storage from './storageService.js';
-import { generateId } from '../utils.js';
-import { INITIAL_CONTENT } from '../config.js';
+import { generateId } from '../common/utils.js';
+import { INITIAL_CONTENT } from '../common/config.js';
 
 // --- Private Helpers ---
 
@@ -271,4 +271,143 @@ export function goToFolder(folderId, stackIndex) {
 
 export function goToRoot() {
     setState({ currentFolderId: null, folderStack: [] });
+}
+
+
+// ===================================================================
+// AI AGENT DATA SERVICE
+// ===================================================================
+
+/**
+ * Loads all AI Agent related data on app initialization.
+ */
+export async function initializeAgentData() {
+    const { agents, topics, history } = await storage.loadAgentData();
+    
+    const agentState = {
+        agents: agents || [],
+        topics: topics || [],
+        history: history || [],
+    };
+
+    // Set initial agent and topic if they exist
+    if (agentState.agents.length > 0) {
+        agentState.currentAgentId = agentState.agents[0].id;
+        const firstTopicForAgent = agentState.topics.find(t => t.agentId === agentState.currentAgentId);
+        if (firstTopicForAgent) {
+            agentState.currentTopicId = firstTopicForAgent.id;
+        }
+    }
+
+    setState(agentState);
+}
+
+/**
+ * Persists all agent-related data.
+ */
+export async function persistAgentState() {
+    try {
+        await storage.saveAgentData({
+            agents: appState.agents,
+            topics: appState.topics,
+            history: appState.history
+        });
+        console.log("Agent state persisted.");
+    } catch (error) {
+        console.error("Failed to persist agent state:", error);
+    }
+}
+
+
+// --- Agent Management ---
+
+export async function addAgent(name, avatar) {
+    const newAgent = {
+        id: generateId(),
+        name,
+        avatar,
+        config: {} // For future settings like system prompts
+    };
+    const agents = [...appState.agents, newAgent];
+    setState({ agents, currentAgentId: newAgent.id, currentTopicId: null });
+    await persistAgentState();
+}
+
+// --- Topic Management ---
+
+export async function addTopic(title, icon) {
+    if (!appState.currentAgentId) {
+        alert("Please select an AI Agent first.");
+        return;
+    }
+    const newTopic = {
+        id: generateId(),
+        agentId: appState.currentAgentId,
+        title,
+        icon: icon || 'fas fa-comment',
+        createdAt: new Date()
+    };
+    const topics = [...appState.topics, newTopic];
+    setState({ topics, currentTopicId: newTopic.id });
+    await persistAgentState();
+}
+
+// --- History/Chat Management ---
+
+export async function addHistoryMessage(topicId, role, content, images = []) {
+    const newMessage = {
+        id: generateId(),
+        topicId,
+        role, // 'user' or 'assistant'
+        content,
+        images, // Array of image data (e.g., base64 strings or blob URLs)
+        timestamp: new Date()
+    };
+    const history = [...appState.history, newMessage];
+    setState({ history });
+    await persistAgentState();
+
+    // Here you would trigger the call to the actual AI model
+    // const aiResponse = await callAIModel(newMessage);
+    // await addHistoryMessage(topicId, 'assistant', aiResponse);
+}
+
+export async function deleteHistoryMessages(messageIds) {
+    const idsToDelete = new Set(messageIds);
+    const history = appState.history.filter(msg => !idsToDelete.has(msg.id));
+    setState({ history });
+    await persistAgentState();
+}
+
+export async function editUserMessageAndRegenerate(messageId, newContent) {
+    // This is more complex. The logic would be:
+    // 1. Find the message to edit.
+    // 2. Find all subsequent messages in the same topic.
+    // 3. Delete all subsequent messages.
+    // 4. Update the content of the target message.
+    // 5. Re-run the AI conversation from that point.
+    console.log(`Editing message ${messageId} with content: ${newContent}`);
+    // Implementation would go here...
+}
+
+
+// --- Selection ---
+
+export function selectAgent(agentId) {
+    const firstTopicForAgent = appState.topics.find(t => t.agentId === agentId);
+    setState({ 
+        currentAgentId: agentId,
+        currentTopicId: firstTopicForAgent ? firstTopicForAgent.id : null
+    });
+}
+
+export function selectTopic(topicId) {
+    setState({ currentTopicId: topicId });
+}
+
+// --- View Router ---
+export function switchView(viewName) {
+    if (viewName === 'anki' || viewName === 'agent') {
+        setState({ activeView: viewName });
+    }
 }

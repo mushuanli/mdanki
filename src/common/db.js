@@ -1,3 +1,4 @@
+// src/common/db.js
 import Dexie from 'dexie'; // Assuming you're using a bundler. If not, Dexie will be global.
 import { DB_NAME, DB_VERSION } from './config.js';
 

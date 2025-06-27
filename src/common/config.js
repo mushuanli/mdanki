@@ -1,3 +1,4 @@
+// src/common/config.js
 export const STORAGE_KEYS = {
     SESSIONS: 'ankiSessions',
     FOLDERS: 'ankiFolders',

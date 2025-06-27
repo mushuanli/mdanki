@@ -1,7 +1,7 @@
 // src/ui/sessionListUI.js
-import * as dom from '../dom.js';
-import { appState } from '../state.js';
-import { escapeHTML } from '../utils.js';
+import * as dom from './anki_dom.js';
+import { appState } from '../common/state.js';
+import { escapeHTML } from '../common/utils.js';
 
 function createItemLi(item) {
     const li = document.createElement('li');

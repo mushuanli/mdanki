@@ -1,6 +1,6 @@
 // src/ui/previewUI.js
-import * as dom from '../dom.js';
-import { appState, setState } from '../state.js';
+import * as dom from './anki_dom.js';
+import { appState, setState } from '../common/state.js';
 // REMOVED: import { saveStateToStorage } from '../services/storageManager.js';
 import { playMultimedia } from './audioUI.js';
 // import { escapeHTML } from '../utils.js'; // Not used here, can be removed

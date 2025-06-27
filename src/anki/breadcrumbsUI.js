@@ -1,6 +1,6 @@
 // src/ui/breadcrumbsUI.js
-import * as dom from '../dom.js';
-import { appState } from '../state.js';
+import * as dom from './anki_dom.js';
+import { appState } from '../common/state.js';
 
 export let backButton;
 
