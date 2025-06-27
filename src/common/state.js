@@ -23,7 +23,7 @@ let state = {
     // --- AI Agent Data State ---
     agents: [],  // { id, name, avatar, config }
     topics: [],  // { id, agentId, title, icon }
-    history: [], // { id, topicId, role, content, images, timestamp }
+    history: [], // { id, topicId, role, content, images, timestamp，status }
 
     // --- AI Agent UI State ---
     currentAgentId: null,

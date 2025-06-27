@@ -5,6 +5,9 @@ import * as storage from './storageService.js';
 import { generateId } from '../common/utils.js';
 import { INITIAL_CONTENT } from '../common/config.js';
 
+import * as llmService from './llm/llmService.js'; // <-- 新增导入
+import { renderHistoryPanel, updateStreamingChunkInDOM, finalizeStreamingUI } from '../agent/agent_ui.js'; 
+
 // --- Private Helpers ---
 
 function parseHeadings(content) {
@@ -328,9 +331,8 @@ export function getAgentById(agentId) {
     return appState.agents.find(a => a.id === agentId);
 }
 
-export async function addAgent(displayName, avatar) {
-    // Modified to use displayName and generate a unique name
-    const baseName = displayName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+export async function addAgent(agentData) {
+    const baseName = agentData.displayName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
     let name = baseName;
     let counter = 1;
     // Ensure name is unique
@@ -341,19 +343,14 @@ export async function addAgent(displayName, avatar) {
     const newAgent = {
         id: generateId(),
         name,
-        displayName,
-        avatar,
-        config: { // Default config
-            provider: 'OpenAI',
-            apiPath: 'https://api.openai.com/v1/chat/completions',
-            apiKey: '',
-            model: 'gpt-4-turbo',
-            isLocal: false,
-        }
+        displayName: agentData.displayName,
+        avatar: agentData.avatar,
+        config: agentData.config, // 直接使用从表单传递过来的完整配置
     };
     const agents = [...appState.agents, newAgent];
     setState({ agents, currentAgentId: newAgent.id, currentTopicId: null });
     await persistAgentState();
+    return newAgent; // 返回新创建的 agent 对象
 }
 
 export async function updateAgent(agentId, updatedData) {
@@ -414,20 +411,26 @@ export async function addTopic(title, icon) {
 
 // --- History/Chat Management ---
 
-async function _addHistoryMessage(topicId, role, content, images = []) {
+async function _addHistoryMessage(topicId, role, content, images = [], status = 'completed', reasoning = null) {
     const newMessage = {
         id: generateId(),
         topicId,
         role,
         content,
+        reasoning, // <-- 新增 reasoning 字段
         images,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        status, // <-- 新增 status
     };
     const history = [...appState.history, newMessage];
     setState({ history });
+    if (status !== 'streaming') {
     await persistAgentState();
+    }
     return newMessage;
 }
+
+
 
 /**
  * The main chat function. Handles user message, simulates AI response.
@@ -435,36 +438,106 @@ async function _addHistoryMessage(topicId, role, content, images = []) {
  * @param {Array<{name: string, data: string}>} attachments - The user's attachments.
  */
 export async function sendMessageAndGetResponse(content, attachments) {
-    if (!appState.currentTopicId) {
-        alert("错误：没有选中的主题。");
+    if (!appState.currentTopicId || appState.isAiThinking) {
         return;
     }
 
     const topicId = appState.currentTopicId;
-    const imageSources = attachments.map(a => a.data);
+    const currentAgent = getAgentById(appState.currentAgentId);
+    if (!currentAgent) {
+        alert("错误：找不到当前Agent的配置。");
+        return;
+    }
+    
+    // --- FIX START ---
 
-    // 1. Add user message
-    await _addHistoryMessage(topicId, 'user', content, imageSources);
-
-    // 2. Set AI thinking state
+    // 1. 设置AI思考状态
     setState({ isAiThinking: true });
 
-    // 3. Simulate AI call (replace with actual API call later)
-    return new Promise(resolve => {
-        setTimeout(async () => {
-            const hasImages = imageSources.length > 0;
-            const aiResponseText = `这是对您消息“${content}”的模拟回复。` + 
-                (hasImages ? ` 我看到了您上传的 ${imageSources.length} 张图片。` : '');
+    // 2. 添加用户消息并立即渲染
+    await _addHistoryMessage(topicId, 'user', content, []);
+    renderHistoryPanel(); 
 
-            // 4. Add AI response
-            await _addHistoryMessage(topicId, 'assistant', aiResponseText);
+    // AI 消息占位符，现在也包含一个空的 reasoning 字段
+    const aiMessage = await _addHistoryMessage(topicId, 'assistant', '', [], 'streaming', '');
+    renderHistoryPanel();
 
-            // 5. Unset AI thinking state
-            setState({ isAiThinking: false });
-            
-            resolve();
-        }, 1500); // Simulate 1.5 second delay
-    });
+    // --- FIX START: 使用两个累加器 ---
+    let accumulatedContent = "";
+    let accumulatedReasoning = "";
+
+    const conversationHistory = appState.history
+        .filter(h => h.topicId === topicId && h.status === 'completed');
+
+    await llmService.streamChat(
+        currentAgent.config,
+        conversationHistory,
+        {
+            onChunk: ({ type, text }) => {
+                // --- 核心修改 ---
+                // 不论类型，都先累积数据
+                if (type === 'content') {
+                    accumulatedContent += text;
+                } else if (type === 'thinking') {
+                    accumulatedReasoning += text;
+                }
+                // 然后调用新的UI函数，实时更新对应的DOM区域
+                updateStreamingChunkInDOM(aiMessage.id, type, text);
+            },
+            onDone: async () => {
+                const finalHistory = appState.history.map(msg => {
+                    if (msg.id === aiMessage.id) {
+                        return { 
+                            ...msg, 
+                            content: accumulatedContent, 
+                            reasoning: accumulatedReasoning, // <-- 保存分离的思考过程
+                            status: 'completed' 
+                        };
+                    }
+                    return msg;
+                });
+                
+                // 2. 调用 finalizeStreamingUI 来折叠 <details> 并显示按钮
+                // 注意：这里我们不再依赖 setState 触发的重渲染来完成UI的最终状态，
+                // 因为重渲染会丢失<details>的折叠状态。我们手动操作它。
+                finalizeStreamingUI(aiMessage.id);
+
+                // 使用 setState 一次性、原子性地更新状态
+                setState({ 
+                    history: finalHistory, 
+                    isAiThinking: false 
+                });
+                
+                // 由于 setState 会触发 renderHistoryPanel，它会用最终正确的 state 重新渲染
+                // 所以 finalizeStreamingMessageInDOM 变得不再必要，可以移除，避免冗余操作
+                // finalizeStreamingMessageInDOM(aiMessage.id, fullResponseContent); // <-- 可以移除此行
+
+                // 等待 state 更新并渲染后，再保存
+                await persistAgentState(); 
+            },
+            onError: async (error) => {
+                const errorText = `\n\n**错误:** ${error.message}`;
+                accumulatedContent += errorText; // 错误信息显示在主内容区
+
+                finalizeStreamingUI(aiMessage.id); // 同样需要折叠
+
+                const finalHistory = appState.history.map(msg => {
+                    if (msg.id === aiMessage.id) {
+                        return { ...msg, content: accumulatedContent, reasoning: accumulatedReasoning, status: 'error' };
+                    }
+                    return msg;
+                });
+
+                setState({ 
+                    history: finalHistory, 
+                    isAiThinking: false 
+                });
+
+                await persistAgentState();
+            }
+        }
+    );
+    // --- FIX END ---
 }
 
 export async function deleteHistoryMessages(messageIds) {

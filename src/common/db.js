@@ -13,15 +13,15 @@ db.version(DB_VERSION).stores({
     // '++id' = auto-incrementing primary key
     // '&name' = unique index
     // 'folderId' = regular index for fast lookups
-    folders: '++id, name, folderId',
-    sessions: '++id, name, folderId',
+    folders: 'id, name, folderId', // 使用 'id' 作为主键更灵活
+    sessions: 'id, name, folderId',
     clozeAccessTimes: 'content', // 'content' is the primary key
     appState: 'key', // A key-value store for simple state properties
 
     // Schema for future AI Agent features
-    agents: '++id, &name',
-    topics: '++id, title, agentId, createdAt',
-    history: '++id, topicId, timestamp',
+    agents: 'id, &name',
+    topics: 'id, title, agentId, createdAt',
+    history: 'id, topicId, timestamp',
 });
 
 // You can add helper functions here if needed, for example:

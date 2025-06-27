@@ -3,26 +3,13 @@
 import * as dom from './agent_dom.js';
 import * as dataService from '../services/dataService.js';
 import { appState } from '../common/state.js';
-import { renderAgentView, renderHistoryPanel, renderAttachmentPreviews } from './agent_ui.js';
+import { renderAgentView, renderHistoryPanel, renderAttachmentPreviews, updateTurnElements } from './agent_ui.js';
+import { LLM_PROVIDERS, getDefaultModel, getDefaultApiPath } from '../services/llm/llmProviders.js'; // <-- 新增导入
 
 // --- Module State ---
-let selectedAttachments = []; // Holds { name, data (base64) }
-
-// --- Config Constants ---
-const PROVIDER_DEFAULTS = {
-    'OpenAI': {
-        apiPath: 'https://api.openai.com/v1/chat/completions',
-        models: ['gpt-4-turbo', 'gpt-4o', 'gpt-3.5-turbo', 'gpt-4-vision-preview']
-    },
-    'Google': {
-        apiPath: 'https://generativelanguage.googleapis.com/v1beta/models/...',
-        models: ['gemini-1.5-pro-latest', 'gemini-1.0-pro']
-    },
-    'Local': {
-        apiPath: 'http://localhost:11434/api/chat',
-        models: ['llama3', 'mistral', 'gemma']
-    }
-};
+let selectedAttachments = [];
+let turnElements = []; // For chat navigation
+let currentTurnIndex = -1; // For chat navigation
 
 // --- Modal Management ---
 const modal = {
@@ -32,13 +19,14 @@ const modal = {
     id: document.getElementById('agentSettingsId'),
     name: document.getElementById('agentSettingsName'),
     displayName: document.getElementById('agentSettingsDisplayName'),
+    avatar: document.getElementById('agentSettingsAvatar'), // <-- 新增
     provider: document.getElementById('agentSettingsProvider'),
     apiPath: document.getElementById('agentSettingsApiPath'),
     apiKey: document.getElementById('agentSettingsApiKey'),
     apiKeyGroup: document.querySelector('.api-key-group'),
     model: document.getElementById('agentSettingsModel'),
-    modelList: document.getElementById('model-list'),
     isLocal: document.getElementById('agentSettingsIsLocal'),
+    systemPrompt: document.getElementById('agentSettingsSystemPrompt'), // <-- 新增
     deleteBtn: document.getElementById('deleteAgentBtn'),
     deleteConfirmZone: document.querySelector('.delete-confirm-zone'),
     agentNameToConfirm: document.getElementById('agentNameToConfirm'),
@@ -49,23 +37,67 @@ const modal = {
     closeBtn: document.getElementById('agentSettingsCloseBtn'),
 };
 
-function openSettingsModal(agent) {
-    modal.el.style.display = 'flex';
-    modal.title.textContent = `Agent 设置: ${agent.displayName}`;
-    
-    // Populate form
-    modal.id.value = agent.id;
-    modal.name.value = agent.name;
-    modal.displayName.value = agent.displayName;
-    modal.provider.value = agent.config.provider || '';
-    modal.apiPath.value = agent.config.apiPath || '';
-    modal.apiKey.value = agent.config.apiKey || '';
-    modal.model.value = agent.config.model || '';
-    modal.isLocal.checked = agent.config.isLocal || false;
+/**
+ * 新增：动态填充提供商下拉菜单
+ */
+function populateProviderDropdown() {
+    modal.provider.innerHTML = ''; // 清空现有选项
+    for (const providerName in LLM_PROVIDERS) {
+        const option = document.createElement('option');
+        option.value = providerName;
+        option.textContent = providerName;
+        modal.provider.appendChild(option);
+    }
+}
 
-    updateModalUIBasedOnState();
+/**
+ * 打开设置模态框，支持创建和编辑模式。
+ * @param {object | null} agent - 如果提供 agent 对象，则为编辑模式；否则为创建模式。
+ */
+function openSettingsModal(agent = null) {
+    modal.el.style.display = 'flex';
     resetValidation();
     modal.deleteConfirmZone.style.display = 'none';
+
+    // 1. 首先，动态填充提供商列表
+    populateProviderDropdown();
+
+    if (agent) { // --- 编辑模式 ---
+        modal.title.textContent = `Agent 设置: ${agent.displayName}`;
+        modal.deleteBtn.style.display = 'block';
+        
+        // 填充表单
+        modal.id.value = agent.id;
+        modal.name.value = agent.name;
+        modal.displayName.value = agent.displayName;
+        modal.avatar.value = agent.avatar || '';
+        modal.systemPrompt.value = agent.config.systemPrompt || '';
+
+        // 3. 设置保存的提供商，并手动触发change事件来加载关联的模型列表和API路径
+        modal.provider.value = agent.config.provider || '火山';
+        modal.provider.dispatchEvent(new Event('change', { bubbles: true }));
+
+        // 4. 填充其余字段（在change事件后，以防被覆盖）
+        modal.apiPath.value = agent.config.apiPath || '';
+        modal.apiKey.value = agent.config.apiKey || '';
+        modal.model.value = agent.config.model || '';
+        modal.isLocal.checked = agent.config.isLocal || false;
+
+    } else { // --- 创建模式 ---
+        modal.title.textContent = '创建新 Agent';
+        modal.deleteBtn.style.display = 'none'; // 创建时隐藏删除按钮
+        
+        // 重置表单
+        modal.form.reset();
+        modal.id.value = ''; // 关键：ID为空表示是新对象
+        modal.name.value = ''; // 内部名称也为空，稍后生成
+
+        // 3. 设置默认提供商，并手动触发change事件来加载默认的模型和API路径
+        modal.provider.value = '火山'; 
+        modal.provider.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    updateModalUIBasedOnState();
 }
 
 function closeSettingsModal() {
@@ -73,14 +105,29 @@ function closeSettingsModal() {
 }
 
 function updateModalUIBasedOnState() {
-    // Update model list based on provider
-    const provider = modal.provider.value;
-    const defaults = PROVIDER_DEFAULTS[provider];
-    modal.modelList.innerHTML = '';
-    if (defaults && defaults.models) {
-        defaults.models.forEach(m => {
-            modal.modelList.innerHTML += `<option value="${m}">`;
+    const providerName = modal.provider.value;
+    const providerConfig = LLM_PROVIDERS[providerName];
+    
+    // 清空现有的模型选项
+    modal.model.innerHTML = ''; 
+
+    // 填充新的模型选项
+    if (providerConfig && providerConfig.models && providerConfig.models.length > 0) {
+        providerConfig.models.forEach(modelName => {
+            const option = document.createElement('option');
+            option.value = modelName;
+            option.textContent = modelName;
+            modal.model.appendChild(option);
         });
+        modal.model.disabled = false;
+    } else {
+        // 如果没有预设模型，显示一个提示并禁用选择
+        const option = document.createElement('option');
+        option.textContent = '请在下方手动输入模型名';
+        option.value = '';
+        modal.model.appendChild(option);
+        modal.model.disabled = true; 
+        // 考虑是否需要一个额外的输入框来让用户手动输入
     }
 
     // Toggle API key based on local model checkbox
@@ -100,44 +147,61 @@ function resetValidation() {
 function validateAndSave() {
     resetValidation();
     let isValid = true;
+    const agentId = modal.id.value; // 如果是创建，此值为空
 
-    // Validate Name
-    const agentId = modal.id.value;
-    const agentName = modal.name.value;
-    const isNameTaken = appState.agents.some(a => a.id !== agentId && a.name === agentName);
-    if (!modal.name.checkValidity() || isNameTaken) {
-        modal.name.classList.add('is-invalid');
-        isValid = false;
-    }
-
+    // 验证显示名
     if (!modal.displayName.checkValidity()) {
         modal.displayName.classList.add('is-invalid');
         isValid = false;
     }
 
+    // 验证头像
+    if (!modal.avatar.checkValidity()) {
+        modal.avatar.classList.add('is-invalid');
+        isValid = false;
+    }
+    
+    // 验证内部名称（仅在用户手动输入时）
+    // 我们的策略是自动生成，所以主要检查重复性
+    const agentName = modal.name.value;
+    if (agentName) {
+        const isNameTaken = appState.agents.some(a => a.id !== agentId && a.name === agentName);
+        if (!modal.name.checkValidity() || isNameTaken) {
+            modal.name.classList.add('is-invalid');
+            isValid = false;
+        }
+    }
+
     if (!isValid) return;
 
-    // Collect data
-    const updatedData = {
-        id: agentId,
-        name: agentName,
+    // 收集表单数据
+    const agentData = {
         displayName: modal.displayName.value,
+        avatar: modal.avatar.value.substring(0, 2).toUpperCase(),
         config: {
             provider: modal.provider.value,
             apiPath: modal.apiPath.value,
             apiKey: modal.apiKey.value,
             model: modal.model.value,
             isLocal: modal.isLocal.checked,
+            systemPrompt: modal.systemPrompt.value, // <-- 新增
         }
     };
 
-    // Update avatar if a new one is provided (example)
-    // For simplicity, we don't have an avatar field, but this is where it would go.
-
-    dataService.updateAgent(agentId, updatedData).then(() => {
-        closeSettingsModal();
-        renderAgentView();
-    });
+    // 根据是否存在 ID 来决定是创建还是更新
+    if (agentId) { // --- 更新 ---
+        agentData.id = agentId;
+        agentData.name = modal.name.value; // 对于更新，name是已知的
+        dataService.updateAgent(agentId, agentData).then(() => {
+            closeSettingsModal();
+            renderAgentView();
+        });
+    } else { // --- 创建 ---
+        dataService.addAgent(agentData).then(() => {
+            closeSettingsModal();
+            renderAgentView();
+        });
+    }
 }
 
 async function handleDeleteAgent() {
@@ -154,18 +218,13 @@ async function handleAgentClick(e) {
     const agentItem = e.target.closest('.agent-item');
     if (!agentItem) return;
 
-    const agentId = agentItem.dataset.agentId;
-    
+    // --- 修改此处逻辑 ---
     if (agentItem.classList.contains('add-agent-btn')) {
-        const displayName = prompt("请输入新Agent的显示名称:");
-        if (displayName) {
-            const avatar = prompt("请输入代表Agent的两个字母:", "AI");
-            await dataService.addAgent(displayName, avatar ? avatar.substring(0, 2).toUpperCase() : 'AI');
-            renderAgentView();
-        }
+        openSettingsModal(); // 不带参数调用，进入创建模式
         return;
     }
     
+    const agentId = agentItem.dataset.agentId;
     if (agentId && !agentItem.classList.contains('active')) {
         dataService.selectAgent(agentId);
         renderAgentView();
@@ -233,26 +292,17 @@ async function handleHistoryActionClick(e) {
  */
 async function handleSendMessage() {
     const content = dom.chatInput.value.trim();
-    if (!content && selectedAttachments.length === 0) {
-        return; // Don't send empty messages
+    if ((!content && selectedAttachments.length === 0) || appState.isAiThinking) {
+        return;
     }
-
-    // Disable input while processing
-    dom.chatInput.disabled = true;
-    dom.sendMessageBtn.disabled = true;
-
-    // Call the data service to handle the logic
-    await dataService.sendMessageAndGetResponse(content, selectedAttachments);
     
-    // Clear inputs and re-render
+    const attachmentsCopy = [...selectedAttachments];
     dom.chatInput.value = '';
     selectedAttachments = [];
-    renderAttachmentPreviews(selectedAttachments);
-    renderHistoryPanel();
+    renderAttachmentPreviews([]);
+    
+    await dataService.sendMessageAndGetResponse(content, attachmentsCopy);
 
-    // Re-enable input
-    dom.chatInput.disabled = false;
-    dom.sendMessageBtn.disabled = false;
     dom.chatInput.focus();
 }
 
@@ -295,6 +345,42 @@ function handleRemoveAttachment(e) {
     renderAttachmentPreviews(selectedAttachments);
 }
 
+// --- Chat Navigation Logic (新增) ---
+function setupChatNavigation() {
+    const upBtn = document.getElementById('chatNavUp');
+    const downBtn = document.getElementById('chatNavDown');
+
+    upBtn.addEventListener('click', () => navigateTurns(-1));
+    downBtn.addEventListener('click', () => navigateTurns(1));
+}
+
+function navigateTurns(direction) {
+    turnElements = Array.from(dom.agentHistoryContent.querySelectorAll('.history-item .role.user'));
+    if (turnElements.length === 0) return;
+
+    document.querySelectorAll('.history-item.highlighted').forEach(el => el.classList.remove('highlighted'));
+
+    currentTurnIndex += direction;
+
+    if (currentTurnIndex < 0) {
+        currentTurnIndex = turnElements.length - 1;
+    } else if (currentTurnIndex >= turnElements.length) {
+        currentTurnIndex = 0;
+    }
+    
+    const userTurnEl = turnElements[currentTurnIndex].closest('.history-item');
+    if (userTurnEl) {
+        userTurnEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        userTurnEl.classList.add('highlighted');
+        const nextEl = userTurnEl.nextElementSibling;
+        if (nextEl && nextEl.classList.contains('history-item')) {
+            nextEl.classList.add('highlighted');
+        }
+    }
+}
+
+
 // --- Setup ---
 
 function setupModalEventListeners() {
@@ -307,12 +393,16 @@ function setupModalEventListeners() {
     modal.cancelBtn.addEventListener('click', closeSettingsModal);
     
     modal.provider.addEventListener('change', () => {
-        const provider = modal.provider.value;
-        const defaults = PROVIDER_DEFAULTS[provider];
-        if (defaults) {
-            modal.apiPath.value = defaults.apiPath;
-        }
-        updateModalUIBasedOnState();
+        const providerName = modal.provider.value;
+        
+        // 自动填充API路径和默认模型
+        modal.apiPath.value = getDefaultApiPath(providerName);
+        
+        // **重要**：先更新模型列表，然后再设置默认值
+        updateModalUIBasedOnState(); 
+        
+        // 设置默认模型
+        modal.model.value = getDefaultModel(providerName);
     });
 
     modal.isLocal.addEventListener('change', updateModalUIBasedOnState);
@@ -362,4 +452,5 @@ export function setupAgentEventListeners() {
     dom.attachmentInput.addEventListener('change', handleAttachmentChange);
     dom.attachmentPreviewContainer.addEventListener('click', handleRemoveAttachment);
     setupModalEventListeners();
+    setupChatNavigation(); // <-- 新增
 }
