@@ -51,7 +51,8 @@ function createSubsessionsForFile(fileId, content) {
 export async function initializeApp() {
     setState({ isLoading: true });
     try {
-        const { sessions, folders, clozeAccessTimes, persistentAppState } = await storage.loadCollections();
+        // --- FIX: Change storage.loadCollections to storage.loadAllData ---
+        const { sessions, folders, clozeAccessTimes, persistentAppState } = await storage.loadAllData();
         
         const loadedState = {
             sessions: sessions || [],
@@ -109,7 +110,8 @@ export async function initializeApp() {
 
 export async function persistState() {
     try {
-        await storage.saveCollections({
+        // --- FIX: Change storage.saveCollections to storage.saveAllData ---
+        await storage.saveAllData({
             sessions: appState.sessions,
             folders: appState.folders,
             clozeAccessTimes: appState.clozeAccessTimes,
@@ -321,15 +323,73 @@ export async function persistAgentState() {
 
 // --- Agent Management ---
 
-export async function addAgent(name, avatar) {
+export function getAgentById(agentId) {
+    if (!agentId) return undefined;
+    return appState.agents.find(a => a.id === agentId);
+}
+
+export async function addAgent(displayName, avatar) {
+    // Modified to use displayName and generate a unique name
+    const baseName = displayName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+    let name = baseName;
+    let counter = 1;
+    // Ensure name is unique
+    while (appState.agents.some(a => a.name === name)) {
+        name = `${baseName}_${counter++}`;
+    }
+
     const newAgent = {
         id: generateId(),
         name,
+        displayName,
         avatar,
-        config: {} // For future settings like system prompts
+        config: { // Default config
+            provider: 'OpenAI',
+            apiPath: 'https://api.openai.com/v1/chat/completions',
+            apiKey: '',
+            model: 'gpt-4-turbo',
+            isLocal: false,
+        }
     };
     const agents = [...appState.agents, newAgent];
     setState({ agents, currentAgentId: newAgent.id, currentTopicId: null });
+    await persistAgentState();
+}
+
+export async function updateAgent(agentId, updatedData) {
+    const agents = appState.agents.map(agent => 
+        agent.id === agentId ? { ...agent, ...updatedData } : agent
+    );
+    setState({ agents });
+    await persistAgentState();
+}
+
+export async function deleteAgent(agentId) {
+    // 1. Get all topics associated with this agent
+    const topicsToDelete = appState.topics.filter(t => t.agentId === agentId);
+    const topicIdsToDelete = new Set(topicsToDelete.map(t => t.id));
+
+    // 2. Filter out associated history, topics, and the agent itself
+    const history = appState.history.filter(h => !topicIdsToDelete.has(h.topicId));
+    const topics = appState.topics.filter(t => t.agentId !== agentId);
+    const agents = appState.agents.filter(a => a.id !== agentId);
+
+    // 3. Determine the new current agent/topic
+    let newCurrentAgentId = appState.currentAgentId;
+    let newCurrentTopicId = appState.currentTopicId;
+    if (newCurrentAgentId === agentId) {
+        newCurrentAgentId = agents.length > 0 ? agents[0].id : null;
+        const firstTopic = topics.find(t => t.agentId === newCurrentAgentId);
+        newCurrentTopicId = firstTopic ? firstTopic.id : null;
+    }
+
+    setState({ 
+        agents, 
+        topics, 
+        history, 
+        currentAgentId: newCurrentAgentId, 
+        currentTopicId: newCurrentTopicId 
+    });
     await persistAgentState();
 }
 
@@ -354,22 +414,57 @@ export async function addTopic(title, icon) {
 
 // --- History/Chat Management ---
 
-export async function addHistoryMessage(topicId, role, content, images = []) {
+async function _addHistoryMessage(topicId, role, content, images = []) {
     const newMessage = {
         id: generateId(),
         topicId,
-        role, // 'user' or 'assistant'
+        role,
         content,
-        images, // Array of image data (e.g., base64 strings or blob URLs)
-        timestamp: new Date()
+        images,
+        timestamp: new Date().toISOString()
     };
     const history = [...appState.history, newMessage];
     setState({ history });
     await persistAgentState();
+    return newMessage;
+}
 
-    // Here you would trigger the call to the actual AI model
-    // const aiResponse = await callAIModel(newMessage);
-    // await addHistoryMessage(topicId, 'assistant', aiResponse);
+/**
+ * The main chat function. Handles user message, simulates AI response.
+ * @param {string} content - The text content from the user.
+ * @param {Array<{name: string, data: string}>} attachments - The user's attachments.
+ */
+export async function sendMessageAndGetResponse(content, attachments) {
+    if (!appState.currentTopicId) {
+        alert("错误：没有选中的主题。");
+        return;
+    }
+
+    const topicId = appState.currentTopicId;
+    const imageSources = attachments.map(a => a.data);
+
+    // 1. Add user message
+    await _addHistoryMessage(topicId, 'user', content, imageSources);
+
+    // 2. Set AI thinking state
+    setState({ isAiThinking: true });
+
+    // 3. Simulate AI call (replace with actual API call later)
+    return new Promise(resolve => {
+        setTimeout(async () => {
+            const hasImages = imageSources.length > 0;
+            const aiResponseText = `这是对您消息“${content}”的模拟回复。` + 
+                (hasImages ? ` 我看到了您上传的 ${imageSources.length} 张图片。` : '');
+
+            // 4. Add AI response
+            await _addHistoryMessage(topicId, 'assistant', aiResponseText);
+
+            // 5. Unset AI thinking state
+            setState({ isAiThinking: false });
+            
+            resolve();
+        }, 1500); // Simulate 1.5 second delay
+    });
 }
 
 export async function deleteHistoryMessages(messageIds) {

@@ -111,11 +111,21 @@ export async function loadAgentData() {
  */
 export async function saveAgentData({ agents, topics, history }) {
      await db.transaction('rw', db.agents, db.topics, db.history, async () => {
-        // Here you would implement the same delete/bulkPut logic as in saveAllData
-        // for agents, topics, and history to ensure data consistency.
+        // --- ADDING FULL IMPLEMENTATION FOR DATA CONSISTENCY ---
         
-        // For simplicity, this is just a bulkPut example. A full implementation
-        // would also handle deletions.
+        // 1. Get IDs/keys of current state items
+        const existingAgentIds = new Set(agents.map(a => a.id));
+        const existingTopicIds = new Set(topics.map(t => t.id));
+        const existingHistoryIds = new Set(history.map(h => h.id));
+
+        // 2. Delete items from DB that are NOT in the current state
+        await Promise.all([
+            db.agents.where('id').noneOf(Array.from(existingAgentIds)).delete(),
+            db.topics.where('id').noneOf(Array.from(existingTopicIds)).delete(),
+            db.history.where('id').noneOf(Array.from(existingHistoryIds)).delete(),
+        ]);
+        
+        // 3. Use 'bulkPut' to insert new items and update existing ones
         await Promise.all([
             db.agents.bulkPut(agents),
             db.topics.bulkPut(topics),

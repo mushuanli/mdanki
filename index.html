@@ -105,12 +105,18 @@
             </div>
             
             <div class="history-panel">
-                <div class="history-header">
-                    <div class="history-title">
-                        <i class="fas fa-comments"></i> 历史对话记录
-                    </div>
-                    <input type="text" class="history-search" placeholder="搜索历史记录...">
-                </div>
+    <div class="history-header">
+        <div class="history-title">
+            <i class="fas fa-comments"></i>
+            <span id="historyHeaderTitle">历史对话记录</span> 
+        </div>
+        <div class="history-header-actions">
+            <button id="agentSettingsTriggerBtn" class="header-action-btn" title="当前Agent设置" style="display: none;">
+                <i class="fas fa-cog"></i>
+            </button>
+            <input type="text" class="history-search" placeholder="搜索历史记录...">
+        </div>
+    </div>
                 <div class="history-content">
                     <div class="history-item">
                         <div class="history-item-header">
@@ -365,5 +371,87 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
     </div>
 
     <script type="module" src="/src/main.js"></script>
+    <!-- ====================================================== -->
+    <!--          AGENT SETTINGS MODAL (Initially Hidden)       -->
+    <!-- ====================================================== -->
+    <div class="modal-overlay" id="agentSettingsModal" style="display: none;">
+        <div class="modal-content agent-settings-modal">
+            <div class="modal-header">
+                <h2 id="agentSettingsModalTitle">Agent 设置</h2>
+                <button class="modal-close" id="agentSettingsCloseBtn">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="agentSettingsForm" novalidate>
+                    <input type="hidden" id="agentSettingsId">
+
+                    <div class="form-group">
+                        <label for="agentSettingsName">Agent名 (内部标识) <i class="fas fa-info-circle" title="唯一标识，仅限字母、数字、下划线。"></i></label>
+                        <input type="text" id="agentSettingsName" class="form-control" required pattern="[a-zA-Z0-9_]+">
+                        <div class="invalid-feedback">名称已被使用或格式不正确。</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="agentSettingsDisplayName">会话显示名</label>
+                        <input type="text" id="agentSettingsDisplayName" class="form-control" required>
+                    </div>
+
+                    <hr>
+
+                    <h4>模型配置</h4>
+
+                    <div class="form-group">
+                        <label for="agentSettingsProvider">提供商</label>
+                        <input list="provider-list" id="agentSettingsProvider" class="form-control">
+                        <datalist id="provider-list">
+                            <option value="OpenAI">
+                            <option value="Google">
+                            <option value="Anthropic">
+                            <option value="Local">
+                        </datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="agentSettingsApiPath">API 地址</label>
+                        <input type="url" id="agentSettingsApiPath" class="form-control">
+                    </div>
+                    
+                    <div class="form-group api-key-group">
+                        <label for="agentSettingsApiKey">API Key</label>
+                        <div class="input-group">
+                            <input type="password" id="agentSettingsApiKey" class="form-control">
+                            <button type="button" id="toggleApiKeyVisibility" class="input-group-btn" title="显示/隐藏"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="agentSettingsModel">模型名</label>
+                        <input list="model-list" id="agentSettingsModel" class="form-control">
+                        <datalist id="model-list">
+                            <!-- This will be populated dynamically -->
+                        </datalist>
+                    </div>
+
+                    <div class="form-check">
+                        <input type="checkbox" id="agentSettingsIsLocal" class="form-check-input">
+                        <label for="agentSettingsIsLocal">这是一个本地推理模型 (无需API Key)</label>
+                    </div>
+
+                    <hr>
+
+                    <h4>危险操作区</h4>
+                    <button type="button" class="btn-danger" id="deleteAgentBtn"><i class="fas fa-trash"></i> 删除此 Agent</button>
+                    <div class="delete-confirm-zone" style="display:none;">
+                        <p>请输入Agent名 "<b><span id="agentNameToConfirm"></span></b>" 以确认删除：</p>
+                        <input type="text" id="deleteConfirmInput" class="form-control">
+                        <button type="button" class="btn-danger" id="finalDeleteBtn" disabled>我已了解后果，永久删除</button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="agentSettingsCancelBtn">取消</button>
+                <button type="submit" class="btn-primary" id="agentSettingsSaveBtn" form="agentSettingsForm">保存更改</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

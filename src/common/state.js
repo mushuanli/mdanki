@@ -31,6 +31,7 @@ let state = {
     
     // --- Transient UI State (not saved) ---
     isLoading: true,
+    isAiThinking: false, // <-- ADD THIS LINE
     isSessionSidebarHidden: false,
     areAllClozeVisible: false,
     movingItems: [], // {id, type}[]

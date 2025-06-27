@@ -1,4 +1,4 @@
-// src/agent_/agent_main.js
+// src/agent/agent_main.js
 
 import { setupAgentEventListeners } from './agent_events.js';
 import { renderAgentView } from './agent_ui.js';
