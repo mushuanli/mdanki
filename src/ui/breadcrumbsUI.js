@@ -1,3 +1,4 @@
+// src/ui/breadcrumbsUI.js
 import * as dom from '../dom.js';
 import { appState } from '../state.js';
 

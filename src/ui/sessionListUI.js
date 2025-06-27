@@ -1,3 +1,4 @@
+// src/ui/sessionListUI.js
 import * as dom from '../dom.js';
 import { appState } from '../state.js';
 import { escapeHTML } from '../utils.js';

@@ -1,3 +1,4 @@
+//  src/ui/modalUI.js
 import * as dom from '../dom.js';
 import { appState, setState } from '../state.js';
 import { escapeHTML } from '../utils.js';

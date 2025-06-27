@@ -8,4 +8,7 @@ export const STORAGE_KEYS = {
     CLOZE_TIMES: 'clozeAccessTimes'
 };
 
+export const DB_NAME = 'AnkiAppDB';
+export const DB_VERSION = 2; // Start with version 2 as per the previous schema design
+
 export const INITIAL_CONTENT = '# 新文件\n\n开始编写您的内容...\n\n使用 --内容-- 创建Cloze记忆卡片';

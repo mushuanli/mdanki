@@ -1,11 +1,11 @@
 // src/ui/previewUI.js
 import * as dom from '../dom.js';
 import { appState, setState } from '../state.js';
-import { saveStateToStorage } from '../services/storageManager.js';
+// REMOVED: import { saveStateToStorage } from '../services/storageManager.js';
 import { playMultimedia } from './audioUI.js';
-import { escapeHTML } from '../utils.js';
+// import { escapeHTML } from '../utils.js'; // Not used here, can be removed
 
-let clozeUpdateTimer = null;
+// --- Private Helper Functions ---
 
 function getClozeColorClass(lastAccessTime) {
     if (!lastAccessTime) return 'cloze-28plus';
@@ -20,7 +20,7 @@ function getClozeColorClass(lastAccessTime) {
     return 'cloze-28plus';
 }
 
-function processClozeElementsInNode(node, onUpdate) {
+function processClozeElementsInNode(node) {
     if (node.nodeType === Node.TEXT_NODE) {
         const clozeRegex = /--(.*?)--(?:\^\^audio:(.*?)\^\^)?/g;
         const parent = node.parentNode;
@@ -65,8 +65,7 @@ function processClozeElementsInNode(node, onUpdate) {
             parent.removeChild(node);
         }
     } else if (node.nodeType === Node.ELEMENT_NODE) {
-        // Recursively process child nodes
-        Array.from(node.childNodes).forEach(child => processClozeElementsInNode(child, onUpdate));
+        Array.from(node.childNodes).forEach(child => processClozeElementsInNode(child));
     }
 }
 
@@ -96,10 +95,6 @@ function addClozeEventListeners() {
         const content = cloze.dataset.content;
         const newClozeAccessTimes = { ...appState.clozeAccessTimes, [content]: Date.now() };
         setState({ clozeAccessTimes: newClozeAccessTimes });
-        
-        // Batch updates to localStorage
-        clearTimeout(clozeUpdateTimer);
-        clozeUpdateTimer = setTimeout(saveStateToStorage, 2000);
 
         // Re-apply color class
         const colorClass = getClozeColorClass(newClozeAccessTimes[content]);
@@ -133,8 +128,7 @@ export function toggleAllClozeVisibility() {
     // 1. 读取当前状态的反向作为目标状态
     const shouldShow = !appState.areAllClozeVisible;
     
-    const clozeElements = dom.preview.querySelectorAll('.cloze');
-    clozeElements.forEach(cloze => {
+    dom.preview.querySelectorAll('.cloze').forEach(cloze => {
         clearTimeout(cloze.timer);
         
         if (shouldShow) {
@@ -157,10 +151,8 @@ export function toggleAllClozeVisibility() {
  * 反转所有 Cloze 的可见性。
  */
 export function invertAllCloze() {
-    const clozeElements = dom.preview.querySelectorAll('.cloze');
-    let allVisibleAfterInvert = true; // 假设反转后都是可见的
-
-    clozeElements.forEach(cloze => {
+    let allVisibleAfterInvert = true;
+    dom.preview.querySelectorAll('.cloze').forEach(cloze => {
         clearTimeout(cloze.timer);
         if (cloze.classList.contains('hidden')) {
             cloze.classList.remove('hidden');
@@ -193,7 +185,6 @@ export function updateToggleVisibilityButton(isVisible) {
 
 export function updatePreview() {
     const { currentSessionId, currentSubsessionId, fileSubsessions, sessions } = appState;
-    let markdownText = dom.editor.value;
     
     const session = sessions.find(s => s.id === currentSessionId);
     if (!session) {
@@ -201,22 +192,21 @@ export function updatePreview() {
         return;
     }
 
+    let markdownText = session.content;
     if (currentSubsessionId) {
         const subsession = fileSubsessions[currentSessionId]?.find(s => s.id === currentSubsessionId);
-        markdownText = subsession ? subsession.content : session.content;
-    } else {
-        markdownText = session.content;
+        if (subsession) markdownText = subsession.content;
     }
 
-    dom.preview.innerHTML = marked.parse(markdownText || '');
+    dom.preview.innerHTML = window.marked.parse(markdownText || '');
     processClozeElementsInNode(dom.preview);
     
     if (window.MathJax) {
-        MathJax.typesetPromise([dom.preview]).catch(err => console.log('MathJax error:', err));
+        window.MathJax.typesetPromise([dom.preview]).catch(err => console.log('MathJax error:', err));
     }
 }
 
 export function setupPreview() {
-    marked.setOptions({ breaks: true });
+    window.marked.setOptions({ breaks: true });
     addClozeEventListeners();
 }
