@@ -133,12 +133,22 @@ function wrapSelection(prefix, suffix = prefix) {
     dom.editor.focus();
 }
 
+// [MODIFIED] 新增辅助函数用于插入文本
+function insertTextAtCursor(text) {
+    const { selectionStart, selectionEnd } = dom.editor;
+    dom.editor.setRangeText(text, selectionStart, selectionEnd, 'end');
+    handleEditorInput();
+    dom.editor.focus();
+}
+
+
 function handleToggleEditor() {
     dom.editorPanel.classList.toggle('collapsed');
     const isCollapsed = dom.editorPanel.classList.contains('collapsed');
     dom.toggleEditorBtn.innerHTML = isCollapsed ? '<i class="fas fa-chevron-down"></i>' : '<i class="fas fa-chevron-up"></i>';
     dom.toggleEditorBtn.title = isCollapsed ? "展开编辑器" : "收起编辑器";
-    [dom.clozeBtn, dom.boldBtn, dom.italicBtn, dom.codeBtn, dom.linkBtn, dom.audioBtn].forEach(btn => btn.disabled = isCollapsed);
+    // [MODIFIED] 将新按钮加入禁用列表
+    [dom.clozeBtn, dom.boldBtn, dom.italicBtn, dom.codeBtn, dom.linkBtn, dom.audioBtn, dom.insertLinebreakBtn].forEach(btn => btn.disabled = isCollapsed);
     if (isCollapsed) handleSave();
 }
 
@@ -177,6 +187,8 @@ export function setupAnkiEventListeners() {
     dom.clozeBtn.addEventListener('click', () => wrapSelection('--', '--'));
     dom.boldBtn.addEventListener('click', () => wrapSelection('**'));
     dom.italicBtn.addEventListener('click', () => wrapSelection('*'));
+    // [MODIFIED] 为新按钮添加事件监听器
+    dom.insertLinebreakBtn.addEventListener('click', () => insertTextAtCursor('¶'));
     dom.codeBtn.addEventListener('click', () => wrapSelection('`'));
     dom.linkBtn.addEventListener('click', () => wrapSelection('[', `](${prompt('URL:', 'https://')})`));
     

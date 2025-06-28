@@ -24,6 +24,8 @@ export const italicBtn = $id('italicBtn');
 export const codeBtn = $id('codeBtn');
 export const linkBtn = $id('linkBtn');
 export const audioBtn = $id('audioBtn');
+// [MODIFIED] 导出新按钮的引用
+export const insertLinebreakBtn = $id('insertLinebreakBtn');
 export const sessionSidebar = $('.session-sidebar');
 export const editorPanel = $id('editorPanel');
 export const selectAllCheckbox = $id('selectAllCheckbox');

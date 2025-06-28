@@ -1,9 +1,7 @@
 // src/ui/previewUI.js
 import * as dom from './anki_dom.js';
 import { appState, setState } from '../common/state.js';
-// REMOVED: import { saveStateToStorage } from '../services/storageManager.js';
 import { playMultimedia } from './audioUI.js';
-// import { escapeHTML } from '../utils.js'; // Not used here, can be removed
 
 // --- Private Helper Functions ---
 
@@ -36,12 +34,16 @@ function processClozeElementsInNode(node) {
                 fragments.push(document.createTextNode(node.nodeValue.substring(lastIndex, match.index)));
             }
             // The cloze element itself
-            const content = match[1];
+            
+            // [MODIFIED] 使用 let 并处理换行符
+            let content = match[1];
+            content = content.replace(/¶/g, '<br>');
+
             const multimedia = match[2] ? match[2].trim() : null;
             
             const clozeSpan = document.createElement('span');
-            clozeSpan.className = `cloze hidden ${getClozeColorClass(appState.clozeAccessTimes[content])}`;
-            clozeSpan.dataset.content = content;
+            clozeSpan.className = `cloze hidden ${getClozeColorClass(appState.clozeAccessTimes[match[1]])}`; // 使用原始 content 作为 key
+            clozeSpan.dataset.content = match[1]; // dataset 中仍然存储原始 content
             if (multimedia) clozeSpan.dataset.multimedia = multimedia;
             
             let innerHTML = '';
@@ -91,6 +93,11 @@ function addClozeEventListeners() {
         
         cloze.classList.remove('hidden');
         cloze.classList.add('temporary');
+
+        // [MODIFIED] Automatically play audio when the cloze is opened
+        if (cloze.dataset.multimedia) {
+            playMultimedia(cloze.dataset.multimedia);
+        }
 
         const content = cloze.dataset.content;
         const newClozeAccessTimes = { ...appState.clozeAccessTimes, [content]: Date.now() };
