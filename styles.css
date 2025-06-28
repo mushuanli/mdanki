@@ -433,7 +433,12 @@
             color: white !important;
             font-weight: bold;
         }
-
+        /* 新增：用于双击永久查看的样式 */
+        .cloze.permanent-view {
+            background-color: #f0f4ff !important; /* 一个中性的、表示“已查看”的浅蓝色 */
+            border: 1px solid #d0d9ff !important;
+            font-weight: normal !important;
+        }
         @keyframes pulse-alert {
             0% { opacity: 0.8; box-shadow: 0 0 0 0 rgba(255, 102, 102, 0.7); }
             100% { opacity: 1; box-shadow: 0 0 0 6px rgba(255, 102, 102, 0); }

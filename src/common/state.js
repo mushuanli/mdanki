@@ -8,7 +8,9 @@ let state = {
 
     sessions: [], // Array of file objects
     folders: [],  // Array of folder objects
-    clozeAccessTimes: {}, // { [content]: timestamp }
+    // [MODIFIED] 从 clozeAccessTimes 升级到更复杂的 clozeStates
+    // 它将存储类似这样的结构: { [clozeId]: { due, interval, easeFactor, ... } }
+    clozeStates: {}, 
     fileSubsessions: {}, // This can be generated at runtime, maybe not persisted
 
     // --- UI/Session State ---

@@ -1,6 +1,7 @@
 // src/services/dataService.js
 
 import { appState, setState } from '../common/state.js';
+import { calculateNextReview } from './srs.js'; // 导入 SRS 模块
 import * as storage from './storageService.js';
 // [MODIFIED] 导入哈希函数
 import { generateId, simpleHash } from '../common/utils.js';
@@ -292,92 +293,52 @@ export function goToRoot() {
 }
 
 /**
- * [NEW] 获取或创建 Cloze 的状态
- * @param {string} fileId - Cloze所在的文件ID
- * @param {string} clozeContent - Cloze 的原始内容
- * @returns {object} Cloze 状态对象
+ * 获取或创建指定 Cloze 的状态
+ * @param {string} fileId 
+ * @param {string} clozeContent 
+ * @returns {object}
  */
 export function getOrCreateClozeState(fileId, clozeContent) {
-    const clozeId = generateClozeId(fileId, clozeContent);
-    let state = appState.clozeStates[clozeId];
-    if (!state) {
-        state = {
-            id: clozeId,
-            fileId: fileId,
-            content: clozeContent,
-            due: Date.now(), // 新卡片立即到期
-            interval: 0,
-            ease: DEFAULT_EASE,
-            lapses: 0,
-            learningStep: 0,
-            state: 'new', // 'new', 'learning', 'review', 'relearning'
-            lastReview: 0,
-        };
+    const clozeId = `${fileId}_${simpleHash(clozeContent)}`;
+    const allStates = appState.clozeStates;
+    
+    if (allStates[clozeId]) {
+        return allStates[clozeId];
     }
-    return state;
+    
+    // 如果不存在，则创建一个新的状态对象
+    return {
+        id: clozeId,
+        fileId: fileId,
+        content: clozeContent,
+        state: 'new',
+        due: Date.now(), // 新卡片立即到期
+        interval: 0,
+        easeFactor: 2.5,
+        lastReview: null,
+    };
 }
 
 /**
- * [MODIFIED] 更新 Cloze 的状态并保存
- * @param {object} clozeState - 更新后的 Cloze 状态对象
- * @param {number} rating - 用户评级 (0:Again, 1:Hard, 2:Good, 3:Easy)
+ * 根据用户评分更新 Cloze 状态
+ * @param {string} fileId 
+ * @param {string} clozeContent 
+ * @param {number} rating 
  */
-export function updateClozeState(clozeState, rating) {
-    const now = Date.now();
-    let newInterval, newEase = clozeState.ease;
-    let nextState = clozeState.state;
-
-    // --- 核心 SRS 算法 ---
-    if (rating === 0) { // Again
-        newEase = Math.max(MIN_EASE, clozeState.ease - 0.2);
-        clozeState.lapses += 1;
-        nextState = 'relearning';
-        clozeState.learningStep = 0;
-        newInterval = LEARNING_STEPS[0];
-    } else {
-        if (clozeState.state === 'learning' || clozeState.state === 'relearning') {
-            // 学习/重学阶段
-            if (clozeState.learningStep < LEARNING_STEPS.length - 1) {
-                newInterval = LEARNING_STEPS[++clozeState.learningStep];
-            } else {
-                nextState = 'review';
-                newInterval = 1; // 毕业，首次间隔为1天
-            }
-        } else { // 复习阶段
-            switch (rating) {
-                case 1: // Hard
-                    newInterval = clozeState.interval * HARD_INTERVAL_FACTOR;
-                    newEase = Math.max(MIN_EASE, clozeState.ease - 0.15);
-                    break;
-                case 2: // Good
-                    newInterval = clozeState.interval * clozeState.ease * INTERVAL_MODIFIER;
-                    break;
-                case 3: // Easy
-                    newInterval = clozeState.interval * clozeState.ease * EASY_BONUS * INTERVAL_MODIFIER;
-                    newEase = clozeState.ease + 0.15;
-                    break;
-            }
-        }
-        // 应用随机扰动，避免卡片堆积
-        newInterval = Math.max(1, newInterval * (0.95 + Math.random() * 0.1));
-    }
+export function updateClozeState(fileId, clozeContent, rating) {
+    const currentState = getOrCreateClozeState(fileId, clozeContent);
+    const updates = calculateNextReview(currentState, rating);
     
-    const newDueDate = now + newInterval * 24 * 60 * 60 * 1000;
-
-    const updatedState = {
-        ...clozeState,
-        ease: newEase,
-        interval: newInterval,
-        due: newDueDate,
-        state: nextState,
-        lastReview: Date.now(),
+    const allStates = appState.clozeStates;
+    allStates[currentState.id] = {
+        ...currentState,
+        ...updates,
+        lastReview: Date.now()
     };
-
-    const newClozeStates = { ...appState.clozeStates, [clozeState.id]: updatedState };
-    setState({ clozeStates: newClozeStates });
     
-    // Anki 状态变化也应该触发持久化
-    persistState();
+    setState({ clozeStates: allStates });
+    // 在实际应用中，这里应该触发数据持久化
+    // e.g., saveToDatabase({ clozeStates: allStates });
 }
 
 
