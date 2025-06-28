@@ -257,6 +257,17 @@
                             <button id="audioBtn" class="editor-btn" title="编辑声音"><i class="fas fa-music"></i></button>
                         </div>
                         <div class="toolbar-right">
+					        <div class="review-btn-group">
+					            <button id="startReviewBtn" class="editor-btn editor-btn-text">
+					                <i class="fas fa-play-circle"></i> 复习 (<span id="reviewCount">0</span>)
+					            </button>
+					            <button id="reviewOptionsBtn" class="editor-btn dropdown-toggle">
+					                <i class="fas fa-chevron-down"></i>
+					            </button>
+					            <div id="reviewDropdownMenu" class="dropdown-menu" style="display: none;">
+					                <a href="#" id="customStudyBtn"><i class="fas fa-wrench"></i> 自定义复习...</a>
+					            </div>
+					        </div>
                             <button id="saveBtn" class="editor-btn editor-btn-text" title="保存"><i class="fas fa-save"></i> 保存</button>
                             <button id="exportFileBtn" class="editor-btn editor-btn-text" title="导出"><i class="fas fa-download"></i> 导出</button>
                             <button id="helpBtn" class="editor-btn editor-btn-text" title="帮助"><i class="fas fa-question-circle"></i> 帮助</button>
@@ -461,6 +472,54 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" id="agentSettingsCancelBtn">取消</button>
                 <button type="submit" class="btn-primary" id="agentSettingsSaveBtn" form="agentSettingsForm">保存更改</button>
+            </div>
+        </div>
+    </div>
+
+        <!-- [NEW] 自定义复习模态框 -->
+    <div class="modal-overlay" id="customStudyModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>自定义复习会话</h2>
+                <button class="modal-close" id="customStudyCloseBtn">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="customStudyForm">
+                    <div class="form-group">
+                        <label for="filterByFile">按文件/目录筛选:</label>
+                        <select id="filterByFile" class="form-control">
+                            <option value="all">所有文件</option>
+                            <!-- 选项将由JS动态填充 -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>按卡片状态筛选:</label>
+                        <div class="form-checkbox-group">
+                            <label><input type="checkbox" name="cardState" value="new" checked> 新卡片</label>
+                            <label><input type="checkbox" name="cardState" value="learning" checked> 学习中</label>
+                            <label><input type="checkbox" name="cardState" value="review" checked> 复习中</label>
+                            <label><input type="checkbox" name="cardState" value="relearning" checked> 重学中</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>按最后一次复习时间筛选:</label>
+                        <select id="filterByLastReview" class="form-control">
+                            <option value="any">任何时间</option>
+                            <option value="last7days">最近7天内</option>
+                            <option value="last30days">最近30天内</option>
+                            <option value="over30days">超过30天未复习</option>
+                            <option value="never">从未复习过 (新卡片)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="maxCards">最大卡片数量:</label>
+                        <input type="number" id="maxCards" class="form-control" value="50" min="1">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="customStudyCancelBtn">取消</button>
+                <button type="submit" class="btn-primary" id="startCustomStudyBtn" form="customStudyForm">开始自定义复习</button>
             </div>
         </div>
     </div>

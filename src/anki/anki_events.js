@@ -1,7 +1,12 @@
+// src/anki/anki_events.js
 import * as dom from './anki_dom.js';
 import { appState, setState } from '../common/state.js';
 import * as dataService from '../services/dataService.js';
 import { updatePreview, toggleAllClozeVisibility, invertAllCloze } from './previewUI.js';
+
+// [MODIFIED] 导入新的 reviewSession 模块
+import { startReviewSession } from './reviewSession.js'; 
+
 import { openMoveModal, closeModal, setupModalEventListeners } from './modalUI.js';
 import { stopAudio, resumeAudio, pauseAudio } from './audioUI.js';
 import { rerenderAnki } from './anki_ui.js';
@@ -152,6 +157,81 @@ function handleToggleEditor() {
     if (isCollapsed) handleSave();
 }
 
+// [NEW] 填充自定义复习模态框的筛选器
+function populateCustomStudyFilters() {
+    const { sessions, folders } = appState;
+    const filterSelect = document.getElementById('filterByFile');
+    filterSelect.innerHTML = '<option value="all">所有文件</option>';
+
+    folders.forEach(folder => {
+        const opt = document.createElement('option');
+        opt.value = `folder_${folder.id}`;
+        opt.textContent = `目录: ${folder.name}`;
+        filterSelect.appendChild(opt);
+    });
+
+    sessions.forEach(session => {
+        const opt = document.createElement('option');
+        opt.value = `file_${session.id}`;
+        opt.textContent = `文件: ${session.name}`;
+        filterSelect.appendChild(opt);
+    });
+}
+
+// [NEW] 设置复习相关的UI事件
+function setupReviewUIEventListeners() {
+    const reviewOptionsBtn = document.getElementById('reviewOptionsBtn');
+    const reviewDropdownMenu = document.getElementById('reviewDropdownMenu');
+    const customStudyBtn = document.getElementById('customStudyBtn');
+    const customStudyModal = document.getElementById('customStudyModal');
+    const customStudyCloseBtn = document.getElementById('customStudyCloseBtn');
+    const customStudyCancelBtn = document.getElementById('customStudyCancelBtn');
+    const customStudyForm = document.getElementById('customStudyForm');
+
+    // 自动复习按钮
+    document.getElementById('startReviewBtn').addEventListener('click', () => startReviewSession());
+
+    // 下拉菜单逻辑
+    reviewOptionsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isShown = reviewDropdownMenu.style.display === 'block';
+        reviewDropdownMenu.style.display = isShown ? 'none' : 'block';
+    });
+
+    document.addEventListener('click', (e) => {
+        const reviewGroup = document.querySelector('.review-btn-group');
+        if (reviewGroup && !reviewGroup.contains(e.target)) {
+            reviewDropdownMenu.style.display = 'none';
+        }
+    });
+
+    // 打开模态框
+    customStudyBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        reviewDropdownMenu.style.display = 'none';
+        populateCustomStudyFilters();
+        customStudyModal.style.display = 'flex';
+    });
+
+    // 关闭模态框
+    const closeModal = () => customStudyModal.style.display = 'none';
+    customStudyCloseBtn.addEventListener('click', closeModal);
+    customStudyCancelBtn.addEventListener('click', closeModal);
+
+    // 提交自定义复习表单
+    customStudyForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const filters = {
+            fileOrFolder: document.getElementById('filterByFile').value,
+            cardStates: Array.from(document.querySelectorAll('input[name="cardState"]:checked')).map(cb => cb.value),
+            lastReview: document.getElementById('filterByLastReview').value,
+            maxCards: parseInt(document.getElementById('maxCards').value, 10),
+        };
+        closeModal();
+        startReviewSession(filters);
+    });
+}
+
 export function setupAnkiEventListeners() {
     dom.newFileBtn.addEventListener('click', handleNewFile);
     dom.newFolderBtn.addEventListener('click', handleNewFolder);
@@ -200,4 +280,5 @@ export function setupAnkiEventListeners() {
     dom.stopBtn.addEventListener('click', stopAudio);
 
     setupModalEventListeners(handleConfirmMove);
+    setupReviewUIEventListeners();
 }

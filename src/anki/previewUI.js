@@ -3,7 +3,9 @@ import * as dom from './anki_dom.js';
 import { appState, setState } from '../common/state.js';
 import { playMultimedia } from './audioUI.js';
 
-// --- Private Helper Functions ---
+// [MODIFIED] 导入需要的模块
+import * as dataService from '../services/dataService.js';
+import { moveToNextCardInSession, isInReviewSession } from '../anki/reviewSession.js';
 
 function getClozeColorClass(lastAccessTime) {
     if (!lastAccessTime) return 'cloze-28plus';
@@ -35,23 +37,31 @@ function processClozeElementsInNode(node) {
             }
             // The cloze element itself
             
-            // [MODIFIED] 使用 let 并处理换行符
-            let content = match[1];
-            content = content.replace(/¶/g, '<br>');
-
+            let contentWithBreaks = match[1].replace(/¶/g, '<br>');
             const multimedia = match[2] ? match[2].trim() : null;
             
             const clozeSpan = document.createElement('span');
-            clozeSpan.className = `cloze hidden ${getClozeColorClass(appState.clozeAccessTimes[match[1]])}`; // 使用原始 content 作为 key
-            clozeSpan.dataset.content = match[1]; // dataset 中仍然存储原始 content
+
+            // 获取 Cloze 状态并应用视觉提示
+            const fileId = appState.currentSessionId;
+            const clozeState = dataService.getOrCreateClozeState(fileId, match[1]);
+            const isDue = clozeState.due <= Date.now();
+            
+            clozeSpan.className = `cloze hidden ${isDue ? 'due' : ''}`;
+            clozeSpan.dataset.content = match[1];
             if (multimedia) clozeSpan.dataset.multimedia = multimedia;
             
-            let innerHTML = '';
-            if (multimedia) {
-                innerHTML += `<span class="media-icon" title="播放音频"><i class="fas fa-volume-up"></i></span>`;
-            }
-            innerHTML += `<span class="cloze-content">${content}</span><span class="placeholder">[...]</span>`;
-            clozeSpan.innerHTML = innerHTML;
+            clozeSpan.innerHTML = `
+                ${multimedia ? '<span class="media-icon" title="播放音频"><i class="fas fa-volume-up"></i></span>' : ''}
+                <span class="cloze-content">${contentWithBreaks}</span>
+                <span class="placeholder">[...]</span>
+                <div class="cloze-actions" style="display: none;">
+                    <button class="cloze-btn again" data-rating="0">重来</button>
+                    <button class="cloze-btn hard" data-rating="1">困难</button>
+                    <button class="cloze-btn good" data-rating="2">良好</button>
+                    <button class="cloze-btn easy" data-rating="3">简单</button>
+                </div>
+            `;
 
             fragments.push(clozeSpan);
             lastIndex = clozeRegex.lastIndex;
@@ -76,54 +86,72 @@ function addClozeEventListeners() {
         const cloze = e.target.closest('.cloze');
         if (!cloze) return;
 
+        // --- 1. 处理反馈按钮的点击 ---
+        const clozeBtn = e.target.closest('.cloze-btn');
+        if (clozeBtn) {
+            e.stopPropagation();
+            const rating = parseInt(clozeBtn.dataset.rating, 10);
+            const fileId = appState.currentSessionId;
+            const clozeContent = cloze.dataset.content;
+            const currentState = dataService.getOrCreateClozeState(fileId, clozeContent);
+            
+            dataService.updateClozeState(currentState, rating);
+            
+            // 更新UI：隐藏按钮，并更新状态样式
+            cloze.querySelector('.cloze-actions').style.display = 'none';
+            cloze.classList.remove('due');
+            cloze.classList.add('answered');
+            
+            // 如果在复习会话中，则自动跳到下一张卡
+            if (isInReviewSession()) {
+                moveToNextCardInSession();
+            }
+            return;
+        }
+
+        // --- 2. 处理媒体图标点击 ---
         if (e.target.closest('.media-icon')) {
             e.stopPropagation();
             if (cloze.dataset.multimedia) playMultimedia(cloze.dataset.multimedia);
             return;
         }
-        
-        if (cloze.classList.contains('permanent')) return;
 
-        if (cloze.classList.contains('temporary')) {
-            clearTimeout(cloze.timer);
-            cloze.classList.remove('temporary');
-            cloze.classList.add('permanent');
-            return;
-        }
-        
-        cloze.classList.remove('hidden');
-        cloze.classList.add('temporary');
-
-        // [MODIFIED] Automatically play audio when the cloze is opened
-        if (cloze.dataset.multimedia) {
-            playMultimedia(cloze.dataset.multimedia);
-        }
-
-        const content = cloze.dataset.content;
-        const newClozeAccessTimes = { ...appState.clozeAccessTimes, [content]: Date.now() };
-        setState({ clozeAccessTimes: newClozeAccessTimes });
-
-        // Re-apply color class
-        const colorClass = getClozeColorClass(newClozeAccessTimes[content]);
-        cloze.className.match(/cloze-\w+/g)?.forEach(c => cloze.classList.remove(c));
-        cloze.classList.add(colorClass);
-
-        cloze.timer = setTimeout(() => {
-            if (cloze.classList.contains('temporary')) {
-                cloze.classList.remove('temporary');
-                cloze.classList.add('hidden');
+        // --- 3. 处理 Cloze 自身的点击 (显示答案) ---
+        if (cloze.classList.contains('hidden')) {
+            cloze.classList.remove('hidden');
+            cloze.querySelector('.cloze-actions').style.display = 'flex'; // 显示反馈按钮
+            
+            // 自动播放音频
+            if (cloze.dataset.multimedia) {
+                playMultimedia(cloze.dataset.multimedia);
             }
-        }, 15000);
+        }
     });
 
+    // --- [NEW] 重新加入并修改双击事件监听器 ---
     dom.preview.addEventListener('dblclick', (e) => {
         const cloze = e.target.closest('.cloze');
         if (!cloze) return;
-        
-        e.stopPropagation();
-        clearTimeout(cloze.timer);
-        cloze.classList.remove('temporary', 'permanent');
-        cloze.classList.add('hidden');
+
+        e.stopPropagation(); // 防止事件冒泡
+
+        // 双击的作用是：在“隐藏”和“永久显示(无按钮)”之间切换
+        // 这提供了一个不评分而只是查看答案的途径
+
+        if (cloze.classList.contains('hidden')) {
+            // 如果是隐藏的，双击则显示答案，但不显示反馈按钮
+            cloze.classList.remove('hidden');
+            cloze.classList.add('permanent-view'); // 使用一个新class来标记这种状态
+        } else {
+            // 如果是显示的（无论是通过单击还是双击），双击则立即隐藏它
+            cloze.classList.remove('permanent-view');
+            cloze.classList.add('hidden');
+            // 确保反馈按钮也被隐藏
+            const actions = cloze.querySelector('.cloze-actions');
+            if (actions) {
+                actions.style.display = 'none';
+            }
+        }
     });
 }
 

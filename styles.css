@@ -399,8 +399,14 @@
             --session-width: 300px;
             --folder-color: #ffd166;
             --file-color: #a1c4fd;
+       
+            /* 新增简单难度的打开颜色 - 非常低调 */
+            --cloze-easy-open: #E8F5E9;  /* 极浅的绿色，几乎与背景融为一体 */
+
+            /* 新增10分钟复习颜色 */
+            --cloze-10m: #FF6666;  /* 鲜艳的红色，表示紧急 */
             
-            /* Cloze 颜色定义 */
+            /* 原有颜色定义保持不变 */
             --cloze-1d: #FFCCCC;   /* 1天 */
             --cloze-2d: #FFDDAA;   /* 2天 */
             --cloze-3d: #FFFF99;   /* 3天 */
@@ -410,7 +416,29 @@
             --cloze-28d: #E0E0E0;  /* 28天 */
             --cloze-28plus: #F0F0F0; /* >28天 */
         }
-        
+
+        /* 简单难度打开时的样式 */
+.cloze.easy-open {
+    background-color: var(--cloze-easy-open) !important;
+    border: 1px dashed #C8E6C9; /* 极浅的绿色虚线边框 */
+    color: #333 !important; /* 保持正常文字颜色 */
+    font-weight: normal; /* 不加粗 */
+    opacity: 0.9; /* 轻微透明 */
+}
+        /* 为10分钟卡片添加特殊样式 */
+        .cloze-10m {
+            background-color: var(--cloze-10m) !important;
+            border-color: #FF3333 !important;
+            animation: pulse-alert 1.5s infinite alternate;
+            color: white !important;
+            font-weight: bold;
+        }
+
+        @keyframes pulse-alert {
+            0% { opacity: 0.8; box-shadow: 0 0 0 0 rgba(255, 102, 102, 0.7); }
+            100% { opacity: 1; box-shadow: 0 0 0 6px rgba(255, 102, 102, 0); }
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -1735,4 +1763,171 @@
     transition: background-color 0.5s ease;
     background-color: #e0e7ff;
     border-color: var(--accent-color);
+}
+
+.global-review-area {
+    margin: 15px 0;
+    display: flex;
+    justify-content: center;
+}
+
+.review-btn-group {
+    display: flex;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
+    border-radius: 30px;
+}
+
+.review-btn-group .app-nav-btn {
+    margin: 0;
+    box-shadow: none;
+}
+
+.review-btn-group .app-nav-btn.main-action {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.review-btn-group .app-nav-btn.dropdown-toggle {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 10px 12px;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 105%; /* 稍微留出一点空隙 */
+    right: 0;
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    z-index: 1000;
+    padding: 8px 0;
+    min-width: 180px;
+    border: 1px solid #ddd;
+}
+
+.dropdown-menu a {
+    display: block;
+    padding: 10px 15px;
+    color: var(--dark-color);
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.dropdown-menu a:hover {
+    background-color: #f0f4ff;
+}
+
+.dropdown-menu a i {
+    margin-right: 10px;
+    color: var(--primary-color);
+    width: 20px;
+    text-align: center;
+}
+
+.form-checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+    padding: 5px 0;
+}
+.form-checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+/* styles.css */
+/* 当通过双击查看时，我们不希望有特殊的边框或效果 */
+.cloze.permanent-view .cloze-actions {
+    display: none !important;
+}
+/* 更新后的Cloze按钮样式 */
+
+/* 反馈按钮容器 */
+.cloze-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* 单个反馈按钮的通用样式 */
+.cloze-btn {
+    flex: 1;
+    padding: 10px 5px;
+    border-radius: 20px;
+    border: none;
+    background-color: #f5f7fa;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+    outline: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* 按钮图标样式 */
+.cloze-btn i {
+    font-size: 1.2rem;
+    margin-bottom: 5px;
+}
+
+/* 重来 (Again) */
+.cloze-btn.again {
+    color: #e53935;
+    background-color: rgba(229, 57, 53, 0.1);
+}
+.cloze-btn.again:hover {
+    background-color: #e53935;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(229, 57, 53, 0.3);
+}
+
+/* 困难 (Hard) */
+.cloze-btn.hard {
+    color: #fb8c00;
+    background-color: rgba(251, 140, 0, 0.1);
+}
+.cloze-btn.hard:hover {
+    background-color: #fb8c00;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(251, 140, 0, 0.3);
+}
+
+/* 良好 (Good) */
+.cloze-btn.good {
+    color: #43a047;
+    background-color: rgba(67, 160, 71, 0.1);
+}
+.cloze-btn.good:hover {
+    background-color: #43a047;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(67, 160, 71, 0.3);
+}
+
+/* 简单 (Easy) */
+.cloze-btn.easy {
+    color: #1e88e5;
+    background-color: rgba(30, 136, 229, 0.1);
+}
+.cloze-btn.easy:hover {
+    background-color: #1e88e5;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
 }
