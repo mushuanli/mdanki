@@ -14,21 +14,23 @@
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-folder-tree"></i> Anki / AI Agent 系统</h1>
-            <!-- NEW NAVIGATION BUTTONS -->
-            <div class="app-nav">
-                <button id="nav-anki-btn" class="app-nav-btn active">
-                    <i class="fas fa-book-open"></i> Anki 笔记
+            <h1><i class="fas fa-brain"></i> 智能学习套件</h1>
+            <p class="subtitle">集成 Anki 笔记、AI Agents 和智能错题本的一站式学习平台</p>
+            <nav class="app-nav">
+                <button class="app-nav-btn" id="nav-anki" data-target="anki-view">
+                    <i class="fas fa-layer-group"></i> Anki 笔记
                 </button>
-                <button id="nav-agent-btn" class="app-nav-btn">
+                <button class="app-nav-btn active" id="nav-mistakes" data-target="mistakes-view">
+                    <i class="fas fa-book"></i> 错题本
+                </button>
+                <button class="app-nav-btn" id="nav-agents" data-target="agents-view">
                     <i class="fas fa-robot"></i> AI Agents
                 </button>
-            </div>
-            <p class="subtitle">创建、组织、预览Markdown笔记, 并与AI助手互动</p>
+            </nav>
         </header>
         
-        <!-- 新增的AI Agent导航栏 -->
-        <nav class="ai-agent-nav">
+        <!-- AI Agent导航栏 (此部分在初始视图中可能隐藏) -->
+        <nav class="ai-agent-nav" style="display: none;">
             <div class="nav-title">
                 <i class="fas fa-robot"></i> AI Agent管理
             </div>
@@ -59,21 +61,9 @@
                 </button>
             </div>
         </nav>
-        
-        <div class="audio-controls" id="audioControls">
-            <div class="audio-title" id="audioTitle">音频播放</div>
-            <div class="audio-progress">
-                <div class="audio-progress-bar" id="audioProgress"></div>
-            </div>
-            <div class="audio-buttons">
-                <button class="audio-btn" id="playBtn"><i class="fas fa-play"></i> 播放</button>
-                <button class="audio-btn" id="pauseBtn"><i class="fas fa-pause"></i> 暂停</button>
-                <button class="audio-btn" id="stopBtn"><i class="fas fa-stop"></i> 停止</button>
-            </div>
-        </div>
-        
-        <!-- AI Agent内容区域 -->
-        <div class="agent-content-container">
+
+        <!-- AI Agent内容区域 (此部分在初始视图中可能隐藏) -->
+        <div class="agent-content-container" id="agent-view" style="display: none;">
             <div class="topics-panel">
                 <div class="topics-header">
                     <i class="fas fa-book"></i> 聊天主题
@@ -105,18 +95,18 @@
             </div>
             
             <div class="history-panel">
-    <div class="history-header">
-        <div class="history-title">
-            <i class="fas fa-comments"></i>
-            <span id="historyHeaderTitle">历史对话记录</span> 
-        </div>
-        <div class="history-header-actions">
-            <button id="agentSettingsTriggerBtn" class="header-action-btn" title="当前Agent设置" style="display: none;">
-                <i class="fas fa-cog"></i>
-            </button>
-            <input type="text" class="history-search" placeholder="搜索历史记录...">
-        </div>
-    </div>
+                <div class="history-header">
+                    <div class="history-title">
+                        <i class="fas fa-comments"></i>
+                        <span id="historyHeaderTitle">历史对话记录</span> 
+                    </div>
+                    <div class="history-header-actions">
+                        <button id="agentSettingsTriggerBtn" class="header-action-btn" title="当前Agent设置" style="display: none;">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        <input type="text" class="history-search" placeholder="搜索历史记录...">
+                    </div>
+                </div>
                 <div class="history-content">
                     <div class="history-item">
                         <div class="history-item-header">
@@ -134,47 +124,6 @@
                             <button class="history-action-btn"><i class="fas fa-trash"></i> 删除</button>
                         </div>
                     </div>
-                    
-                    <div class="history-item">
-                        <div class="history-item-header">
-                            <span>2023-10-14 09:15</span>
-                            <span>线性代数 - 特征值与特征向量</span>
-                        </div>
-                        <div class="history-item-content">
-                            <p><strong>用户:</strong> 特征值和特征向量有什么实际应用？</p>
-                            <p><strong>AI助手:</strong> 特征值和特征向量在多个领域有广泛应用：</p>
-                            <ol>
-                                <li>物理学：分析振动系统的主振动模式</li>
-                                <li>计算机图形学：用于图像压缩和特征提取</li>
-                                <li>机器学习：主成分分析(PCA)的核心</li>
-                                <li>工程学：结构稳定性分析</li>
-                            </ol>
-                            <p>例如，在PCA中，我们通过计算协方差矩阵的特征值和特征向量来降低数据维度。</p>
-                        </div>
-                        <div class="history-item-actions">
-                            <button class="history-action-btn"><i class="fas fa-redo"></i> 重新生成</button>
-                            <button class="history-action-btn"><i class="fas fa-edit"></i> 编辑</button>
-                            <button class="history-action-btn"><i class="fas fa-trash"></i> 删除</button>
-                        </div>
-                    </div>
-                    
-                    <div class="history-item">
-                        <div class="history-item-header">
-                            <span>2023-10-12 16:45</span>
-                            <span>微积分 - 极限与连续</span>
-                        </div>
-                        <div class="history-item-content">
-                            <p><strong>用户:</strong> 请证明lim(x→0) sin(x)/x = 1</p>
-                            <p><strong>AI助手:</strong> 这个重要极限可以通过几何方法或泰勒级数证明。几何证明如下：</p>
-                            <p>考虑单位圆中的扇形OAB，其中OA和OB是半径，角AOB为x弧度。三角形OAB的面积小于扇形OAB的面积，后者又小于直角三角形OAC的面积（AC是切线）。</p>
-
-                        </div>
-                        <div class="history-item-actions">
-                            <button class="history-action-btn"><i class="fas fa-redo"></i> 重新生成</button>
-                            <button class="history-action-btn"><i class="fas fa-edit"></i> 编辑</button>
-                            <button class="history-action-btn"><i class="fas fa-trash"></i> 删除</button>
-                        </div>
-                    </div>
                 </div>
                 <div class="chat-navigation">
                     <button id="chatNavUp" class="chat-nav-btn" title="上一轮对话"><i class="fas fa-arrow-up"></i></button>
@@ -182,15 +131,7 @@
                 </div>
                 <!-- ==================== 新增的聊天输入区域 ==================== -->
                 <div class="chat-input-area">
-                    <div class="attachment-preview-container" id="attachmentPreview">
-                        <!-- 附件预览将动态添加到这里 -->
-                        <!-- 示例: 
-                        <div class="attachment-preview-item">
-                            <span><i class="fas fa-file-image"></i> image_01.jpg</span>
-                            <button class="remove-attachment-btn">×</button>
-                        </div> 
-                        -->
-                    </div>
+                    <div class="attachment-preview-container" id="attachmentPreview"></div>
                     <div class="input-controls">
                         <textarea id="chatInput" class="chat-textarea" rows="3" placeholder="输入消息... (Shift + Enter 换行)"></textarea>
                         <!-- 隐藏的文件输入框，通过JS点击附件按钮来触发 -->
@@ -207,7 +148,8 @@
             </div>
         </div>
         
-        <div class="main-layout">
+        <!-- Anki 笔记视图 (此部分在初始视图中可能隐藏) -->
+        <div class="main-layout" id="anki-view" style="display: none;">
             <div class="session-sidebar">
                 <div class="session-header">
                     <div class="session-title">
@@ -241,41 +183,55 @@
             
             <div class="app-container">
                 <div class="panel" id="editorPanel">
-                    <div class="editor-toolbar">
-                        <div class="toolbar-left">
-                            <button id="toggleSessionBtn" class="editor-btn" title="显示/隐藏会话栏"><i class="fas fa-arrow-left"></i></button>
-                            <button id="toggleEditorBtn" class="editor-btn" title="收起编辑器"><i class="fas fa-chevron-up"></i></button>
-                        </div>
-                        <div class="toolbar-middle">
-                            <button id="clozeBtn" class="editor-btn" title="转换为Cloze"><i class="fas fa-square"></i></button>
-                            <button id="boldBtn" class="editor-btn" title="加粗"><i class="fas fa-bold"></i></button>
-                            <button id="italicBtn" class="editor-btn" title="斜体"><i class="fas fa-italic"></i></button>
-                            <!-- [MODIFIED] 新增按钮 -->
-                            <button id="insertLinebreakBtn" class="editor-btn" title="插入换行符(¶)"><i class="fas fa-paragraph"></i></button>
-                            <button id="codeBtn" class="editor-btn" title="代码"><i class="fas fa-code"></i></button>
-                            <button id="linkBtn" class="editor-btn" title="链接"><i class="fas fa-link"></i></button>
-                            <button id="audioBtn" class="editor-btn" title="编辑声音"><i class="fas fa-music"></i></button>
-                        </div>
-                        <div class="toolbar-right">
-					        <div class="review-btn-group">
-					            <button id="startReviewBtn" class="editor-btn editor-btn-text">
-					                <i class="fas fa-play-circle"></i> 复习 (<span id="reviewCount">0</span>)
-					            </button>
-					            <button id="reviewOptionsBtn" class="editor-btn dropdown-toggle">
-					                <i class="fas fa-chevron-down"></i>
-					            </button>
-					            <div id="reviewDropdownMenu" class="dropdown-menu" style="display: none;">
-					                <a href="#" id="customStudyBtn"><i class="fas fa-wrench"></i> 自定义复习...</a>
-					            </div>
-					        </div>
-                            <button id="saveBtn" class="editor-btn editor-btn-text" title="保存"><i class="fas fa-save"></i> 保存</button>
-                            <button id="exportFileBtn" class="editor-btn editor-btn-text" title="导出"><i class="fas fa-download"></i> 导出</button>
-                            <button id="helpBtn" class="editor-btn editor-btn-text" title="帮助"><i class="fas fa-question-circle"></i> 帮助</button>
-                        </div>
-                    </div>
-                    <div class="panel-content">
-                        <div class="editor-container">
-                            <textarea id="editor" class="editor"># Anki MD管理系统
+    <!-- 1. 添加了标准的 panel-header -->
+    <div class="panel-header">
+    <!-- 1. 左侧的按钮容器 -->
+    <div class="panel-actions-leading">
+        <button id="toggleSessionBtn" class="panel-btn" title="显示/隐藏会话栏"><i class="fas fa-bars"></i></button>
+    </div>
+
+        <div class="panel-title">
+            <i class="fas fa-edit"></i> Anki 编辑器
+        </div>
+        <div class="panel-actions">
+			<!-- 复习按钮组也可以放在这里，或者放在 header actions 里，这里放在子工具栏更符合“编辑”上下文 -->
+            <div class="review-btn-group" style="margin-left: auto;">
+                <button id="startReviewBtn" class="editor-btn editor-btn-text">
+                    <i class="fas fa-play-circle"></i> 复习 (<span id="reviewCount">0</span>)
+                </button>
+                <button id="reviewOptionsBtn" class="editor-btn dropdown-toggle">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div id="reviewDropdownMenu" class="dropdown-menu" style="display: none;">
+                    <a href="#" id="customStudyBtn"><i class="fas fa-wrench"></i> 自定义复习...</a>
+                </div>
+            </div>
+            <button id="saveBtn" class="panel-btn panel-btn-text" title="保存"><i class="fas fa-save"></i> </button>
+            <button id="exportFileBtn" class="panel-btn panel-btn-text" title="导出"><i class="fas fa-download"></i> </button>
+            <button id="helpBtn" class="panel-btn panel-btn-text" title="帮助"><i class="fas fa-question-circle"></i></button>
+            <!-- 折叠按钮也在这里，这样它就不会被隐藏 -->
+            <button id="toggleEditorBtn" class="panel-btn collapse-btn" title="收起/展开编辑器">
+                <i class="fas fa-chevron-up"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="panel-content">
+        <!-- 3. 格式化工具栏作为子工具栏放在内容区顶部 -->
+        <div class="editor-sub-toolbar">
+            <button id="clozeBtn" class="editor-btn" title="转换为Cloze"><i class="fas fa-square"></i></button>
+            <button id="boldBtn" class="editor-btn" title="加粗"><i class="fas fa-bold"></i></button>
+            <button id="italicBtn" class="editor-btn" title="斜体"><i class="fas fa-italic"></i></button>
+            <button id="insertLinebreakBtn" class="editor-btn" title="插入换行符(¶)"><i class="fas fa-paragraph"></i></button>
+            <button id="codeBtn" class="editor-btn" title="代码"><i class="fas fa-code"></i></button>
+            <button id="linkBtn" class="editor-btn" title="链接"><i class="fas fa-link"></i></button>
+            <button id="audioBtn" class="editor-btn" title="编辑声音"><i class="fas fa-music"></i></button>
+            
+
+        </div>
+
+        <div class="editor-container">
+            <textarea id="editor" class="editor"># Anki MD管理系统
 
 ## 使用说明
 
@@ -312,13 +268,8 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
                     <div class="panel-header">
                         <div class="panel-title"><i class="fas fa-eye"></i> 预览</div>
                         <div class="panel-actions">
-            <!-- 新的合并后的按钮 -->
-            <button id="toggleVisibilityClozeBtn" class="panel-btn" title="全部隐藏">
-                <i class="fas fa-eye-slash"></i>
-            </button>
-            <button id="invertClozeBtn" class="panel-btn" title="反向显示/隐藏">
-                <i class="fas fa-exchange-alt"></i>
-            </button>
+                            <button id="toggleVisibilityClozeBtn" class="panel-btn" title="全部隐藏"><i class="fas fa-eye-slash"></i></button>
+                            <button id="invertClozeBtn" class="panel-btn" title="反向显示/隐藏"><i class="fas fa-exchange-alt"></i></button>
                         </div>
                     </div>
                     <div class="panel-content">
@@ -328,6 +279,189 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
             </div>
         </div>
         
+                <!-- 错题本视图 -->
+        <div id="mistakes-view" class="main-layout active">
+                <!-- ==================== [MODIFIED] 错题本导航栏已统一风格 ==================== -->
+                <div class="session-sidebar">
+                    <div class="session-header">
+                        <div class="session-title">
+                            <span><i class="fas fa-book"></i> 错题本管理</span>
+                        </div>
+                    <!-- 科目选择器简化 -->
+                    <div class="subject-selector-wrapper" style="padding: 10px 0;">
+                        <label for="subject-filter" style="color: white; margin-right: 5px;"><i class="fas fa-filter"></i> 科目:</label>
+                        <select id="subject-filter" style="width: calc(100% - 60px); padding: 5px;">
+                                <option value="all">全部科目</option>
+                                <option value="math">数学</option>
+                                <option value="physics">物理</option>
+                                <option value="chemistry">化学</option>
+                                <option value="chinese">语文</option>
+                                <option value="english">英语</option>
+                                <option value="biology">生物</option>
+                                <option value="history">历史</option>
+                                <option value="geography">地理</option>
+                                <option value="politics">政治</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                <div class="session-content">
+                    <details class="filter-accordion-item" open>
+                        <summary>
+                            <span><i class="fas fa-lightbulb"></i> 知识点</span>
+                            <i class="fas fa-chevron-down toggle-icon"></i>
+                        </summary>
+                        <div class="tag-list" style="padding: 10px 5px 15px 5px; background-color: #fdfdff; display: flex; flex-wrap: wrap; gap: 8px;">
+                            <div class="tag active">全部</div>
+                            <div class="tag">二次函数</div>
+                            <div class="tag">三角函数</div>
+                            <div class="tag">立体几何</div>
+                        </div>
+                    </details>
+                    <details class="filter-accordion-item">
+                        <summary>
+                            <span><i class="fas fa-diagnoses"></i> 错误原因</span>
+                            <i class="fas fa-chevron-down toggle-icon"></i>
+                        </summary>
+                        <div class="tag-list" style="padding: 10px 5px 15px 5px; background-color: #fdfdff; display: flex; flex-wrap: wrap; gap: 8px;">
+                             <div class="tag active">全部</div>
+                             <div class="tag">概念混淆</div>
+                             <div class="tag">计算失误</div>
+                        </div>
+                    </details>
+                    
+                    <div class="mistakes-list-container" style="margin-top: 15px;">
+                        <div style="font-weight: bold; padding-bottom: 10px; border-bottom: 1px solid #eee; margin-bottom: 10px;"><i class="fas fa-list"></i> 错题列表</div>
+                        <ul class="session-list" style="list-style: none;">
+                            <li class="mistake-item active">
+                                <div class="mistake-title">二次函数图像与系数关系</div>
+                                <div class="mistake-meta">
+                                    <span class="mistake-tag">概念混淆</span>
+                                    <span class="mistake-next-review">今天</span>
+                                </div>
+                            </li>
+                            <li class="mistake-item">
+                                <div class="mistake-title">三角函数恒等变换证明</div>
+                                <div class="mistake-meta">
+                                    <span class="mistake-tag">公式记错</span>
+                                    <span class="mistake-next-review">明天</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+                
+                <div class="app-container">
+                    <!-- 为编辑器面板添加ID，并添加折叠按钮 -->
+                    <div id="mistake-editor-panel" class="panel editor-panel">
+                        <div class="panel-header">
+						    <!-- 1. 左侧的按钮容器 (使用新ID) -->
+    <div class="panel-actions-leading">
+        <button id="mistakeToggleSessionBtn" class="panel-btn" title="显示/隐藏错题导航"><i class="fas fa-bars"></i></button>
+    </div>
+
+                            <div class="panel-title"><i class="fas fa-code"></i> YAML 编辑器</div>
+                            <div class="panel-actions">
+							        <!-- 复习按钮组 (新ID) -->
+        <div class="review-btn-group">
+            <button id="mistakeStartReviewBtn" class="editor-btn editor-btn-text">
+                <i class="fas fa-play-circle"></i> 复习
+            </button>
+            <button id="mistakeReviewOptionsBtn" class="editor-btn dropdown-toggle">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <div id="mistakeReviewDropdownMenu" class="dropdown-menu" style="display: none;">
+                <a href="#" id="mistakeCustomStudyBtn"><i class="fas fa-wrench"></i> 自定义复习...</a>
+            </div>
+        </div>
+        <button id="mistakeSaveBtn" class="panel-btn" title="保存"><i class="fas fa-save"></i></button>
+        <!-- 导出按钮 (新ID) -->
+        <button id="mistakeExportBtn" class="panel-btn" title="导出YAML"><i class="fas fa-download"></i></button>
+        <button class="panel-btn collapse-btn" id="mistakeCollapseBtn" title="收起/展开">
+            <i class="fas fa-chevron-up"></i>
+        </button>
+
+                            </div>
+                        </div>
+                        <div class="panel-content">
+                            <textarea id="yaml-editor"># 错题数据结构
+uuid: 1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed
+title: "二次函数y=ax^2+bx+c图像与系数关系判断"
+problem: |
+  已知二次函数 $y = ax^2 + bx + c$ 的图像如图所示，下列结论中正确的是？
+  A. $a > 0, c > 0$
+  B. $b^2 - 4ac < 0$
+  C. $a - b + c > 0$
+  D. $abc > 0$
+attachments:
+  - type: image
+    url: "https://via.placeholder.com/600x300/4361ee/ffffff?text=二次函数图像"
+my_answer:
+  content: "A"
+correct_answer:
+  content: "C"
+  explanation: |
+    1. **开口方向**: 图像开口向上, $a > 0$。
+    2. **对称轴**: $x = -b/2a < 0$。因 $a > 0$, 所以 $b > 0$。
+    3. **与y轴交点**: 图像与y轴交点在负半轴, $c < 0$。
+    4. **特殊点**: 当 $x = -1$ 时, $y > 0$, 即 $a - b + c > 0$。
+analysis:
+  reason_for_error: "概念混淆"
+tags:
+  - "二次函数"
+  - "概念混淆"
+</textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="panel preview-panel">
+                        <div class="panel-header">
+                            <div class="panel-title"><i class="fas fa-eye"></i> 预览</div>
+                            <div class="panel-actions">
+                                <button class="panel-btn" title="刷新预览"><i class="fas fa-sync-alt"></i></button>
+                            </div>
+                        </div>
+                        <div class="panel-content">
+                            <div id="mistakes-preview">
+                                <div class="problem-card">
+                                    <div class="problem-header">
+                                        <div class="problem-title">二次函数y=ax²+bx+c图像与系数关系判断</div>
+                                        <div class="problem-subject">数学</div>
+                                    </div>
+                                    <div class="problem-content">
+                                        <p>已知二次函数 \(y = ax^2 + bx + c\) 的图像如图所示，下列结论中正确的是？</p>
+                                        <p>A. \(a > 0, c &gt; 0\)</p>
+                                        <p>B. \(b^2 - 4ac &lt; 0\)</p>
+                                        <p>C. \(a - b + c &gt; 0\)</p>
+                                        <p>D. \(abc &gt; 0\)</p>
+                                        <img src="https://via.placeholder.com/600x300/4361ee/ffffff?text=二次函数图像" alt="二次函数图像" class="problem-image">
+                                    </div>
+                                    <div class="answer-section">
+                                        <div class="my-answer">
+                                            <div class="section-title"><i class="fas fa-times-circle"></i> 我的答案</div>
+                                            <p><strong>选项：</strong> A</p>
+                                        </div>
+                                        <div class="correct-answer">
+                                            <div class="section-title"><i class="fas fa-check-circle"></i> 正确答案</div>
+                                            <p><strong>选项：</strong> C</p>
+                                        </div>
+                                    </div>
+                                    <div class="analysis-section">
+                                        <div class="section-title"><i class="fas fa-brain"></i> 错因分析</div>
+                                        <p><strong>错误原因：</strong> 概念混淆</p>
+                                        <div class="tag-section-preview">
+                                            <div class="tag">二次函数</div><div class="tag">概念混淆</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="instructions">
              <h2><i class="fas fa-info-circle"></i> 使用说明</h2>
             <div class="instructions-grid">
@@ -388,6 +522,22 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
     </div>
 
     <script type="module" src="/src/main.js"></script>
+
+    <!-- ====================================================== -->
+    <!--          AUDIO PLAYING                                 -->
+    <!-- ====================================================== -->
+        <div class="audio-controls" id="audioControls">
+            <div class="audio-title" id="audioTitle">音频播放</div>
+            <div class="audio-progress">
+                <div class="audio-progress-bar" id="audioProgress"></div>
+            </div>
+            <div class="audio-buttons">
+                <button class="audio-btn" id="playBtn"><i class="fas fa-play"></i> 播放</button>
+                <button class="audio-btn" id="pauseBtn"><i class="fas fa-pause"></i> 暂停</button>
+                <button class="audio-btn" id="stopBtn"><i class="fas fa-stop"></i> 停止</button>
+            </div>
+        </div>
+        
     <!-- ====================================================== -->
     <!--          AGENT SETTINGS MODAL (Initially Hidden)       -->
     <!-- ====================================================== -->

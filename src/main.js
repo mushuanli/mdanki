@@ -12,27 +12,42 @@ import { initializeAnkiApp } from './anki/anki_main.js';
 // --- AGENT Feature Imports ---
 import { initializeAgentApp } from './agent/agent_main.js';
 
+// --- [ADDED] MISTAKES Feature Import ---
+// Assuming a modular structure similar to other features
+import { initializeMistakesApp } from './mistakes/mistakes_main.js';
+
+
 /**
  * Manages the visibility of the main application views based on appState.activeView.
  */
 function handleViewChange() {
     const { activeView } = appState;
-    const ankiNavBtn = document.getElementById('nav-anki-btn');
-    const agentNavBtn = document.getElementById('nav-agent-btn');
-    const agentNav = document.querySelector('.ai-agent-nav');
+    const ankiNavBtn = $id('nav-anki');
+    const agentNavBtn = $id('nav-agents');
+    const mistakesNavBtn = $id('nav-mistakes');
+    
+    // Hide all views first
+    dom.ankiView.style.display = 'none';
+    dom.agentView.style.display = 'none';
+    dom.mistakesView.style.display = 'none'; // [ADDED] Hide mistakes view
+    dom.agentNav.style.display = 'none'; // Agent-specific nav
 
+    // Reset all buttons
+    ankiNavBtn.classList.remove('active');
+    agentNavBtn.classList.remove('active');
+    mistakesNavBtn.classList.remove('active');
+
+    // Show selected view
     if (activeView === 'anki') {
         dom.ankiView.style.display = 'flex';
-        dom.agentView.style.display = 'none';
-        agentNav.style.display = 'none'; // Hide agent-specific nav
         ankiNavBtn.classList.add('active');
-        agentNavBtn.classList.remove('active');
     } else if (activeView === 'agent') {
-        dom.ankiView.style.display = 'none';
         dom.agentView.style.display = 'flex';
-        agentNav.style.display = 'flex'; // Show agent-specific nav
-        ankiNavBtn.classList.remove('active');
+        dom.agentNav.style.display = 'flex';
         agentNavBtn.classList.add('active');
+    } else if (activeView === 'mistakes') {
+        dom.mistakesView.style.display = 'flex';
+        mistakesNavBtn.classList.add('active');
     }
 }
 
@@ -40,8 +55,9 @@ function handleViewChange() {
  * Sets up the top-level navigation that switches between Anki and Agent views.
  */
 function setupAppNavigation() {
-    const ankiNavBtn = document.getElementById('nav-anki-btn');
-    const agentNavBtn = document.getElementById('nav-agent-btn');
+    const ankiNavBtn = $id('nav-anki');
+    const agentNavBtn = $id('nav-agents');
+    const mistakesNavBtn = $id('nav-mistakes'); // [ADDED] Get mistakes button
 
     ankiNavBtn.addEventListener('click', () => {
         dataService.switchView('anki');
@@ -50,6 +66,11 @@ function setupAppNavigation() {
 
     agentNavBtn.addEventListener('click', () => {
         dataService.switchView('agent');
+        handleViewChange();
+    });
+
+    mistakesNavBtn.addEventListener('click', () => {
+        dataService.switchView('mistakes');
         handleViewChange();
     });
 }
@@ -64,10 +85,12 @@ async function main() {
         // 1. Connect to DB (once for the whole app)
         await connectToDatabase();
         
-        // 2. Initialize both features. They will load their own data.
+        // 2. Initialize all features in parallel.
+        //    They will load their own data.
         await Promise.all([
             initializeAnkiApp(),
-            initializeAgentApp()
+            initializeAgentApp(),
+            initializeMistakesApp() // [ADDED] Initialize the mistakes module
         ]);
         
         // 3. Setup top-level navigation and automatic persistence
@@ -84,7 +107,7 @@ async function main() {
         });
 
         // 4. Set the initial view (default to anki)
-        dataService.switchView('anki');
+        dataService.switchView(appState.activeView || 'anki');
         handleViewChange();
 
         console.log("Application initialized successfully.");
@@ -99,3 +122,8 @@ async function main() {
 
 // Start the application
 document.addEventListener('DOMContentLoaded', main);
+
+// Helper function for getting elements by ID, used for clarity
+function $id(id) {
+    return document.getElementById(id);
+}

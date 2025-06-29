@@ -638,7 +638,7 @@ export function selectTopic(topicId) {
 
 // --- View Router ---
 export function switchView(viewName) {
-    if (viewName === 'anki' || viewName === 'agent') {
+    if (viewName === 'anki' || viewName === 'agent' || viewName === 'mistakes' ) {
         setState({ activeView: viewName });
     }
 }
