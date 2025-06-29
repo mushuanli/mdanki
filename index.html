@@ -23,7 +23,7 @@
                 <button class="app-nav-btn active" id="nav-mistakes" data-target="mistakes-view">
                     <i class="fas fa-book"></i> 错题本
                 </button>
-                <button class="app-nav-btn" id="nav-agents" data-target="agents-view">
+                <button class="app-nav-btn" id="nav-agents" data-target="agent-view">
                     <i class="fas fa-robot"></i> AI Agents
                 </button>
             </nav>
@@ -279,188 +279,109 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
             </div>
         </div>
         
-                <!-- 错题本视图 -->
+        <!-- ====================================================== -->
+        <!--          [MODIFIED] 错题本视图 (应用所有修改)           -->
+        <!-- ====================================================== -->
         <div id="mistakes-view" class="main-layout active">
-                <!-- ==================== [MODIFIED] 错题本导航栏已统一风格 ==================== -->
-                <div class="session-sidebar">
-                    <div class="session-header">
-                        <div class="session-title">
-                            <span><i class="fas fa-book"></i> 错题本管理</span>
-                        </div>
-                    <!-- 科目选择器简化 -->
-                    <div class="subject-selector-wrapper" style="padding: 10px 0;">
-                        <label for="subject-filter" style="color: white; margin-right: 5px;"><i class="fas fa-filter"></i> 科目:</label>
-                        <select id="subject-filter" style="width: calc(100% - 60px); padding: 5px;">
-                                <option value="all">全部科目</option>
-                                <option value="math">数学</option>
-                                <option value="physics">物理</option>
-                                <option value="chemistry">化学</option>
-                                <option value="chinese">语文</option>
-                                <option value="english">英语</option>
-                                <option value="biology">生物</option>
-                                <option value="history">历史</option>
-                                <option value="geography">地理</option>
-                                <option value="politics">政治</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                <div class="session-content">
-                    <details class="filter-accordion-item" open>
-                        <summary>
-                            <span><i class="fas fa-lightbulb"></i> 知识点</span>
-                            <i class="fas fa-chevron-down toggle-icon"></i>
-                        </summary>
-                        <div class="tag-list" style="padding: 10px 5px 15px 5px; background-color: #fdfdff; display: flex; flex-wrap: wrap; gap: 8px;">
-                            <div class="tag active">全部</div>
-                            <div class="tag">二次函数</div>
-                            <div class="tag">三角函数</div>
-                            <div class="tag">立体几何</div>
-                        </div>
-                    </details>
-                    <details class="filter-accordion-item">
-                        <summary>
-                            <span><i class="fas fa-diagnoses"></i> 错误原因</span>
-                            <i class="fas fa-chevron-down toggle-icon"></i>
-                        </summary>
-                        <div class="tag-list" style="padding: 10px 5px 15px 5px; background-color: #fdfdff; display: flex; flex-wrap: wrap; gap: 8px;">
-                             <div class="tag active">全部</div>
-                             <div class="tag">概念混淆</div>
-                             <div class="tag">计算失误</div>
-                        </div>
-                    </details>
-                    
-                    <div class="mistakes-list-container" style="margin-top: 15px;">
-                        <div style="font-weight: bold; padding-bottom: 10px; border-bottom: 1px solid #eee; margin-bottom: 10px;"><i class="fas fa-list"></i> 错题列表</div>
-                        <ul class="session-list" style="list-style: none;">
-                            <li class="mistake-item active">
-                                <div class="mistake-title">二次函数图像与系数关系</div>
-                                <div class="mistake-meta">
-                                    <span class="mistake-tag">概念混淆</span>
-                                    <span class="mistake-next-review">今天</span>
-                                </div>
-                            </li>
-                            <li class="mistake-item">
-                                <div class="mistake-title">三角函数恒等变换证明</div>
-                                <div class="mistake-meta">
-                                    <span class="mistake-tag">公式记错</span>
-                                    <span class="mistake-next-review">明天</span>
-                                </div>
-                            </li>
-                        </ul>
+
+            <!-- [MODIFIED] 错题本侧边栏 -->
+            <div class="session-sidebar">
+                <div class="session-header">
+                    <div class="session-title">
+                        <span><i class="fas fa-book-open"></i> 错题筛选与导航</span>
                     </div>
                 </div>
-            </div>
                 
-                <div class="app-container">
-                    <!-- 为编辑器面板添加ID，并添加折叠按钮 -->
-                    <div id="mistake-editor-panel" class="panel editor-panel">
-                        <div class="panel-header">
-						    <!-- 1. 左侧的按钮容器 (使用新ID) -->
-    <div class="panel-actions-leading">
-        <button id="mistakeToggleSessionBtn" class="panel-btn" title="显示/隐藏错题导航"><i class="fas fa-bars"></i></button>
+                <div class="session-content">
+                    <!-- 筛选区域 -->
+                        <!-- [MODIFIED] 将 .filter-section 改为 .session-header -->
+    <div class="session-header"> 
+        <!-- [MODIFIED] 将 .filter-controls 改为 .session-controls -->
+        <div class="session-controls"> 
+            <select id="subject-filter"></select>
+            <!-- [MODIFIED] 统一所有按钮的样式为 session-btn -->
+            <button id="refresh-mistakes-btn" class="session-btn" title="刷新"><i class="fas fa-sync-alt"></i></button>
+            <button id="newMistakeFileBtn" class="session-btn" title="新建错题文件"><i class="fas fa-file-alt"></i></button>
+            <button id="load-yaml-btn" class="session-btn" title="导入YAML文件"><i class="fas fa-file-upload"></i></button>
+            <input type="file" id="yaml-file-input" accept=".yml,.yaml" style="display: none;">
+        </div>
+        <div class="filter-group" data-type="tags">
+          <div class="tag-list"></div>
+        </div>
+        <div class="filter-group" data-type="reasons">
+          <div class="tag-list"></div>
+        </div>
     </div>
 
-                            <div class="panel-title"><i class="fas fa-code"></i> YAML 编辑器</div>
-                            <div class="panel-actions">
-							        <!-- 复习按钮组 (新ID) -->
-        <div class="review-btn-group">
-            <button id="mistakeStartReviewBtn" class="editor-btn editor-btn-text">
-                <i class="fas fa-play-circle"></i> 复习
-            </button>
-            <button id="mistakeReviewOptionsBtn" class="editor-btn dropdown-toggle">
-                <i class="fas fa-chevron-down"></i>
-            </button>
-            <div id="mistakeReviewDropdownMenu" class="dropdown-menu" style="display: none;">
-                <a href="#" id="mistakeCustomStudyBtn"><i class="fas fa-wrench"></i> 自定义复习...</a>
-            </div>
-        </div>
-        <button id="mistakeSaveBtn" class="panel-btn" title="保存"><i class="fas fa-save"></i></button>
-        <!-- 导出按钮 (新ID) -->
-        <button id="mistakeExportBtn" class="panel-btn" title="导出YAML"><i class="fas fa-download"></i></button>
-        <button class="panel-btn collapse-btn" id="mistakeCollapseBtn" title="收起/展开">
-            <i class="fas fa-chevron-up"></i>
-        </button>
 
-                            </div>
-                        </div>
-                        <div class="panel-content">
-                            <textarea id="yaml-editor"># 错题数据结构
-uuid: 1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed
-title: "二次函数y=ax^2+bx+c图像与系数关系判断"
-problem: |
-  已知二次函数 $y = ax^2 + bx + c$ 的图像如图所示，下列结论中正确的是？
-  A. $a > 0, c > 0$
-  B. $b^2 - 4ac < 0$
-  C. $a - b + c > 0$
-  D. $abc > 0$
-attachments:
-  - type: image
-    url: "https://via.placeholder.com/600x300/4361ee/ffffff?text=二次函数图像"
-my_answer:
-  content: "A"
-correct_answer:
-  content: "C"
-  explanation: |
-    1. **开口方向**: 图像开口向上, $a > 0$。
-    2. **对称轴**: $x = -b/2a < 0$。因 $a > 0$, 所以 $b > 0$。
-    3. **与y轴交点**: 图像与y轴交点在负半轴, $c < 0$。
-    4. **特殊点**: 当 $x = -1$ 时, $y > 0$, 即 $a - b + c > 0$。
-analysis:
-  reason_for_error: "概念混淆"
-tags:
-  - "二次函数"
-  - "概念混淆"
-</textarea>
+                    <!-- 错题列表容器 -->
+                    <div class="mistakes-list-container">
+                        <div class="list-header"><i class="fas fa-list-ul"></i> 待复习列表 (按到期日排序)</div>
+                        <ul class="session-list" id="mistakes-list">
+                            <!-- 错题列表项将由JS动态生成 -->
+                        </ul>
+                        <div class="pagination">
+                            <!-- 分页按钮将由JS动态生成 -->
                         </div>
                     </div>
-                    
-                    <div class="panel preview-panel">
-                        <div class="panel-header">
-                            <div class="panel-title"><i class="fas fa-eye"></i> 预览</div>
-                            <div class="panel-actions">
-                                <button class="panel-btn" title="刷新预览"><i class="fas fa-sync-alt"></i></button>
-                            </div>
+                </div>
+            </div>
+            
+            <!-- [MODIFIED] 错题本主内容区 -->
+            <div class="app-container">
+                <!-- 统计仪表盘 -->
+                <div id="statistics-dashboard" class="stats-dashboard">
+                    <!-- 统计卡片将由JS动态生成 -->
+                </div>
+                
+                <!-- YAML 编辑器面板 -->
+                <div id="mistake-editor-panel" class="panel editor-panel">
+                    <div class="panel-header">
+                        <div class="panel-actions-leading">
+                            <button id="mistakeToggleSessionBtn" class="panel-btn" title="显示/隐藏筛选栏"><i class="fas fa-bars"></i></button>
                         </div>
-                        <div class="panel-content">
-                            <div id="mistakes-preview">
-                                <div class="problem-card">
-                                    <div class="problem-header">
-                                        <div class="problem-title">二次函数y=ax²+bx+c图像与系数关系判断</div>
-                                        <div class="problem-subject">数学</div>
-                                    </div>
-                                    <div class="problem-content">
-                                        <p>已知二次函数 \(y = ax^2 + bx + c\) 的图像如图所示，下列结论中正确的是？</p>
-                                        <p>A. \(a > 0, c &gt; 0\)</p>
-                                        <p>B. \(b^2 - 4ac &lt; 0\)</p>
-                                        <p>C. \(a - b + c &gt; 0\)</p>
-                                        <p>D. \(abc &gt; 0\)</p>
-                                        <img src="https://via.placeholder.com/600x300/4361ee/ffffff?text=二次函数图像" alt="二次函数图像" class="problem-image">
-                                    </div>
-                                    <div class="answer-section">
-                                        <div class="my-answer">
-                                            <div class="section-title"><i class="fas fa-times-circle"></i> 我的答案</div>
-                                            <p><strong>选项：</strong> A</p>
-                                        </div>
-                                        <div class="correct-answer">
-                                            <div class="section-title"><i class="fas fa-check-circle"></i> 正确答案</div>
-                                            <p><strong>选项：</strong> C</p>
-                                        </div>
-                                    </div>
-                                    <div class="analysis-section">
-                                        <div class="section-title"><i class="fas fa-brain"></i> 错因分析</div>
-                                        <p><strong>错误原因：</strong> 概念混淆</p>
-                                        <div class="tag-section-preview">
-                                            <div class="tag">二次函数</div><div class="tag">概念混淆</div>
-                                        </div>
-                                    </div>
+                        <div class="panel-title"><i class="fas fa-code"></i> YAML 编辑器</div>
+                        <div class="panel-actions">
+                            <button id="mistakeSaveBtn" class="panel-btn" title="保存并刷新"><i class="fas fa-save"></i></button>
+                            <button id="mistakeExportBtn" class="panel-btn" title="导出YAML"><i class="fas fa-download"></i></button>
+                            <button class="panel-btn collapse-btn" id="mistakeCollapseBtn" title="收起/展开">
+                                <i class="fas fa-chevron-up"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <textarea id="yaml-editor" placeholder="在此处粘贴或编辑您的YAML格式错题..."></textarea>
+                    </div>
+                </div>
+                
+                <!-- 错题预览面板 -->
+<div id="mistakes-preview-panel" class="panel preview-panel">
+                    <div class="panel-header">
+                        <div class="panel-title"><i class="fas fa-eye"></i> 错题预览</div>
+                        <div class="panel-actions">
+                            <div class="review-btn-group">
+                                <button id="mistakeStartReviewBtn" class="editor-btn editor-btn-text">
+                                    <i class="fas fa-play-circle"></i> 开始复习
+                                </button>
+                                <button id="mistakeReviewOptionsBtn" class="editor-btn dropdown-toggle">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div id="mistakeReviewDropdownMenu" class="dropdown-menu" style="display: none;">
+                                    <a href="#" id="mistakeCustomStudyBtn"><i class="fas fa-wrench"></i> 自定义复习...</a>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div id="mistakes-preview" class="mistakes-preview-container">
+                            <!-- 错题预览卡片将由JS动态生成 -->
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+        <!-- 错题本视图结束 -->
+
 
         <div class="instructions">
              <h2><i class="fas fa-info-circle"></i> 使用说明</h2>

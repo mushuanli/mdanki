@@ -6,18 +6,19 @@ const INITIAL_EASE_FACTOR = 2.5; // Anki 默认简易度 250%
 
 /**
  * 计算下一次复习的状态
- * @param {object} currentState - Cloze 当前的状态对象
- * @param {number} rating - 用户的评分 (0: Again, 1: Hard, 2: Good, 3: Easy)
- * @returns {object} - 更新后的状态对象 { due, interval, easeFactor }
+ * @param {object} currentState - 当前的复习状态 { interval, easeFactor, state }
+ * @param {number} rating - 用户评分 (0: Again, 1: Hard, 2: Good, 3: Easy)
+ * @returns {object} - 更新后的状态 { due, interval, easeFactor, state }
  */
 export function calculateNextReview(currentState, rating) {
     const now = Date.now();
     let { interval = 0, easeFactor = INITIAL_EASE_FACTOR, state = 'new' } = currentState;
-    
-    if (state === 'new') {
-        // 对于新卡片
+
+    if (state === 'new' || state === 'learning') {
+        // 对于新卡片或学习中的卡片
         switch (rating) {
             case 0: // Again
+                // 保持在学习阶段，10分钟后重试
                 return { due: now + AGAIN_INTERVAL, interval: 0, easeFactor, state: 'learning' };
             case 1: // Hard
                 return { due: now + 1 * 24 * 3600 * 1000, interval: 1, easeFactor, state: 'review' };
@@ -28,10 +29,11 @@ export function calculateNextReview(currentState, rating) {
         }
     }
 
-    // 对于正在复习的卡片
+    // 对于正在复习的卡片 (state === 'review')
     switch (rating) {
-        case 0: // Again
+        case 0: // Again (Lapse)
             easeFactor = Math.max(1.3, easeFactor - 0.2);
+            // 进入学习阶段，10分钟后重试
             return { due: now + AGAIN_INTERVAL, interval: 0, easeFactor, state: 'learning' };
         case 1: // Hard
             interval = Math.max(1, interval * 1.2);
@@ -44,15 +46,14 @@ export function calculateNextReview(currentState, rating) {
             easeFactor += 0.15;
             break;
     }
-    
-    // 计算下次间隔（天）并转换为毫秒
-    const nextIntervalInDays = Math.max(1, interval * easeFactor);
+
+    const nextIntervalInDays = Math.max(interval + 1, interval * easeFactor);
     const nextDueDate = now + nextIntervalInDays * 24 * 3600 * 1000;
 
-    return { 
-        due: nextDueDate, 
-        interval: nextIntervalInDays, 
-        easeFactor, 
-        state: 'review' 
+    return {
+        due: nextDueDate,
+        interval: nextIntervalInDays,
+        easeFactor,
+        state: 'review'
     };
 }

@@ -15,4 +15,4 @@ export const agentView = $id('agent-view');
 export const mistakesView = $id('mistakes-view');
 
 // [MODIFIED] The agent-specific top navigation bar
-export const agentNav = $('.ai-agent-nav');
+export const agentNav = document.querySelector('.ai-agent-nav');

@@ -640,5 +640,25 @@ export function selectTopic(topicId) {
 export function switchView(viewName) {
     if (viewName === 'anki' || viewName === 'agent' || viewName === 'mistakes' ) {
         setState({ activeView: viewName });
+    } else {
+        console.warn(`[DataService] Invalid view name passed to switchView: '${viewName}'`);
+    }
+}
+
+/**
+ * [新增] 持久化所有应用模块的状态
+ * 调用各个模块的持久化函数。
+ */
+export async function persistAllAppState() {
+    try {
+        await Promise.all([
+            persistState(), // 保存 Anki/Core 数据
+            persistAgentState(), // 保存 Agent 数据
+            // 将来如果 mistakes 有自己的独立状态需要保存，也在这里调用
+            // 例如: mistakesManager.persist()
+        ]);
+        console.log("All application state persisted.");
+    } catch (error) {
+        console.error("Failed to persist all application state:", error);
     }
 }

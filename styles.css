@@ -1059,8 +1059,8 @@ h1 {
 .cloze-btn.again:hover { background-color: #e53935; color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(229, 57, 53, 0.3); }
 .cloze-btn.hard { color: #fb8c00; background-color: rgba(251, 140, 0, 0.1); }
 .cloze-btn.hard:hover { background-color: #fb8c00; color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(251, 140, 0, 0.3); }
-.cloze-btn.good { color: #43a047; background-color: rgba(67, 160, 71, 0.1); }
-.cloze-btn.good:hover { background-color: #43a047; color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(67, 160, 71, 0.3); }
+.cloze-btn.double { color: #43a047; background-color: rgba(67, 160, 71, 0.1); }
+.cloze-btn.double:hover { background-color: #43a047; color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(67, 160, 71, 0.3); }
 .cloze-btn.easy { color: #1e88e5; background-color: rgba(30, 136, 229, 0.1); }
 .cloze-btn.easy:hover { background-color: #1e88e5; color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3); }
 
@@ -1092,4 +1092,86 @@ h1 {
     .panel-header .panel-title { justify-content: center; }
     .panel-actions { justify-content: center; }
     .app-nav { flex-wrap: wrap; }
+}
+
+/* ====================================================== */
+/*        [NEW] INLINE STATISTICS DASHBOARD STYLES        */
+/* ====================================================== */
+
+.stats-dashboard-inline {
+    display: flex;
+    gap: 15px;
+    padding: 15px;
+    background-color: #f8f9fa; /* 浅灰色背景 */
+    border-bottom: 1px solid #dee2e6;
+}
+
+.stats-card {
+    flex: 1;
+    background-color: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    overflow: hidden; /* 保证圆角生效 */
+}
+
+.stats-card-header {
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 8px 12px;
+    background-color: #f1f3f5;
+    border-bottom: 1px solid #e9ecef;
+    color: #495057;
+}
+
+.stats-card-header i {
+    margin-right: 8px;
+    color: var(--primary-color);
+}
+
+.stats-card-body {
+    padding: 12px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.stats-card-body.list-style {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #212529;
+}
+
+.stat-value.overdue { color: #d90429; }
+.stat-value.today { color: #f77f00; }
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.list-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+}
+
+.list-value {
+    font-weight: 600;
+    padding: 2px 6px;
+    background-color: #e9ecef;
+    border-radius: 4px;
 }

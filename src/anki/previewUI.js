@@ -61,7 +61,7 @@ function processClozeElementsInNode(node) {
                 <div class="cloze-actions" style="display: none;">
                     <button class="cloze-btn again" data-rating="0">重来</button>
                     <button class="cloze-btn hard" data-rating="1">困难</button>
-                    <button class="cloze-btn good" data-rating="2">良好</button>
+                    <button class="cloze-btn double" data-rating="2">犹豫</button>
                     <button class="cloze-btn easy" data-rating="3">简单</button>
                 </div>
             `;
@@ -124,7 +124,7 @@ function addClozeEventListeners() {
                 // 保持卡片打开，并应用 'easy-open' 样式
                 cloze.classList.remove('hidden', 'permanent-view');
                 cloze.classList.add('easy-open');
-            } else { // 重来, 困难, 良好
+            } else { // 重来, 困难, 犹豫
                 // 立即隐藏卡片
                 cloze.classList.add('hidden');
                 cloze.classList.remove('easy-open', 'permanent-view');

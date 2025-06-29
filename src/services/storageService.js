@@ -7,25 +7,21 @@ import { db } from '../common/db.js';
  * @returns {Promise<object>} An object containing the data collections.
  */
 export async function loadAllData() {
-    // Use Promise.all to fetch all tables in parallel for maximum speed.
-    const [sessions, folders, clozeAccessTimes, appStateValues] = await Promise.all([
+    // [修正] 不再加载 clozeAccessTimes，而是加载 clozeStates
+    const [sessions, folders, clozeStates, appStateValues] = await Promise.all([
         db.sessions.toArray(),
         db.folders.toArray(),
-        db.clozeAccessTimes.toArray(),
+        db.clozeStates.toArray(), // <--- 修改点
         db.appState.toArray(),
     ]);
 
-    // The data is fetched as arrays of objects. We need to reconstruct
-    // the key-value objects for cloze times and app state.
-
-    const reconstructedClozeTimes = clozeAccessTimes.reduce((acc, item) => {
-        // The primary key is 'content', and the value is 'time'
-        acc[item.content] = item.time;
+    // [修正] 将 clozeStates 数组转换为以 id 为 key 的对象
+    const reconstructedClozeStates = clozeStates.reduce((acc, item) => {
+        acc[item.id] = item;
         return acc;
     }, {});
 
     const reconstructedAppState = appStateValues.reduce((acc, item) => {
-        // The primary key is 'key', and the value is 'value'
         acc[item.key] = item.value;
         return acc;
     }, {});
@@ -33,7 +29,7 @@ export async function loadAllData() {
     return {
         sessions: sessions || [],
         folders: folders || [],
-        clozeAccessTimes: reconstructedClozeTimes || {},
+        clozeStates: reconstructedClozeStates || {}, // <--- 修改点
         persistentAppState: reconstructedAppState || {},
     };
 }
@@ -48,38 +44,35 @@ export async function loadAllData() {
  * @param {object} data.clozeAccessTimes - The cloze access times object.
  * @param {object} data.persistentAppState - An object with simple key-value state.
  */
-export async function saveAllData({ sessions, folders, clozeAccessTimes, persistentAppState }) {
-    // Define the tables we will be writing to in the transaction.
-    const tablesToUpdate = [db.sessions, db.folders, db.clozeAccessTimes, db.appState];
+export async function saveAllData({ sessions, folders, clozeStates, persistentAppState }) {
+    // [修正] 更新事务中要操作的表
+    const tablesToUpdate = [db.sessions, db.folders, db.clozeStates, db.appState];
 
     await db.transaction('rw', tablesToUpdate, async () => {
-        // 1. Prepare data for 'bulkPut'. It needs an array of objects.
-        const clozeDataForDB = Object.entries(clozeAccessTimes).map(([content, time]) => ({ content, time }));
+        // [修正] 准备 clozeStates 数据
+        // clozeStates 在 appState 中已经是对象了，我们需要将其转换为数组以进行 bulkPut
+        const clozeDataForDB = Object.values(clozeStates);
         const appStateDataForDB = Object.entries(persistentAppState).map(([key, value]) => ({ key, value }));
 
-        // 2. Clear out any data that no longer exists.
-        // This handles deletions efficiently. For example, if a session was deleted
-        // from the `sessions` array, we need to remove it from the DB.
-        
+        // [修正] 获取已存在的 clozeStates 的 ID
         const existingSessionIds = new Set(sessions.map(s => s.id));
         const existingFolderIds = new Set(folders.map(f => f.id));
-        const existingClozeContents = new Set(Object.keys(clozeAccessTimes));
+        const existingClozeIds = new Set(Object.keys(clozeStates)); // <--- 修改点
         const existingAppStateKeys = new Set(Object.keys(persistentAppState));
 
-        // Delete items from DB that are NOT in the current state arrays/objects.
+        // [修正] 删除不再存在的 clozeStates
         await Promise.all([
             db.sessions.where('id').noneOf(Array.from(existingSessionIds)).delete(),
             db.folders.where('id').noneOf(Array.from(existingFolderIds)).delete(),
-            db.clozeAccessTimes.where('content').noneOf(Array.from(existingClozeContents)).delete(),
+            db.clozeStates.where('id').noneOf(Array.from(existingClozeIds)).delete(), // <--- 修改点
             db.appState.where('key').noneOf(Array.from(existingAppStateKeys)).delete(),
         ]);
         
-        // 3. Use 'bulkPut' to insert new items and update existing ones.
-        // This is highly efficient for saving collections.
+        // [修正] 批量保存 clozeStates
         await Promise.all([
             db.sessions.bulkPut(sessions),
             db.folders.bulkPut(folders),
-            db.clozeAccessTimes.bulkPut(clozeDataForDB),
+            db.clozeStates.bulkPut(clozeDataForDB), // <--- 修改点
             db.appState.bulkPut(appStateDataForDB),
         ]);
     });
@@ -132,4 +125,60 @@ export async function saveAgentData({ agents, topics, history }) {
             db.history.bulkPut(history),
         ]);
     });
+}
+
+// --- [新增] 错题集相关的数据服务 ---
+
+/**
+ * 从 IndexedDB 加载所有错题
+ * @returns {Promise<Array<object>>}
+ */
+export async function loadAllMistakes() {
+    try {
+        // 确保在查询前数据库已打开
+        if (!db.isOpen()) {
+            await db.open();
+        }
+        return await db.mistakes.toArray();
+    } catch (error) {
+        console.error("Failed to load mistakes from DB:", error);
+        return [];
+    }
+}
+
+/**
+ * 将错题批量保存到 IndexedDB
+ * @param {Array<object>} mistakes - 要保存的错题数组
+ */
+export async function saveAllMistakes(mistakes) {
+    try {
+        await db.mistakes.bulkPut(mistakes);
+        console.log("Mistakes saved successfully.");
+    } catch (error) {
+        console.error("Failed to save mistakes to DB:", error);
+    }
+}
+
+/**
+ * 更新单个错题（例如，在复习后）
+ * @param {object} mistake - 更新后的错题对象
+ */
+export async function updateMistake(mistake) {
+    try {
+        await db.mistakes.put(mistake);
+    } catch (error) {
+        console.error(`Failed to update mistake ${mistake.uuid}:`, error);
+    }
+}
+
+/**
+ * 根据ID删除错题
+ * @param {string[]} mistakeUuids - 要删除的错题UUID数组
+ */
+export async function deleteMistakes(mistakeUuids) {
+    try {
+        await db.mistakes.bulkDelete(mistakeUuids);
+    } catch(error) {
+        console.error("Failed to delete mistakes:", error);
+    }
 }

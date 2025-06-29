@@ -1,30 +1,42 @@
 // src/mistakes/mistakes_dom.js
-import { $, $id } from '../common/dom.js';
 
-// --- Main containers ---
+// 辅助函数，简化选择器
+const $id = (id) => document.getElementById(id);
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => document.querySelectorAll(selector);
+
+// 视图主容器
 export const mistakesView = $id('mistakes-view');
+
+// 侧边栏和筛选器
 export const sidebar = $('#mistakes-view .session-sidebar');
-export const mistakesList = $('#mistakes-view .session-list');
-export const editorPanel = $id('mistake-editor-panel');
-export const previewPanel = $('.preview-panel');
-
-// --- Sidebar elements ---
 export const subjectFilter = $id('subject-filter');
-export const knowledgePointTags = $('#mistakes-view .tag-list'); // Assuming one for now
-// TODO: Add selectors for other filter sections if needed
+export const tagFilterContainer = $('#mistakes-view .filter-group[data-type="tags"] .tag-list');
+export const reasonFilterContainer = $('#mistakes-view .filter-group[data-type="reasons"] .tag-list');
 
-// --- Editor Panel elements ---
+// 列表和分页
+export const mistakesListContainer = $id('mistakes-list');
+export const paginationContainer = $('#mistakes-view .pagination');
+
+// 内容预览区
+export const previewContainer = $id('mistakes-preview');
+
+// 编辑器面板
+export const editorPanel = $id('mistake-editor-panel');
 export const yamlEditor = $id('yaml-editor');
-export const preview = $id('mistakes-preview');
 
-// --- Header Buttons (unique IDs are crucial) ---
+// 头部/面板按钮 (使用特定ID避免与Anki视图冲突)
 export const toggleSessionBtn = $id('mistakeToggleSessionBtn');
 export const saveBtn = $id('mistakeSaveBtn');
 export const exportBtn = $id('mistakeExportBtn');
 export const collapseBtn = $id('mistakeCollapseBtn');
+export const refreshBtn = $id('refresh-mistakes-btn'); // 统一ID
+export const loadYamlBtn = $id('load-yaml-btn');
+export const yamlFileInput = $id('yaml-file-input');
 
-// --- Header Review Buttons ---
+export const newMistakeFileBtn = $id('newMistakeFileBtn'); 
+
+// 复习相关按钮
 export const startReviewBtn = $id('mistakeStartReviewBtn');
 export const reviewOptionsBtn = $id('mistakeReviewOptionsBtn');
 export const reviewDropdownMenu = $id('mistakeReviewDropdownMenu');
-export const customStudyBtn = $id('mistakeCustomStudyBtn');
