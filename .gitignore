@@ -1,4 +1,5 @@
 node_modules/
 target/
 .vite
+.env
 package-lock.json

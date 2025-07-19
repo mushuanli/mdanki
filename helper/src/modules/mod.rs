@@ -2,3 +2,5 @@
 
 /// 打包功能的模块
 pub mod pack;
+
+pub mod init; // <--- 新增```

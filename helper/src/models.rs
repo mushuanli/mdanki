@@ -1,8 +1,8 @@
 // src/models.rs
-use serde::Deserialize;
+use serde::{Deserialize, Serialize}; 
 use serde_json::Value;
 
-#[derive(Debug, Deserialize, pub)]
+#[derive(Debug, Deserialize)]
 pub struct AnkiModelTemplate {
     pub id: i64,
     pub name: String,
@@ -13,22 +13,24 @@ pub struct AnkiModelTemplate {
     pub model_type: Option<i32>,
 }
 
-#[derive(Debug, Deserialize, pub)]
+#[derive(Debug, Deserialize)]
 pub struct TemplateField {
     pub name: String,
 }
 
-#[derive(Debug, Deserialize, pub)]
+#[derive(Debug, Deserialize)]
 pub struct TemplateFormat {
     pub name: String,
     pub qfmt: String,
     pub afmt: String,
 }
 
-#[derive(Debug, Deserialize, Default, pub)]
+#[derive(Debug, Deserialize, Serialize, Default, Clone)] // <--- 修改
 pub struct WordData {
     pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub grade: Option<Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub unit: Option<Value>,
     pub symbol: Option<String>,
     pub chn: Option<String>,
@@ -41,9 +43,12 @@ pub struct WordData {
     pub memory_tips: Option<String>,
     pub difficulty: Option<Value>,
     pub collocations: Option<String>,
+    pub image_prompt: Option<String>, // <--- 新增这一行
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub image_taskid: Option<String>, // 新增用于跟踪图片生成任务的字段
 }
 
-#[derive(Debug, Deserialize, Default, pub)]
+#[derive(Debug, Deserialize, Serialize, Default, Clone)] // <--- 修改
 #[allow(dead_code)]
 pub struct ReciteData {
     pub name: Option<String>,

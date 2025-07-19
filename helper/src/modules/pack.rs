@@ -13,7 +13,7 @@ use serde_json::Value;
 
 // 导入在项目其他文件中定义的结构
 use crate::cli::PackArgs;
-use crate::models::{AnkiModelTemplate, ReciteData, TemplateField, TemplateFormat, WordData};
+use crate::models::{AnkiModelTemplate, ReciteData, WordData};
 
 /// “pack” 子命令的公共处理函数
 ///
