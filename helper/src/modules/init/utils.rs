@@ -52,26 +52,60 @@ pub async fn ai_chat(client: &Client, word: &str) -> Result<WordData> {
         }
     ]);
 
-    let response = client
+    // --- 调试请求 ---
+    // 1. 将请求的 Body 构建到一个变量中
+    let request_body = json!({
+        "model": config::openai_model(),
+        "messages": messages,
+        "temperature": 0.7,
+        "max_tokens": 8000,
+    });
+
+    // 2. 使用 dbg! 打印请求的各个部分
+    println!("\n--- [DEBUG] 准备发送 HTTP 请求 ---");
+    dbg!(config::openai_base_url()); // 打印请求 URL
+    // 注意：为了安全，不建议在日志中打印完整的API密钥。这里只打印一个标记。
+    dbg!(format!("Authorization: Bearer {}...", &config::openai_api_key().chars().take(8).collect::<String>()));
+    dbg!(&request_body); // 打印请求体 (Body)
+    println!("-------------------------------------\n");
+
+    // 3. 发送请求，但暂时不直接解析响应体，以获取完整的响应对象
+    let response_object = client
         .post(config::openai_base_url())
         .bearer_auth(config::openai_api_key())
-        .json(&json!({
-            "model": config::openai_model(),
-            "messages": messages,
-            "temperature": 0.7,
-            "max_tokens": 8000,
-        }))
+        .json(&request_body)
         .send()
-        .await?
-        .json::<Value>()
-        .await?;
+        .await
+        .context("发送HTTP请求到AI服务失败")?;
 
-    let content = response["choices"][0]["message"]["content"]
+    // --- 调试响应 ---
+    // 4. 使用 dbg! 打印响应的状态码和头信息
+    println!("\n--- [DEBUG] 收到 HTTP 响应 ---");
+    dbg!(response_object.status());
+    dbg!(response_object.headers());
+
+    // 5. 将响应体解析为 JSON。这一步会消耗掉响应对象，因此放在最后。
+    //    然后打印解析后的 JSON Body。
+    let response_json: Value = response_object
+        .json()
+        .await
+        .context("解析AI响应体为JSON失败")?;
+
+    dbg!(&response_json);
+    println!("--------------------------------\n");
+
+    // 6. 从我们刚刚打印的 `response_json` 变量中提取内容
+    let content = response_json["choices"][0]["message"]["content"]
         .as_str()
         .ok_or_else(|| anyhow!("AI响应中缺少内容"))?;
 
-    let mut word_data: WordData = serde_json::from_str(content)
-        .with_context(|| format!("解析AI返回的JSON失败: {}", content))?;
+    // --- 新增: 清洗 AI 返回的内容 ---
+    // 这个步骤提高了代码的健壮性，可以处理被 Markdown 代码块包裹的 JSON。
+    let clean_content = extract_json_from_markdown(content);
+    
+    // --- 修改: 使用清洗后的内容进行解析 ---
+    let mut word_data: WordData = serde_json::from_str(clean_content)
+        .with_context(|| format!("解析AI返回的JSON失败: {}", clean_content))?;
     
     if word_data.name.is_none() {
         word_data.name = Some(word.to_string());
@@ -244,4 +278,34 @@ pub async fn generate_multimedia_for_word(
     }
     
     Ok(needs_update)
+}
+
+
+// --- 新增: 辅助函数，用于从可能的 Markdown 代码块中提取纯 JSON 字符串 ---
+///
+/// 这个函数接收一个原始字符串，它可能是纯 JSON，也可能是被 ` ```json ... ``` ` 包裹的。
+/// 它会返回一个只包含潜在 JSON 内容的字符串切片，提高了对 AI 输出的容错性。
+///
+/// # Arguments
+/// * `raw_content` - 从 AI API 获取的原始字符串内容。
+///
+/// # Returns
+/// 一个字符串切片，指向 `raw_content` 中包含纯 JSON 的部分。
+fn extract_json_from_markdown(raw_content: &str) -> &str {
+    // 首先修剪两端的空白字符，这可以处理掉 AI 可能添加的多余换行符
+    let trimmed = raw_content.trim();
+
+    // 检查字符串是否同时以 ` ```json ` 开头并以 ` ``` ` 结尾
+    if trimmed.starts_with("```json") && trimmed.ends_with("```") {
+        // 如果是，就剥离掉这两个标记。
+        // 使用 .strip_prefix 和 .strip_suffix 是安全的方式。
+        // .unwrap() 在这里是安全的，因为我们已经用 .starts_with/.ends_with 检查过了。
+        let unwrapped = trimmed.strip_prefix("```json").unwrap().strip_suffix("```").unwrap();
+        
+        // 再次修剪，以移除 JSON 内容和 Markdown 标记之间的换行符
+        return unwrapped.trim();
+    }
+    
+    // 如果不符合 Markdown 块的特征，则假定它已经是纯 JSON，直接返回修剪后的字符串
+    trimmed
 }

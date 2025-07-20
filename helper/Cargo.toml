@@ -16,3 +16,4 @@ tokio = { version = "1", features = ["full"] } # 异步运行时
 tokio-stream = "0.1" # <--- 新增这一行
 reqwest = { version = "0.12", features = ["json"] } # HTTP 客户端
 dotenvy = "0.15" # 用于加载 .env 文件中的环境变量
+futures = "0.3"

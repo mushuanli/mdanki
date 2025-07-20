@@ -3,7 +3,7 @@ use std::env;
 
 // --- AI 服务配置 ---
 pub fn openai_base_url() -> String {
-    env::var("OPENAI_BASEURL").unwrap_or_else(|_| "https://api.deepseek.com".to_string())
+    env::var("OPENAI_BASEURL").unwrap_or_else(|_| "https://api.deepseek.com/v1/chat/completions".to_string())
 }
 pub fn openai_api_key() -> String {
     env::var("OPENAI_API_KEY").expect("错误：未设置 OPENAI_API_KEY 环境变量")

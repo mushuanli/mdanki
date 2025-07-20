@@ -87,3 +87,11 @@ pub struct ReciteData {
     pub text9: Option<String>,
     pub hint9: Option<String>,
 }
+
+/// 用于解析 wordlist.json 中每个条目的结构体 (新增)
+#[derive(Debug, Deserialize)]
+pub struct WordlistItem {
+    pub name: String,
+    pub chn: Option<String>,
+    pub symbol: Option<String>,
+}
