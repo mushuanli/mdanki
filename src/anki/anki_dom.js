@@ -27,7 +27,9 @@ export const audioBtn = $id('audioBtn');
 // [MODIFIED] 导出新按钮的引用
 export const insertLinebreakBtn = $id('insertLinebreakBtn');
 export const sessionSidebar = $('.session-sidebar');
-export const editorPanel = $id('editorPanel');
+
+// [MODIFIED] 移除旧的 editorPanel，添加新合并面板的引用
+export const editorPreviewPanel = $('.editor-preview-panel');
 export const selectAllCheckbox = $id('selectAllCheckbox');
 export const moveModal = $id('moveModal');
 export const folderList = $id('folderList');
@@ -44,3 +46,8 @@ export const sessionTitleContainer = $('.session-title');
 export const instructionsSection = $('.instructions');
 export const toggleVisibilityClozeBtn = $id('toggleVisibilityClozeBtn');
 export const invertClozeBtn = $id('invertClozeBtn');
+
+// 新增元素引用
+export const toggleEditPreviewBtn = $id('toggleEditPreviewBtn');
+export const editModeDot = $id('editModeDot');
+export const previewModeDot = $id('previewModeDot');

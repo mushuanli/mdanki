@@ -148,13 +148,40 @@ function insertTextAtCursor(text) {
 
 
 function handleToggleEditor() {
-    dom.editorPanel.classList.toggle('collapsed');
-    const isCollapsed = dom.editorPanel.classList.contains('collapsed');
+    dom.editorPreviewPanel.classList.toggle('collapsed');
+    const isCollapsed = dom.editorPreviewPanel.classList.contains('collapsed');
     dom.toggleEditorBtn.innerHTML = isCollapsed ? '<i class="fas fa-chevron-down"></i>' : '<i class="fas fa-chevron-up"></i>';
     dom.toggleEditorBtn.title = isCollapsed ? "展开编辑器" : "收起编辑器";
     // [MODIFIED] 将新按钮加入禁用列表
     [dom.clozeBtn, dom.boldBtn, dom.italicBtn, dom.codeBtn, dom.linkBtn, dom.audioBtn, dom.insertLinebreakBtn].forEach(btn => btn.disabled = isCollapsed);
     if (isCollapsed) handleSave();
+}
+
+// 切换编辑/预览模式
+function toggleEditPreviewMode() {
+    const panel = dom.editorPreviewPanel;
+    const isPreviewMode = panel.classList.contains('preview-active');
+    
+    if (isPreviewMode) {
+        // 切换到编辑模式
+        panel.classList.remove('preview-active');
+        dom.toggleEditPreviewBtn.innerHTML = '<i class="fas fa-book-open"></i>';
+        dom.toggleEditPreviewBtn.title = "切换到预览模式";
+        dom.editModeDot.classList.add('active');
+        dom.previewModeDot.classList.remove('active');
+    } else {
+        // 切换到预览模式
+        panel.classList.add('preview-active');
+        dom.toggleEditPreviewBtn.innerHTML = '<i class="fas fa-edit"></i>';
+        dom.toggleEditPreviewBtn.title = "切换到编辑模式";
+        dom.editModeDot.classList.remove('active');
+        dom.previewModeDot.classList.add('active');
+        
+        // 切换到预览模式时自动保存
+        handleSave();
+        // 确保预览内容是最新的
+        updatePreview();
+    }
 }
 
 // [NEW] 填充自定义复习模态框的筛选器
@@ -272,6 +299,23 @@ export function setupAnkiEventListeners() {
     dom.codeBtn.addEventListener('click', () => wrapSelection('`'));
     dom.linkBtn.addEventListener('click', () => wrapSelection('[', `](${prompt('URL:', 'https://')})`));
     
+    // 添加切换编辑/预览模式的事件监听器
+    dom.toggleEditPreviewBtn.addEventListener('click', toggleEditPreviewMode);
+    
+    // 修改全部隐藏按钮的图标
+    dom.toggleVisibilityClozeBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+    dom.toggleVisibilityClozeBtn.title = "全部隐藏";
+    
+    // 修改反向显示按钮的图标
+    dom.invertClozeBtn.innerHTML = '<i class="fas fa-random"></i>';
+    dom.invertClozeBtn.title = "反向显示/隐藏";
+    
+    // 初始化编辑/预览模式
+    dom.editorPreviewPanel.classList.remove('preview-active');
+    dom.toggleEditPreviewBtn.innerHTML = '<i class="fas fa-book-open"></i>';
+    dom.toggleEditPreviewBtn.title = "切换到预览模式";
+    dom.editModeDot.classList.add('active');
+    dom.previewModeDot.classList.remove('active');
     dom.toggleVisibilityClozeBtn.addEventListener('click', toggleAllClozeVisibility);
     dom.invertClozeBtn.addEventListener('click', invertAllCloze);
 

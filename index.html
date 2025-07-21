@@ -28,7 +28,7 @@
                 </button>
             </nav>
         </header>
-        
+
         <!-- AI Agent导航栏 (此部分在初始视图中可能隐藏) -->
         <nav class="ai-agent-nav" style="display: none;">
             <div class="nav-title">
@@ -93,12 +93,12 @@
                     </ul>
                 </div>
             </div>
-            
+
             <div class="history-panel">
                 <div class="history-header">
                     <div class="history-title">
                         <i class="fas fa-comments"></i>
-                        <span id="historyHeaderTitle">历史对话记录</span> 
+                        <span id="historyHeaderTitle">历史对话记录</span>
                     </div>
                     <div class="history-header-actions">
                         <button id="agentSettingsTriggerBtn" class="header-action-btn" title="当前Agent设置" style="display: none;">
@@ -147,7 +147,7 @@
                 <!-- ==================== 聊天输入区域结束 ==================== -->
             </div>
         </div>
-        
+
         <!-- Anki 笔记视图 (此部分在初始视图中可能隐藏) -->
         <div class="main-layout" id="anki-view" style="display: none;">
             <div class="session-sidebar">
@@ -180,45 +180,57 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="app-container">
-                <div class="panel" id="editorPanel">
-    <!-- 1. 添加了标准的 panel-header -->
-    <div class="panel-header">
-    <!-- 1. 左侧的按钮容器 -->
-    <div class="panel-actions-leading">
-        <button id="toggleSessionBtn" class="panel-btn" title="显示/隐藏会话栏"><i class="fas fa-bars"></i></button>
-    </div>
 
-        <div class="panel-title">
-            <i class="fas fa-edit"></i> Anki 编辑器
-        </div>
-        <div class="panel-actions">
-			<!-- 复习按钮组也可以放在这里，或者放在 header actions 里，这里放在子工具栏更符合“编辑”上下文 -->
-            <div class="review-btn-group" style="margin-left: auto;">
-                <button id="startReviewBtn" class="editor-btn editor-btn-text">
-                    <i class="fas fa-play-circle"></i> 复习 (<span id="reviewCount">0</span>)
-                </button>
-                <button id="reviewOptionsBtn" class="editor-btn dropdown-toggle">
-                    <i class="fas fa-chevron-down"></i>
-                </button>
-                <div id="reviewDropdownMenu" class="dropdown-menu" style="display: none;">
-                    <a href="#" id="customStudyBtn"><i class="fas fa-wrench"></i> 自定义复习...</a>
-                </div>
-            </div>
-            <button id="saveBtn" class="panel-btn panel-btn-text" title="保存"><i class="fas fa-save"></i> </button>
-            <button id="exportFileBtn" class="panel-btn panel-btn-text" title="导出"><i class="fas fa-download"></i> </button>
-            <button id="helpBtn" class="panel-btn panel-btn-text" title="帮助"><i class="fas fa-question-circle"></i></button>
-            <!-- 折叠按钮也在这里，这样它就不会被隐藏 -->
-            <button id="toggleEditorBtn" class="panel-btn collapse-btn" title="收起/展开编辑器">
-                <i class="fas fa-chevron-up"></i>
-            </button>
-        </div>
-    </div>
-    
-    <div class="panel-content">
-        <!-- 3. 格式化工具栏作为子工具栏放在内容区顶部 -->
-        <div class="editor-sub-toolbar">
+            <div class="app-container">
+                <div class="editor-preview-panel">
+                    <!-- 1. 添加了标准的 panel-header -->
+                    <div class="panel-header">
+                        <!-- 1. 左侧的按钮容器 -->
+                        <div class="panel-actions-leading">
+        <button id="toggleSessionBtn" class="panel-btn" title="显示/隐藏会话栏"><i class="fas fa-bars"></i></button>
+                            <button id="toggleEditPreviewBtn" class="panel-btn panel-btn-text">
+                                <i class="fas fa-book-open"></i> Preview
+                            </button>
+                        </div>
+
+                        <div class="panel-title">
+                            <i class="fas fa-edit"></i> Anki 编辑器
+                        </div>
+                        <div class="panel-actions">
+                            <!-- 复习按钮组也可以放在这里，或者放在 header actions 里，这里放在子工具栏更符合“编辑”上下文 -->
+                            <div class="review-btn-group" style="margin-left: auto;">
+
+                                <button id="startReviewBtn" class="panel-btn panel-btn-text">
+                                    <i class="fas fa-play-circle"></i> 复习 (<span id="reviewCount">0</span>)
+                                </button>
+                                <button id="reviewOptionsBtn" class="panel-btn dropdown-toggle">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div id="reviewDropdownMenu" class="dropdown-menu" style="display: none;">
+                                    <a href="#" id="customStudyBtn"><i class="fas fa-wrench"></i> 自定义复习...</a>
+                                </div>
+                            </div>
+                            <button id="toggleVisibilityClozeBtn" class="panel-btn" title="全部隐藏">
+                                <i class="fas fa-eye-eye"></i>
+                            </button>
+                            <button id="invertClozeBtn" class="panel-btn" title="反向显示/隐藏">
+                                <i class="fas fa-random"></i>
+                            </button>
+                            <button id="saveBtn" class="panel-btn panel-btn-text" title="保存"><i class="fas fa-save"></i>
+                            </button>
+                            <button id="exportFileBtn" class="panel-btn panel-btn-text" title="导出"><i
+                                    class="fas fa-download"></i> </button>
+                            <button id="helpBtn" class="panel-btn panel-btn-text" title="帮助"><i
+                                    class="fas fa-question-circle"></i></button>
+                            <button id="toggleEditorBtn" class="panel-btn collapse-btn" title="收起/展开编辑器">
+                                <i class="fas fa-chevron-up"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="panel-content">
+        <!-- 编辑模式下的工具栏 -->
+        <div class="editor-sub-toolbar" id="editorToolbar">
             <button id="clozeBtn" class="editor-btn" title="转换为Cloze"><i class="fas fa-square"></i></button>
             <button id="boldBtn" class="editor-btn" title="加粗"><i class="fas fa-bold"></i></button>
             <button id="italicBtn" class="editor-btn" title="斜体"><i class="fas fa-italic"></i></button>
@@ -226,12 +238,12 @@
             <button id="codeBtn" class="editor-btn" title="代码"><i class="fas fa-code"></i></button>
             <button id="linkBtn" class="editor-btn" title="链接"><i class="fas fa-link"></i></button>
             <button id="audioBtn" class="editor-btn" title="编辑声音"><i class="fas fa-music"></i></button>
-            
-
         </div>
 
-        <div class="editor-container">
-            <textarea id="editor" class="editor"># Anki MD管理系统
+        <!-- 编辑器容器 -->
+        <div class="editor-container" id="editorContainer">
+                            <textarea id="editor"
+                                class="editor"># Anki MD管理系统
 
 ## 使用说明
 
@@ -260,193 +272,191 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
 量子力学基础：--\\( \psi = \psi(x,t) \\)--
 相对论：--\\( E = \gamma m c^2 \\)--
 电磁学：--\\( \nabla \times \mathbf{B} = \mu_0 \mathbf{J} + \mu_0 \epsilon_0 \frac{\partial \mathbf{E}}{\partial t} \\)--</textarea>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="panel">
-                    <div class="panel-header">
-                        <div class="panel-title"><i class="fas fa-eye"></i> 预览</div>
-                        <div class="panel-actions">
-                            <button id="toggleVisibilityClozeBtn" class="panel-btn" title="全部隐藏"><i class="fas fa-eye-slash"></i></button>
-                            <button id="invertClozeBtn" class="panel-btn" title="反向显示/隐藏"><i class="fas fa-exchange-alt"></i></button>
-                        </div>
-                    </div>
-                    <div class="panel-content">
+
                         <div id="preview"></div>
+                        </div>
+
+        <!-- 模式指示器 -->
+                        <div class="mode-indicator">
+                            <div class="mode-dot active" id="editModeDot" title="编辑模式"></div>
+                            <div class="mode-dot" id="previewModeDot" title="预览模式"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- ====================================================== -->
-        <!--          [MODIFIED] 错题本视图 (应用所有修改)           -->
-        <!-- ====================================================== -->
-        <div id="mistakes-view" class="main-layout active">
+            </div>
 
-            <!-- [MODIFIED] 错题本侧边栏 -->
-            <div class="session-sidebar">
-                <div class="session-header">
-                    <div class="session-title">
-                        <span><i class="fas fa-book-open"></i> 错题筛选与导航</span>
+            <!-- ====================================================== -->
+            <!--          [MODIFIED] 错题本视图 (应用所有修改)           -->
+            <!-- ====================================================== -->
+            <div id="mistakes-view" class="main-layout active">
+
+                <!-- [MODIFIED] 错题本侧边栏 -->
+                <div class="session-sidebar">
+                    <div class="session-header">
+                        <div class="session-title">
+                            <span><i class="fas fa-book-open"></i> 错题筛选与导航</span>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="session-content">
-                    <!-- 筛选区域 -->
+
+                    <div class="session-content">
+                        <!-- 筛选区域 -->
                         <!-- [MODIFIED] 将 .filter-section 改为 .session-header -->
-    <div class="session-header"> 
-        <!-- [MODIFIED] 将 .filter-controls 改为 .session-controls -->
-        <div class="session-controls"> 
-            <select id="subject-filter"></select>
-            <!-- [MODIFIED] 统一所有按钮的样式为 session-btn -->
-            <button id="refresh-mistakes-btn" class="session-btn" title="刷新"><i class="fas fa-sync-alt"></i></button>
-            <button id="newMistakeFileBtn" class="session-btn" title="新建错题文件"><i class="fas fa-file-alt"></i></button>
-            <button id="load-yaml-btn" class="session-btn" title="导入YAML文件"><i class="fas fa-file-upload"></i></button>
-            <input type="file" id="yaml-file-input" accept=".yml,.yaml" style="display: none;">
-        </div>
-        <div class="filter-group" data-type="tags">
-          <div class="tag-list"></div>
-        </div>
-        <div class="filter-group" data-type="reasons">
-          <div class="tag-list"></div>
-        </div>
-    </div>
+                        <div class="session-header">
+                            <!-- [MODIFIED] 将 .filter-controls 改为 .session-controls -->
+                            <div class="session-controls">
+                                <select id="subject-filter"></select>
+                                <!-- [MODIFIED] 统一所有按钮的样式为 session-btn -->
+                                <button id="refresh-mistakes-btn" class="session-btn" title="刷新"><i
+                                        class="fas fa-sync-alt"></i></button>
+                                <button id="newMistakeFileBtn" class="session-btn" title="新建错题文件"><i
+                                        class="fas fa-file-alt"></i></button>
+                                <button id="load-yaml-btn" class="session-btn" title="导入YAML文件"><i
+                                        class="fas fa-file-upload"></i></button>
+                                <input type="file" id="yaml-file-input" accept=".yml,.yaml" style="display: none;">
+                            </div>
+                            <div class="filter-group" data-type="tags">
+                                <div class="tag-list"></div>
+                            </div>
+                            <div class="filter-group" data-type="reasons">
+                                <div class="tag-list"></div>
+                            </div>
+                        </div>
 
 
-                    <!-- 错题列表容器 -->
-                    <div class="mistakes-list-container">
-                        <div class="list-header"><i class="fas fa-list-ul"></i> 待复习列表 (按到期日排序)</div>
-                        <ul class="session-list" id="mistakes-list">
-                            <!-- 错题列表项将由JS动态生成 -->
-                        </ul>
-                        <div class="pagination">
-                            <!-- 分页按钮将由JS动态生成 -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- [MODIFIED] 错题本主内容区 -->
-            <div class="app-container">
-                <!-- 统计仪表盘 -->
-                <div id="statistics-dashboard" class="stats-dashboard">
-                    <!-- 统计卡片将由JS动态生成 -->
-                </div>
-                
-                <!-- YAML 编辑器面板 -->
-                <div id="mistake-editor-panel" class="panel editor-panel">
-                    <div class="panel-header">
-                        <div class="panel-actions-leading">
-                            <button id="mistakeToggleSessionBtn" class="panel-btn" title="显示/隐藏筛选栏"><i class="fas fa-bars"></i></button>
-                        </div>
-                        <div class="panel-title"><i class="fas fa-code"></i> YAML 编辑器</div>
-                        <div class="panel-actions">
-                            <button id="mistakeSaveBtn" class="panel-btn" title="保存并刷新"><i class="fas fa-save"></i></button>
-                            <button id="mistakeExportBtn" class="panel-btn" title="导出YAML"><i class="fas fa-download"></i></button>
-                            <button class="panel-btn collapse-btn" id="mistakeCollapseBtn" title="收起/展开">
-                                <i class="fas fa-chevron-up"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="panel-content">
-                        <textarea id="yaml-editor" placeholder="在此处粘贴或编辑您的YAML格式错题..."></textarea>
-                    </div>
-                </div>
-                
-                <!-- 错题预览面板 -->
-<div id="mistakes-preview-panel" class="panel preview-panel">
-                    <div class="panel-header">
-                        <div class="panel-title"><i class="fas fa-eye"></i> 错题预览</div>
-                        <div class="panel-actions">
-                            <div class="review-btn-group">
-                                <button id="mistakeStartReviewBtn" class="editor-btn editor-btn-text">
-                                    <i class="fas fa-play-circle"></i> 开始复习
-                                </button>
-                                <button id="mistakeReviewOptionsBtn" class="editor-btn dropdown-toggle">
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                                <div id="mistakeReviewDropdownMenu" class="dropdown-menu" style="display: none;">
-                                    <a href="#" id="mistakeCustomStudyBtn"><i class="fas fa-wrench"></i> 自定义复习...</a>
-                                </div>
+                        <!-- 错题列表容器 -->
+                        <div class="mistakes-list-container">
+                            <div class="list-header"><i class="fas fa-list-ul"></i> 待复习列表 (按到期日排序)</div>
+                            <ul class="session-list" id="mistakes-list">
+                                <!-- 错题列表项将由JS动态生成 -->
+                            </ul>
+                            <div class="pagination">
+                                <!-- 分页按钮将由JS动态生成 -->
                             </div>
                         </div>
                     </div>
-                    <div class="panel-content">
-                        <div id="mistakes-preview" class="mistakes-preview-container">
-                            <!-- 错题预览卡片将由JS动态生成 -->
+                </div>
+
+                <!-- [MODIFIED] 错题本主内容区 -->
+                <div class="app-container">
+                    <!-- 统计仪表盘 -->
+                    <div id="statistics-dashboard" class="stats-dashboard">
+                        <!-- 统计卡片将由JS动态生成 -->
+                    </div>
+
+                    <!-- YAML 编辑器面板 -->
+                    <div id="mistake-editor-panel" class="panel editor-panel">
+                        <div class="panel-header">
+                            <div class="panel-actions-leading">
+                            <button id="mistakeToggleSessionBtn" class="panel-btn" title="显示/隐藏筛选栏"><i class="fas fa-bars"></i></button>
+                            </div>
+                            <div class="panel-title"><i class="fas fa-code"></i> YAML 编辑器</div>
+                            <div class="panel-actions">
+                            <button id="mistakeSaveBtn" class="panel-btn" title="保存并刷新"><i class="fas fa-save"></i></button>
+                            <button id="mistakeExportBtn" class="panel-btn" title="导出YAML"><i class="fas fa-download"></i></button>
+                                <button class="panel-btn collapse-btn" id="mistakeCollapseBtn" title="收起/展开">
+                                    <i class="fas fa-chevron-up"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="panel-content">
+                            <textarea id="yaml-editor" placeholder="在此处粘贴或编辑您的YAML格式错题..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 错题预览面板 -->
+                    <div id="mistakes-preview-panel" class="panel preview-panel">
+                        <div class="panel-header">
+                            <div class="panel-title"><i class="fas fa-eye"></i> 错题预览</div>
+                            <div class="panel-actions">
+                                <div class="review-btn-group">
+                                    <button id="mistakeStartReviewBtn" class="editor-btn editor-btn-text">
+                                        <i class="fas fa-play-circle"></i> 开始复习
+                                    </button>
+                                    <button id="mistakeReviewOptionsBtn" class="editor-btn dropdown-toggle">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <div id="mistakeReviewDropdownMenu" class="dropdown-menu" style="display: none;">
+                                    <a href="#" id="mistakeCustomStudyBtn"><i class="fas fa-wrench"></i> 自定义复习...</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-content">
+                            <div id="mistakes-preview" class="mistakes-preview-container">
+                                <!-- 错题预览卡片将由JS动态生成 -->
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <!-- 错题本视图结束 -->
+            <!-- 错题本视图结束 -->
 
 
-        <div class="instructions">
-             <h2><i class="fas fa-info-circle"></i> 使用说明</h2>
-            <div class="instructions-grid">
-                <div class="instruction-card">
-                    <h3><i class="fas fa-folder"></i> 目录管理</h3>
-                    <p>• <strong>新建目录</strong>：点击文件夹+图标创建新目录<br>
-                    • <strong>选择目录</strong>：点击目录名称设为当前目录<br>
-                    • <strong>移动项目</strong>：使用移动按钮将项目移动到其他目录<br>
-                    • <strong>删除目录</strong>：删除目录会同时删除其下所有内容</p>
-                </div>
-                
-                <div class="instruction-card">
-                    <h3><i class="fas fa-file"></i> 文件管理</h3>
-                    <p>• <strong>新建文件</strong>：在当前目录下创建新文件<br>
-                    • <strong>打开文件</strong>：导入外部文件到当前目录<br>
-                    • <strong>移动文件</strong>：可将文件移动到其他目录<br>
-                    • <strong>编辑内容</strong>：点击文件名称编辑其内容</p>
-                </div>
-                
-                <div class="instruction-card">
-                    <h3><i class="fas fa-check-square"></i> 批量操作</h3>
-                    <p>• <strong>全选</strong>：选中所有可见项目<br>
-                    • <strong>目录选择</strong>：选中目录会自动选中其下所有内容<br>
-                    • <strong>批量删除</strong>：删除所有选中的项目<br>
-                    • <strong>跨目录操作</strong>：可同时选择不同目录下的项目</p>
-                </div>
-                
-                <div class="instruction-card">
-                    <h3><i class="fas fa-edit"></i> 编辑器工具</h3>
-                    <p>• <strong>转换为Cloze</strong>：将选中文本转换为记忆卡片<br>
-                    • <strong>格式工具</strong>：支持加粗、斜体、代码块等格式<br>
-                    • <strong>保存/导出</strong>：保存当前内容或导出为Markdown文件<br>
-                    • <strong>收起/展开</strong>：优化工作区空间管理</p>
+            <div class="instructions">
+                <h2><i class="fas fa-info-circle"></i> 使用说明</h2>
+                <div class="instructions-grid">
+                    <div class="instruction-card">
+                        <h3><i class="fas fa-folder"></i> 目录管理</h3>
+                        <p>• <strong>新建目录</strong>：点击文件夹+图标创建新目录<br>
+                            • <strong>选择目录</strong>：点击目录名称设为当前目录<br>
+                            • <strong>移动项目</strong>：使用移动按钮将项目移动到其他目录<br>
+                            • <strong>删除目录</strong>：删除目录会同时删除其下所有内容</p>
+                    </div>
+
+                    <div class="instruction-card">
+                        <h3><i class="fas fa-file"></i> 文件管理</h3>
+                        <p>• <strong>新建文件</strong>：在当前目录下创建新文件<br>
+                            • <strong>打开文件</strong>：导入外部文件到当前目录<br>
+                            • <strong>移动文件</strong>：可将文件移动到其他目录<br>
+                            • <strong>编辑内容</strong>：点击文件名称编辑其内容</p>
+                    </div>
+
+                    <div class="instruction-card">
+                        <h3><i class="fas fa-check-square"></i> 批量操作</h3>
+                        <p>• <strong>全选</strong>：选中所有可见项目<br>
+                            • <strong>目录选择</strong>：选中目录会自动选中其下所有内容<br>
+                            • <strong>批量删除</strong>：删除所有选中的项目<br>
+                            • <strong>跨目录操作</strong>：可同时选择不同目录下的项目</p>
+                    </div>
+
+                    <div class="instruction-card">
+                        <h3><i class="fas fa-edit"></i> 编辑器工具</h3>
+                        <p>• <strong>转换为Cloze</strong>：将选中文本转换为记忆卡片<br>
+                            • <strong>格式工具</strong>：支持加粗、斜体、代码块等格式<br>
+                            • <strong>保存/导出</strong>：保存当前内容或导出为Markdown文件<br>
+                            • <strong>收起/展开</strong>：优化工作区空间管理</p>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <input type="file" id="fileInput" class="file-input" accept=".md, .txt">
-        
-        <div class="move-modal" id="moveModal">
-            <div class="move-modal-content">
-                <div class="move-modal-header">
-                    <div class="move-modal-title">移动到目录</div>
-                    <button class="move-modal-close" id="closeMoveModalBtn">×</button>
-                </div>
-                <p>请选择目标目录：</p>
-                <div class="folder-list" id="folderList"></div>
-                <div class="move-modal-actions">
-                    <button class="move-modal-btn cancel" id="cancelMoveBtn">取消</button>
-                    <button class="move-modal-btn confirm" id="confirmMoveBtn">确认移动</button>
+
+            <input type="file" id="fileInput" class="file-input" accept=".md, .txt">
+
+            <div class="move-modal" id="moveModal">
+                <div class="move-modal-content">
+                    <div class="move-modal-header">
+                        <div class="move-modal-title">移动到目录</div>
+                        <button class="move-modal-close" id="closeMoveModalBtn">×</button>
+                    </div>
+                    <p>请选择目标目录：</p>
+                    <div class="folder-list" id="folderList"></div>
+                    <div class="move-modal-actions">
+                        <button class="move-modal-btn cancel" id="cancelMoveBtn">取消</button>
+                        <button class="move-modal-btn confirm" id="confirmMoveBtn">确认移动</button>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="footer">
-            <p>© 2024 Anki MD管理系统 | 数据保存在浏览器本地存储中</p>
-        </div>
-    </div>
 
-    <script type="module" src="/src/main.js"></script>
+            <div class="footer">
+                <p>© 2024 Anki MD管理系统 | 数据保存在浏览器本地存储中</p>
+            </div>
+        </div>
 
-    <!-- ====================================================== -->
-    <!--          AUDIO PLAYING                                 -->
-    <!-- ====================================================== -->
+        <script type="module" src="/src/main.js"></script>
+
+        <!-- ====================================================== -->
+        <!--          AUDIO PLAYING                                 -->
+        <!-- ====================================================== -->
         <div class="audio-controls" id="audioControls">
             <div class="audio-title" id="audioTitle">音频播放</div>
             <div class="audio-progress">
@@ -458,141 +468,141 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
                 <button class="audio-btn" id="stopBtn"><i class="fas fa-stop"></i> 停止</button>
             </div>
         </div>
-        
-    <!-- ====================================================== -->
-    <!--          AGENT SETTINGS MODAL (Initially Hidden)       -->
-    <!-- ====================================================== -->
-    <div class="modal-overlay" id="agentSettingsModal" style="display: none;">
-        <div class="modal-content agent-settings-modal">
-            <div class="modal-header">
-                <h2 id="agentSettingsModalTitle">Agent 设置</h2>
-                <button class="modal-close" id="agentSettingsCloseBtn">×</button>
-            </div>
-            <div class="modal-body">
-                <form id="agentSettingsForm" novalidate>
-                    <input type="hidden" id="agentSettingsId">
 
-                    <div class="form-group">
+        <!-- ====================================================== -->
+        <!--          AGENT SETTINGS MODAL (Initially Hidden)       -->
+        <!-- ====================================================== -->
+        <div class="modal-overlay" id="agentSettingsModal" style="display: none;">
+            <div class="modal-content agent-settings-modal">
+                <div class="modal-header">
+                    <h2 id="agentSettingsModalTitle">Agent 设置</h2>
+                    <button class="modal-close" id="agentSettingsCloseBtn">×</button>
+                </div>
+                <div class="modal-body">
+                    <form id="agentSettingsForm" novalidate>
+                        <input type="hidden" id="agentSettingsId">
+
+                        <div class="form-group">
                         <label for="agentSettingsName">Agent名 (内部标识) <i class="fas fa-info-circle" title="唯一标识，仅限字母、数字、下划线。"></i></label>
                         <input type="text" id="agentSettingsName" class="form-control" required pattern="[a-zA-Z0-9_]+">
-                        <div class="invalid-feedback">名称已被使用或格式不正确。</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="agentSettingsDisplayName">会话显示名</label>
-                        <input type="text" id="agentSettingsDisplayName" class="form-control" required>
-                    </div>
-                    <!-- 新增 Avatar 输入框 -->
-                    <div class="form-group">
-                        <label for="agentSettingsAvatar">头像 (2个字符)</label>
-                        <input type="text" id="agentSettingsAvatar" class="form-control" required maxlength="2" placeholder="例如：AI, 数, 语">
-                    </div>
-                    <hr>
-
-                    <h4>模型配置</h4>
-
-                    <div class="form-group">
-                        <label for="agentSettingsProvider">提供商</label>
-                        <select id="agentSettingsProvider" class="form-control" required>
-                            <!-- 选项将由JS动态填充 -->
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="agentSettingsApiPath">API 地址</label>
-                        <input type="url" id="agentSettingsApiPath" class="form-control">
-                    </div>
-                    
-                    <div class="form-group api-key-group">
-                        <label for="agentSettingsApiKey">API Key</label>
-                        <div class="input-group">
-                            <input type="password" id="agentSettingsApiKey" class="form-control">
-                            <button type="button" id="toggleApiKeyVisibility" class="input-group-btn" title="显示/隐藏"><i class="fas fa-eye"></i></button>
+                            <div class="invalid-feedback">名称已被使用或格式不正确。</div>
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <label for="agentSettingsModel">模型名</label>
-                        <select id="agentSettingsModel" class="form-control" required>
-                            <!-- 选项将由JS动态填充 -->
-                        </select>
-                    </div>
+                        <div class="form-group">
+                            <label for="agentSettingsDisplayName">会话显示名</label>
+                            <input type="text" id="agentSettingsDisplayName" class="form-control" required>
+                        </div>
+                        <!-- 新增 Avatar 输入框 -->
+                        <div class="form-group">
+                            <label for="agentSettingsAvatar">头像 (2个字符)</label>
+                        <input type="text" id="agentSettingsAvatar" class="form-control" required maxlength="2" placeholder="例如：AI, 数, 语">
+                        </div>
+                        <hr>
 
-                    <div class="form-check">
-                        <input type="checkbox" id="agentSettingsIsLocal" class="form-check-input">
-                        <label for="agentSettingsIsLocal">这是一个本地推理模型 (无需API Key)</label>
-                    </div>
+                        <h4>模型配置</h4>
 
-                    <hr>
+                        <div class="form-group">
+                            <label for="agentSettingsProvider">提供商</label>
+                            <select id="agentSettingsProvider" class="form-control" required>
+                                <!-- 选项将由JS动态填充 -->
+                            </select>
+                        </div>
 
-                    <h4>危险操作区</h4>
+                        <div class="form-group">
+                            <label for="agentSettingsApiPath">API 地址</label>
+                            <input type="url" id="agentSettingsApiPath" class="form-control">
+                        </div>
+
+                        <div class="form-group api-key-group">
+                            <label for="agentSettingsApiKey">API Key</label>
+                            <div class="input-group">
+                                <input type="password" id="agentSettingsApiKey" class="form-control">
+                            <button type="button" id="toggleApiKeyVisibility" class="input-group-btn" title="显示/隐藏"><i class="fas fa-eye"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="agentSettingsModel">模型名</label>
+                            <select id="agentSettingsModel" class="form-control" required>
+                                <!-- 选项将由JS动态填充 -->
+                            </select>
+                        </div>
+
+                        <div class="form-check">
+                            <input type="checkbox" id="agentSettingsIsLocal" class="form-check-input">
+                            <label for="agentSettingsIsLocal">这是一个本地推理模型 (无需API Key)</label>
+                        </div>
+
+                        <hr>
+
+                        <h4>危险操作区</h4>
                     <button type="button" class="btn-danger" id="deleteAgentBtn"><i class="fas fa-trash"></i> 删除此 Agent</button>
-                    <div class="delete-confirm-zone" style="display:none;">
-                        <p>请输入Agent名 "<b><span id="agentNameToConfirm"></span></b>" 以确认删除：</p>
-                        <input type="text" id="deleteConfirmInput" class="form-control">
-                        <button type="button" class="btn-danger" id="finalDeleteBtn" disabled>我已了解后果，永久删除</button>
-                    </div>
-                    <hr>
-                    <h4>Agent 行为设定</h4>
-                    <div class="form-group">
-                        <label for="agentSettingsSystemPrompt">System Prompt (系统提示词)</label>
+                        <div class="delete-confirm-zone" style="display:none;">
+                            <p>请输入Agent名 "<b><span id="agentNameToConfirm"></span></b>" 以确认删除：</p>
+                            <input type="text" id="deleteConfirmInput" class="form-control">
+                            <button type="button" class="btn-danger" id="finalDeleteBtn" disabled>我已了解后果，永久删除</button>
+                        </div>
+                        <hr>
+                        <h4>Agent 行为设定</h4>
+                        <div class="form-group">
+                            <label for="agentSettingsSystemPrompt">System Prompt (系统提示词)</label>
                         <textarea id="agentSettingsSystemPrompt" class="form-control" rows="5" placeholder="定义Agent的角色和行为，例如：你是一个专业的数学学习助手..."></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn-secondary" id="agentSettingsCancelBtn">取消</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="agentSettingsCancelBtn">取消</button>
                 <button type="submit" class="btn-primary" id="agentSettingsSaveBtn" form="agentSettingsForm">保存更改</button>
+                </div>
             </div>
         </div>
-    </div>
 
         <!-- [NEW] 自定义复习模态框 -->
-    <div class="modal-overlay" id="customStudyModal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>自定义复习会话</h2>
-                <button class="modal-close" id="customStudyCloseBtn">×</button>
-            </div>
-            <div class="modal-body">
-                <form id="customStudyForm">
-                    <div class="form-group">
-                        <label for="filterByFile">按文件/目录筛选:</label>
-                        <select id="filterByFile" class="form-control">
-                            <option value="all">所有文件</option>
-                            <!-- 选项将由JS动态填充 -->
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>按卡片状态筛选:</label>
-                        <div class="form-checkbox-group">
-                            <label><input type="checkbox" name="cardState" value="new" checked> 新卡片</label>
-                            <label><input type="checkbox" name="cardState" value="learning" checked> 学习中</label>
-                            <label><input type="checkbox" name="cardState" value="review" checked> 复习中</label>
-                            <label><input type="checkbox" name="cardState" value="relearning" checked> 重学中</label>
+        <div class="modal-overlay" id="customStudyModal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>自定义复习会话</h2>
+                    <button class="modal-close" id="customStudyCloseBtn">×</button>
+                </div>
+                <div class="modal-body">
+                    <form id="customStudyForm">
+                        <div class="form-group">
+                            <label for="filterByFile">按文件/目录筛选:</label>
+                            <select id="filterByFile" class="form-control">
+                                <option value="all">所有文件</option>
+                                <!-- 选项将由JS动态填充 -->
+                            </select>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label>按最后一次复习时间筛选:</label>
-                        <select id="filterByLastReview" class="form-control">
-                            <option value="any">任何时间</option>
-                            <option value="last7days">最近7天内</option>
-                            <option value="last30days">最近30天内</option>
-                            <option value="over30days">超过30天未复习</option>
-                            <option value="never">从未复习过 (新卡片)</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="maxCards">最大卡片数量:</label>
-                        <input type="number" id="maxCards" class="form-control" value="50" min="1">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn-secondary" id="customStudyCancelBtn">取消</button>
+                        <div class="form-group">
+                            <label>按卡片状态筛选:</label>
+                            <div class="form-checkbox-group">
+                                <label><input type="checkbox" name="cardState" value="new" checked> 新卡片</label>
+                                <label><input type="checkbox" name="cardState" value="learning" checked> 学习中</label>
+                                <label><input type="checkbox" name="cardState" value="review" checked> 复习中</label>
+                                <label><input type="checkbox" name="cardState" value="relearning" checked> 重学中</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>按最后一次复习时间筛选:</label>
+                            <select id="filterByLastReview" class="form-control">
+                                <option value="any">任何时间</option>
+                                <option value="last7days">最近7天内</option>
+                                <option value="last30days">最近30天内</option>
+                                <option value="over30days">超过30天未复习</option>
+                                <option value="never">从未复习过 (新卡片)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="maxCards">最大卡片数量:</label>
+                            <input type="number" id="maxCards" class="form-control" value="50" min="1">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="customStudyCancelBtn">取消</button>
                 <button type="submit" class="btn-primary" id="startCustomStudyBtn" form="customStudyForm">开始自定义复习</button>
+                </div>
             </div>
         </div>
-    </div>
 </body>
 </html>
