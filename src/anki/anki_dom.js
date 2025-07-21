@@ -15,7 +15,6 @@ export const saveBtn = $id('saveBtn');
 export const exportFileBtn = $id('exportFileBtn');
 export const deleteSelectedBtn = $id('deleteSelectedBtn');
 export const moveSelectedBtn = $id('moveSelectedBtn');
-export const helpBtn = $id('helpBtn');
 export const toggleSessionBtn = $id('toggleSessionBtn');
 export const toggleEditorBtn = $id('toggleEditorBtn');
 export const clozeBtn = $id('clozeBtn');

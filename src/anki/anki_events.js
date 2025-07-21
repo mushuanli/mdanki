@@ -157,20 +157,81 @@ function handleToggleEditor() {
     if (isCollapsed) handleSave();
 }
 
-// 切换编辑/预览模式
+// ======================================================
+//          [MODIFIED] 新增和修改的函数
+// ======================================================
+
+/**
+ * [新增] 编辑器滚动事件处理。
+ * 计算并存储当前滚动的百分比。
+ */
+function handleEditorScroll() {
+    // 只有当编辑器可见时才更新状态，防止视图切换时触发不必要的更新
+    if (dom.editorPreviewPanel.classList.contains('preview-active')) return;
+
+    const editor = dom.editor;
+    // 避免在内容不可滚动时除以零
+    if (editor.scrollHeight > editor.clientHeight) {
+        const scrollRatio = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
+        // 将滚动比例保存到应用状态中
+        setState({ editorScrollRatio: Math.min(1, Math.max(0, scrollRatio)) });
+    }
+}
+
+/**
+ * [新增] 预览区滚动事件处理。
+ * 计算并存储当前滚动的百分比。
+ */
+function handlePreviewScroll() {
+    // 只有当预览区可见时才更新状态
+    if (!dom.editorPreviewPanel.classList.contains('preview-active')) return;
+
+    const preview = dom.preview;
+    if (preview.scrollHeight > preview.clientHeight) {
+        const scrollRatio = preview.scrollTop / (preview.scrollHeight - preview.clientHeight);
+        setState({ editorScrollRatio: scrollRatio });
+    }
+}
+
+/**
+ * [重写] 切换编辑/预览模式，并同步滚动位置。
+ */
 function toggleEditPreviewMode() {
     const panel = dom.editorPreviewPanel;
     const isPreviewMode = panel.classList.contains('preview-active');
     
     if (isPreviewMode) {
-        // 切换到编辑模式
+        // --- 从预览切换到编辑模式 ---
         panel.classList.remove('preview-active');
-        dom.toggleEditPreviewBtn.innerHTML = '<i class="fas fa-book-open"></i>';
-        dom.toggleEditPreviewBtn.title = "切换到预览模式";
+        dom.toggleEditPreviewBtn.innerHTML = '<i class="fas fa-book-open"></i> Preview';
+        dom.toggleEditPreviewBtn.title = "切换到预览";
         dom.editModeDot.classList.add('active');
         dom.previewModeDot.classList.remove('active');
+        
+        // 使用 requestAnimationFrame 确保编辑器在DOM中可见并且其尺寸已计算
+        requestAnimationFrame(() => {
+            const editor = dom.editor;
+            // 应用保存的滚动比例
+            if (appState.editorScrollRatio !== undefined && (editor.scrollHeight > editor.clientHeight)) {
+                editor.scrollTop = appState.editorScrollRatio * (editor.scrollHeight - editor.clientHeight);
+            }
+        });
+        dom.editor.focus(); // 将焦点设置回编辑器
+
     } else {
-        // 切换到预览模式
+        // --- 从编辑切换到预览模式 ---
+        handleSave(); // 切换前保存
+        updatePreview(); // 更新预览内容
+        
+        // 使用 requestAnimationFrame 等待DOM更新，特别是内容渲染后
+        requestAnimationFrame(() => {
+            const preview = dom.preview;
+            // 应用保存的滚动比例
+            if (appState.editorScrollRatio !== undefined && (preview.scrollHeight > preview.clientHeight)) {
+                preview.scrollTop = appState.editorScrollRatio * (preview.scrollHeight - preview.clientHeight);
+            }
+        });
+
         panel.classList.add('preview-active');
         dom.toggleEditPreviewBtn.innerHTML = '<i class="fas fa-edit"></i>';
         dom.toggleEditPreviewBtn.title = "切换到编辑模式";
@@ -289,7 +350,6 @@ export function setupAnkiEventListeners() {
         dom.toggleSessionBtn.innerHTML = isHidden ? '<i class="fas fa-arrow-right"></i>' : '<i class="fas fa-arrow-left"></i>';
     });
 
-    dom.helpBtn.addEventListener('click', () => dom.instructionsSection.scrollIntoView({ behavior: 'smooth' }));
     dom.toggleEditorBtn.addEventListener('click', handleToggleEditor);
     dom.clozeBtn.addEventListener('click', () => wrapSelection('--', '--'));
     dom.boldBtn.addEventListener('click', () => wrapSelection('**'));
@@ -299,7 +359,11 @@ export function setupAnkiEventListeners() {
     dom.codeBtn.addEventListener('click', () => wrapSelection('`'));
     dom.linkBtn.addEventListener('click', () => wrapSelection('[', `](${prompt('URL:', 'https://')})`));
     
-    // 添加切换编辑/预览模式的事件监听器
+    // [MODIFIED] 绑定新的滚动事件监听器
+    dom.editor.addEventListener('scroll', handleEditorScroll);
+    dom.preview.addEventListener('scroll', handlePreviewScroll);
+
+    // [MODIFIED] 确保此按钮的点击事件由我们重写的函数处理
     dom.toggleEditPreviewBtn.addEventListener('click', toggleEditPreviewMode);
     
     // 修改全部隐藏按钮的图标
