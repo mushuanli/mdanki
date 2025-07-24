@@ -280,6 +280,55 @@ export function updatePreview() {
 }
 
 export function setupPreview() {
+    const mathExtension = {
+  name: 'math',
+  level: 'inline', // or 'block'
+  start(src) {
+    return src.match(/\$\$|\\[\(\)\[\]]/)?.index; // 查找 $$ 或 \[ 等数学环境的起始位置
+  },
+  tokenizer(src, tokens) {
+    // 匹配块级公式 $$...$$ 或 \[...\]
+    let match = src.match(/^\$\$\s*([\s\S]+?)\s*\$\$/); // $$
+    if (!match) {
+        match = src.match(/^\\\[\s*([\s\S]+?)\s*\\\]/); // \[ \]
+    }
+    if (match) {
+        return {
+            type: 'math',
+            raw: match[0],
+            text: match[1].trim(),
+            displayMode: true // 标记为块级
+        };
+    }
+
+    // 匹配行内公式 $...$ 或 \(...\)
+    match = src.match(/^\$((?:\\\$|[^$])+?)\$/); // $
+    if (!match) {
+        match = src.match(/^\\\(\s*([\s\S]+?)\s*\\\)/); // \( \)
+    }
+    if (match) {
+        return {
+            type: 'math',
+            raw: match[0],
+            text: match[1].trim(),
+            displayMode: false // 标记为行内
+        };
+    }
+  },
+  renderer(token) {
+    // 最关键的一步：原样返回公式内容，让 MathJax 自己去处理
+    // MathJax 会自动寻找这些分隔符
+    if (token.displayMode) {
+      return `\\[${token.text}\\]`;
+    } else {
+      return `\\(${token.text}\\)`;
+    }
+  }
+};
+
+// 使用自定义的数学扩展
+window.marked.use({ extensions: [mathExtension] });
+
     window.marked.setOptions({ breaks: true });
     addClozeEventListeners();
 }
