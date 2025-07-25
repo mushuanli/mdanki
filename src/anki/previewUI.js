@@ -304,77 +304,77 @@ function addClozeEventListeners() {
     // [核心修正 1] 将事件处理函数声明为 async
     dom.preview.addEventListener('change', async (e) => {
         const target = e.target;
-        // 步骤 1: 确保是列表项中的复选框
-        if (target.tagName === 'INPUT' && target.type === 'checkbox' && target.closest('li')) {
-            const isChecked = target.checked;
-            
-            const allCheckboxes = Array.from(dom.preview.querySelectorAll('li input[type="checkbox"]'));
-            const clickedIndex = allCheckboxes.indexOf(target);
+        // 步骤 1: 确保事件源是列表项中的一个复选框
+        if (target.tagName !== 'INPUT' || target.type !== 'checkbox' || !target.closest('li')) {
+            return;
+        }
 
-            if (clickedIndex === -1) return;
+        // 步骤 2: 确定被点击的复选框是所有复选框中的第几个
+        const allCheckboxes = Array.from(dom.preview.querySelectorAll('li input[type="checkbox"]'));
+        const clickedIndex = allCheckboxes.indexOf(target);
+        if (clickedIndex === -1) {
+            return;
+        }
 
-            // 步骤 2: 获取编辑器的当前内容
-            let editorContent = dom.editor.value;
+        const isChecked = target.checked;
+        const editorContent = dom.editor.value;
+        const lines = editorContent.split('\n');
+        
+        // 用于识别任务列表项的正则表达式
+        const taskLineRegex = /^\s*- \[( |x)\]/;
+        let taskCounter = 0; // 专门用于对源文本中的任务项进行计数
 
-            // 使用一个更简单的正则，只分离标记和后面的所有内容
-            const taskRegex = /^(- \[( |x)\])(.*)$/gm;
-            const dateBlockRegex = /( *\{.*?\})/; // 用于从内容中查找日期块的正则
-            let currentIndex = 0;
-            let matchFound = false;
-
-            editorContent = editorContent.replace(taskRegex, (match, marker, spaceOrX, fullContent) => {
-                if (currentIndex === clickedIndex) {
-                    matchFound = true;
-                    let content = fullContent.trim();
-                    let existingDateBlock = '';
-
-                    // 检查内容中是否已经存在日期块
-                    const dateMatch = content.match(dateBlockRegex);
-                    if (dateMatch) {
-                        // 如果找到，就把它分离出来
-                        existingDateBlock = dateMatch[0].trim();
-                        // 剩下的就是纯粹的任务文本
-                        content = content.replace(dateBlockRegex, '').trim();
-                    }
-                    
-                    if (isChecked) {
-                        // 【修正逻辑】总是生成新的日期块来覆盖旧的
-                        const displayDate = formatDateToSubscript(new Date());
-                        const machineDate = new Date().toISOString();
-                        const newDateBlock = `{${displayDate}|${machineDate}}`;
-                        
-                        // 总是以 "标记 日期 文本" 的格式重新组合
-                        return `- [x] ${newDateBlock} ${content}`;
-                    } else {
-                        // 取消勾选时，保留旧的日期块（如果存在）
-                        const datePart = existingDateBlock ? ` ${existingDateBlock}` : '';
-                        return `- [ ]${datePart} ${content}`;
-                    }
-                }
-                currentIndex++;
-                return match;
-            });
-
-            // 步骤 4 & 5: 如果成功找到并替换，则更新编辑器并触发事件以保存
-            if (matchFound) {
-                const cursorPos = dom.editor.selectionStart;
-                dom.editor.value = editorContent;
-                dom.editor.setSelectionRange(cursorPos, cursorPos);
-              
-                // [核心修正 2] 在触发重绘之前，立即保存当前内容到核心状态
-                // 这样后续的 updatePreview 才能读到正确的数据
-                await dataService.saveCurrentSessionContent(editorContent);
-                
-                // [核心修正 2] 立即调用 updatePreview 以确保 UI 完全同步
-                // 这会立刻重绘预览区，包括正确的 title 属性
-                await updatePreview();
-
-                // 步骤 5: 触发 input 事件以通知其他模块（如果需要），例如“未保存”状态提示
-                dom.editor.dispatchEvent(new Event('input', { bubbles: true }));
-
-                // 触发预览更新，以正确显示悬停提示等
-                // setTimeout(() => updatePreview(), 50); // 此行可以保留，以便即时更新预览中的title属性
+        // 步骤 3: 遍历每一行来定位和修改目标行
+        const newLines = lines.map(line => {
+            // 如果这一行不是任务项，直接返回原样
+            if (!taskLineRegex.test(line)) {
+                return line;
             }
+
+            // 如果这一行是任务项，检查它是否是我们要找的那个
+            if (taskCounter === clickedIndex) {
+                taskCounter++; // 别忘了增加计数器
+                
+                // 正是这一行！现在进行修改
+                if (isChecked) {
+                    // --- 场景：勾选复选框 ---
+                    // 1. 去掉旧的日期块（如果有的话），避免重复
+                    let content = line.replace(/\{[^}]+\}/g, '').trim();
+                    // 2. 提取纯任务文本
+                    let taskText = content.replace(/^\s*- \[\s\]\s*/, '');
+                    
+                    // 3. 创建新的日期块
+                    const displayDate = formatDateToSubscript(new Date());
+                    const machineDate = new Date().toISOString();
+                    const newDateBlock = `{${displayDate}|${machineDate}}`;
+                    
+                    // 4. 组装成新的、已完成的任务行
+                    return `- [x] ${newDateBlock} ${taskText}`;
+                } else {
+                    // --- 场景：取消勾选 ---
+                    // 1. 只需将 "[x]" 替换为 "[ ]"
+                    // 2. 您的原始逻辑保留了日期，这种做法可以保持任务的元数据，这里我们遵循它。
+                    return line.replace('[x]', '[ ]');
+                }
+            } else {
+                // 是任务行，但不是被点击的那个，原样返回
+                taskCounter++;
+                return line;
+            }
+        });
+
+        // 步骤 4: 将修改后的行数组合并成新文本，并更新编辑器
+        const newEditorContent = newLines.join('\n');
+        
+        if (editorContent !== newEditorContent) {
+            const cursorPos = dom.editor.selectionStart;
+            dom.editor.value = newEditorContent;
+            dom.editor.setSelectionRange(cursorPos, cursorPos);
+          
+            // 保存并触发UI更新
+            await dataService.saveCurrentSessionContent(newEditorContent);
+            await updatePreview();
+            dom.editor.dispatchEvent(new Event('input', { bubbles: true }));
         }
     });
 }
