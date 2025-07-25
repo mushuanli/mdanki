@@ -5,4 +5,4 @@ export const DB_NAME = 'MdAnkiDatabase';
 
 export const DB_VERSION = 2; // Start with version 2 as per the previous schema design
 
-export const INITIAL_CONTENT = '# 新文件\n\n开始编写您的内容...\n\n使用 --内容-- 创建Cloze记忆卡片';
+export const INITIAL_CONTENT = '# 新文件\n\n开始编写您的内容...\n\n- [ ] 完成情况 \n\n使用 --内容-- 创建Cloze记忆卡片, 可以有声音: --你好--^^hello^^ ';

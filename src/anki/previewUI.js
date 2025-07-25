@@ -86,6 +86,110 @@ function processClozeElementsInNode(node) {
     }
 }
 
+/**
+ * [新增] 处理任务列表，添加悬停提示和隐藏时间戳
+ */
+function processTaskLists() {
+    const taskItems = dom.preview.querySelectorAll('li');
+    const timeRegex = /\{([^}]+)\}/; // 匹配 {...} 中的内容
+
+    taskItems.forEach(item => {
+        // 寻找复选框
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        if (!checkbox) return;
+
+        // 步骤 1: 确保复选框是可点击的 (这一步保持不变)
+        checkbox.disabled = false;
+        // ======================================================
+
+        // 步骤 2: [核心修改] 精确查找并替换时间戳文本节点
+        // 遍历 li 的所有直接子节点
+        Array.from(item.childNodes).forEach(node => {
+            // 我们只关心文本节点，并且内容要匹配时间戳格式
+            if (node.nodeType === Node.TEXT_NODE && timeRegex.test(node.nodeValue)) {
+                const match = node.nodeValue.match(timeRegex);
+                const fullBlock = match[0];       // e.g., "{₂₀₂₅-₇-₂₆|2025-07-26T...Z}"
+                const contentBlock = match[1];    // e.g., "₂₀₂₅-₇-₂₆|2025-07-26T...Z"
+
+                let displayDate = '';
+                let machineDate = '';
+
+                // 解析我们的双格式数据
+                if (contentBlock.includes('|')) {
+                    const parts = contentBlock.split('|');
+                    displayDate = parts[0];
+                    machineDate = parts[1];
+                } else {
+                    // 如果格式不符，则跳过，避免出错
+                    return; 
+                }
+
+                try {
+                    const date = new Date(machineDate);
+                    if (isNaN(date.getTime())) return; // 无效日期则跳过
+
+                    // 1. 设置悬停提示
+                    item.title = `完成于: ${date.toLocaleString()}`;
+
+                    // ======================================================
+                    //          ▼▼▼ 第 1 处核心修改 ▼▼▼
+                    // 目的：改变渲染顺序，将日期显示在任务内容前面。
+                    // ======================================================
+
+                    // 2. DOM 操作：用可见的日期和隐藏的数据块替换原始文本
+                    const textContent = node.nodeValue.replace(fullBlock, '');
+
+                    // 创建可见的日期文本节点，注意后面的空格用于分隔
+                    const displayNode = document.createTextNode(` ${displayDate} `);
+
+                    // 创建隐藏的数据存储节点
+                    const storageNode = document.createElement('span');
+                    storageNode.style.display = 'none';
+                    storageNode.className = 'task-timestamp-data';
+                    storageNode.textContent = fullBlock;
+                    
+                    // 3. 更新原始节点：只保留纯任务文本
+                    node.nodeValue = textContent;
+                    
+                    // 4. 在任务文本节点之前插入可见的日期节点
+                    item.insertBefore(displayNode, node);
+                    
+                    // 5. 将隐藏的数据块附加到<li>的末尾（它的位置不影响显示）
+                    item.appendChild(storageNode);
+                    
+                } catch (e) {
+                    console.warn("解析任务日期时出错:", e);
+                }
+            }
+        });
+    });
+}
+
+
+// ======================================================
+//          [新增] 日期格式化辅助函数
+// ======================================================
+/**
+ * 将日期格式化为包含 Unicode 下标数字的特殊字符串。
+ * @param {Date} date - 要格式化的日期对象。
+ * @returns {string} 格式化后的字符串，例如 "₂₀₂₅年₇月₂₆日"。
+ */
+function formatDateToSubscript(date) {
+    const year = date.getFullYear().toString();
+    const month = (date.getMonth() + 1).toString();
+    const day = date.getDate().toString();
+
+    const subscriptMap = {
+        '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄',
+        '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉'
+    };
+
+    const toSubscript = (str) => str.split('').map(char => subscriptMap[char] || char).join('');
+
+    // 返回新的格式
+    return `${toSubscript(year)}-${toSubscript(month)}-${toSubscript(day)}`;
+}
+
 function addClozeEventListeners() {
     // --- 1. 单击事件监听器 (用于复习) ---
     dom.preview.addEventListener('click', (e) => {
@@ -193,6 +297,86 @@ function addClozeEventListeners() {
             cloze.querySelector('.cloze-actions').style.display = 'none';
         }
     });
+
+    // ======================================================
+    //          [新增] 任务列表复选框交互逻辑
+    // ======================================================
+    // [核心修正 1] 将事件处理函数声明为 async
+    dom.preview.addEventListener('change', async (e) => {
+        const target = e.target;
+        // 步骤 1: 确保是列表项中的复选框
+        if (target.tagName === 'INPUT' && target.type === 'checkbox' && target.closest('li')) {
+            const isChecked = target.checked;
+            
+            const allCheckboxes = Array.from(dom.preview.querySelectorAll('li input[type="checkbox"]'));
+            const clickedIndex = allCheckboxes.indexOf(target);
+
+            if (clickedIndex === -1) return;
+
+            // 步骤 2: 获取编辑器的当前内容
+            let editorContent = dom.editor.value;
+
+            // 使用一个更简单的正则，只分离标记和后面的所有内容
+            const taskRegex = /^(- \[( |x)\])(.*)$/gm;
+            const dateBlockRegex = /( *\{.*?\})/; // 用于从内容中查找日期块的正则
+            let currentIndex = 0;
+            let matchFound = false;
+
+            editorContent = editorContent.replace(taskRegex, (match, marker, spaceOrX, fullContent) => {
+                if (currentIndex === clickedIndex) {
+                    matchFound = true;
+                    let content = fullContent.trim();
+                    let existingDateBlock = '';
+
+                    // 检查内容中是否已经存在日期块
+                    const dateMatch = content.match(dateBlockRegex);
+                    if (dateMatch) {
+                        // 如果找到，就把它分离出来
+                        existingDateBlock = dateMatch[0].trim();
+                        // 剩下的就是纯粹的任务文本
+                        content = content.replace(dateBlockRegex, '').trim();
+                    }
+                    
+                    if (isChecked) {
+                        // 【修正逻辑】总是生成新的日期块来覆盖旧的
+                        const displayDate = formatDateToSubscript(new Date());
+                        const machineDate = new Date().toISOString();
+                        const newDateBlock = `{${displayDate}|${machineDate}}`;
+                        
+                        // 总是以 "标记 日期 文本" 的格式重新组合
+                        return `- [x] ${newDateBlock} ${content}`;
+                    } else {
+                        // 取消勾选时，保留旧的日期块（如果存在）
+                        const datePart = existingDateBlock ? ` ${existingDateBlock}` : '';
+                        return `- [ ]${datePart} ${content}`;
+                    }
+                }
+                currentIndex++;
+                return match;
+            });
+
+            // 步骤 4 & 5: 如果成功找到并替换，则更新编辑器并触发事件以保存
+            if (matchFound) {
+                const cursorPos = dom.editor.selectionStart;
+                dom.editor.value = editorContent;
+                dom.editor.setSelectionRange(cursorPos, cursorPos);
+              
+                // [核心修正 2] 在触发重绘之前，立即保存当前内容到核心状态
+                // 这样后续的 updatePreview 才能读到正确的数据
+                await dataService.saveCurrentSessionContent(editorContent);
+                
+                // [核心修正 2] 立即调用 updatePreview 以确保 UI 完全同步
+                // 这会立刻重绘预览区，包括正确的 title 属性
+                await updatePreview();
+
+                // 步骤 5: 触发 input 事件以通知其他模块（如果需要），例如“未保存”状态提示
+                dom.editor.dispatchEvent(new Event('input', { bubbles: true }));
+
+                // 触发预览更新，以正确显示悬停提示等
+                // setTimeout(() => updatePreview(), 50); // 此行可以保留，以便即时更新预览中的title属性
+            }
+        }
+    });
 }
 
 // --- 新的核心 Cloze 控制函数 ---
@@ -283,6 +467,7 @@ export async function updatePreview() {
 
     dom.preview.innerHTML = window.marked.parse(markdownText || '');
     processClozeElementsInNode(dom.preview);
+        processTaskLists(); // [新增] 调用任务列表处理函数
     
     // 3. [新增] 异步渲染 Mermaid 图表
     // 查找所有语言标记为 mermaid 的代码块
@@ -345,41 +530,52 @@ export function setupPreview() {
         name: 'math',
         level: 'inline', // Process at inline level
         start(src) {
-            // Find the first occurrence of a math delimiter
-            return src.match(/\$\$|\\\(|\\\[|\\ce\{/)?.index;
+            // 寻找数学公式分隔符的起始位置
+            // 【修正】在正则表达式的末尾添加 '|\\$' 来匹配单个美元符号
+            return src.match(/\$\$|\\\(|\\\[|\\ce\{|\$/)?.index;
         },
         tokenizer(src, tokens) {
             let match;
             
+            // 块级公式 $$...$$
             match = src.match(/^\$\$\s*([\s\S]+?)\s*\$\$/);
             if (match) return { type: 'math', raw: match[0] };
 
+            // 块级公式 \[...\]
             match = src.match(/^\\\[\s*([\s\S]+?)\s*\\\]/);
             if (match) return { type: 'math', raw: match[0] };
 
+            // 行内公式 \(...\)
             match = src.match(/^\\\(\s*([\s\S]+?)\s*\\\)/);
             if (match) return { type: 'math', raw: match[0] };
             
-            // Rule for our custom \ce shorthand
+            // 快捷方式 \ce{...}
             match = src.match(/^\\ce\{([\s\S]+?)\}/);
-            if (match) return { type: 'math', raw: match[0] };
+            if (match) return { type: 'math', raw: match[0], isCeShorthand: true }; // 添加一个标志
             
+            // 行内公式 $...$
             match = src.match(/^\$((?:\\\$|[^$])+?)\$/);
             if (match) return { type: 'math', raw: match[0] };
 
             return undefined;
         },
         renderer(token) {
-            // ** THE CRITICAL FIX IS HERE **
-            // If the token is our bare \ce command, we must wrap it in
-            // delimiters that MathJax will recognize.
-            if (token.raw.startsWith('\\ce')) {
-                // Wrap the command in inline math delimiters \\(...\\)
+            // 【核心修正】在这里统一处理渲染逻辑
+
+            // 1. 如果是 \ce{...} 快捷方式，为其包裹上标准分隔符
+            if (token.isCeShorthand) {
                 return `\\(${token.raw}\\)`;
             }
             
-            // For all other cases, the delimiters are already part of token.raw.
-            // So, just return it as is.
+            // 2. 如果是 $...$ 格式，将其转换为标准分隔符 \(...\)
+            if (token.raw.startsWith('$') && !token.raw.startsWith('$$')) {
+                // 截取掉前后的 '$'
+                const content = token.raw.slice(1, -1);
+                // 用标准分隔符包裹
+                return `\\(${content}\\)`;
+            }
+            
+            // 3. 对于其他格式 (如 $$...$$, \(...\) 等)，它们已经是标准格式，直接返回
             return token.raw;
         }
     };
@@ -387,6 +583,11 @@ export function setupPreview() {
     // Use the improved math extension
     window.marked.use({ extensions: [mathExtension] });
 
-    window.marked.setOptions({ breaks: true });
+    // 【修改】在这里添加 gfm: true 选项
+    window.marked.setOptions({ 
+        breaks: true,
+        gfm: true // 启用GitHub Flavored Markdown支持
+    });
+    
     addClozeEventListeners();
 }

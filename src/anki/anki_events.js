@@ -169,6 +169,77 @@ function handleToggleEditor() {
     if (isCollapsed) handleSave();
 }
 
+// [NEW] Added audio prompt editing functionality
+function handleAudioPrompt() {
+    const editor = dom.editor;
+    const text = editor.value;
+    const cursorPos = editor.selectionStart;
+
+    // Regex to find all clozes, including those with audio prompts
+    const clozeRegex = /--.*?--(?:\^\^audio:.*?\^\^)?/g;
+    let match;
+    let targetCloze = null;
+
+    // 1. Find if the cursor is inside any cloze
+    while ((match = clozeRegex.exec(text)) !== null) {
+        const startIndex = match.index;
+        const endIndex = startIndex + match[0].length;
+        if (cursorPos >= startIndex && cursorPos <= endIndex) {
+            targetCloze = {
+                content: match[0],
+                start: startIndex,
+                end: endIndex
+            };
+            break;
+        }
+    }
+
+    // If cursor is not in a cloze, ignore the click (Requirement 1)
+    if (!targetCloze) {
+        return;
+    }
+
+    // Regex to parse the content and audio from the found cloze
+    const parseRegex = /^--(.*?)--(?:(?:\^){2}audio:(.*)(?:\^){2})?$/;
+    const parts = targetCloze.content.match(parseRegex);
+
+    if (!parts) return; // Should not happen if the main regex matches
+
+    const clozeText = parts[1] ? parts[1].trim() : '';
+    const existingAudio = parts[2] ? parts[2].trim() : '';
+
+    // 2. If cloze has audio, dialog shows audio. (Requirement 2)
+    // 3. If cloze has no audio, dialog shows cloze content. (Requirement 3)
+    const defaultPrompt = existingAudio || clozeText;
+
+    const newAudioText = prompt("请输入或编辑Cloze的音频提示文本:", defaultPrompt);
+
+    // If user cancels, do nothing
+    if (newAudioText === null) {
+        return;
+    }
+
+    // 4. Update audio content on confirmation
+    const trimmedNewAudio = newAudioText.trim();
+    let replacementString;
+
+    if (trimmedNewAudio) {
+        replacementString = `--${clozeText}--^^audio:${trimmedNewAudio}^^`;
+    } else {
+        // If the new audio text is empty, remove the audio part
+        replacementString = `--${clozeText}--`;
+    }
+
+    // Replace the old cloze string with the new one in the editor
+    const newEditorValue = text.substring(0, targetCloze.start) + replacementString + text.substring(targetCloze.end);
+    editor.value = newEditorValue;
+
+    // Trigger preview update and save the changes
+    handleEditorInput();
+    handleSave();
+    editor.focus();
+}
+
 // ======================================================
 //          [MODIFIED] 新增和修改的函数
 // ======================================================
@@ -457,6 +528,9 @@ export function setupAnkiEventListeners() {
     dom.codeBtn.addEventListener('click', () => wrapSelection('`'));
     dom.linkBtn.addEventListener('click', () => wrapSelection('[', `](${prompt('URL:', 'https://')})`));
     
+    // [MODIFIED] Add event listener for the new audio button functionality
+    dom.audioBtn.addEventListener('click', handleAudioPrompt); // <--- 在这里添加这一行
+
     // [MODIFIED] 绑定新的滚动事件监听器
     dom.editor.addEventListener('scroll', handleEditorScroll);
     dom.preview.addEventListener('scroll', handlePreviewScroll);
