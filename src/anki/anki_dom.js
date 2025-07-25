@@ -13,6 +13,7 @@ export const newFolderBtn = $id('newFolderBtn');
 export const openFileBtn = $id('openFileBtn');
 export const saveBtn = $id('saveBtn');
 export const exportFileBtn = $id('exportFileBtn');
+export const printPreviewBtn = $id('printPreviewBtn'); // [MODIFIED] Added Print Button reference
 export const deleteSelectedBtn = $id('deleteSelectedBtn');
 export const moveSelectedBtn = $id('moveSelectedBtn');
 export const toggleSessionBtn = $id('toggleSessionBtn');

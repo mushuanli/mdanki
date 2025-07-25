@@ -162,6 +162,83 @@ function handleToggleEditor() {
 // ======================================================
 
 /**
+ * [新增] 打印预览内容的处理函数
+ */
+function handlePrintPreview() {
+    const previewContent = dom.preview.innerHTML;
+
+    // 创建一个新窗口用于打印
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="zh-CN">
+        <head>
+            <meta charset="UTF-8">
+            <title>打印预览</title>
+            <!-- 重新链接所有必要的样式表以确保打印视图的正确性 -->
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+            <link rel="stylesheet" href="./styles.css">
+            <style>
+                /* 打印专用样式 */
+                @media print {
+                    body { 
+                        margin: 20px; 
+                        -webkit-print-color-adjust: exact; /* 确保背景色和颜色在打印时正确显示 */
+                        print-color-adjust: exact;
+                    }
+                    /* 隐藏不希望打印的元素，如操作按钮 */
+                    .cloze-actions, .media-icon {
+                        display: none !important;
+                    }
+                    /* 确保所有Cloze内容在打印时都是可见的 */
+                    .cloze.hidden .cloze-content, .cloze .cloze-content {
+                        display: inline !important;
+                        visibility: visible !important;
+                        color: black !important; /* 强制文字为黑色 */
+                    }
+                    .cloze .placeholder {
+                        display: none !important;
+                    }
+                    /* 确保Cloze的背景颜色能被打印 */
+                    .cloze {
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                }
+                body {
+                    font-family: sans-serif;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="preview" style="display: block !important;">
+                ${previewContent}
+            </div>
+            <!-- 重新引入MathJax以渲染数学公式 -->
+            <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+            <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+            <script>
+                // 设置MathJax，在渲染完成后自动触发打印并关闭窗口
+                window.MathJax = {
+                    startup: {
+                        pageReady: () => {
+                            return window.MathJax.startup.defaultPageReady().then(() => {
+                                console.log('MathJax has finished rendering. Triggering print.');
+                                window.print();
+                                window.close();
+                            });
+                        }
+                    }
+                };
+            </script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close(); // 必须调用 close() 来结束写入，这会触发页面加载
+}
+
+
+/**
  * [新增] 编辑器滚动事件处理。
  * 计算并存储当前滚动的百分比。
  */
@@ -208,6 +285,9 @@ function toggleEditPreviewMode() {
         dom.editModeDot.classList.add('active');
         dom.previewModeDot.classList.remove('active');
         
+        // [MODIFIED] Disable print button in edit mode
+        dom.printPreviewBtn.disabled = true;
+        
         // 使用 requestAnimationFrame 确保编辑器在DOM中可见并且其尺寸已计算
         requestAnimationFrame(() => {
             const editor = dom.editor;
@@ -237,6 +317,9 @@ function toggleEditPreviewMode() {
         dom.toggleEditPreviewBtn.title = "切换到编辑模式";
         dom.editModeDot.classList.remove('active');
         dom.previewModeDot.classList.add('active');
+        
+        // [MODIFIED] Enable print button in preview mode
+        dom.printPreviewBtn.disabled = false;
         
         // 切换到预览模式时自动保存
         handleSave();
@@ -329,6 +412,9 @@ export function setupAnkiEventListeners() {
     dom.editor.addEventListener('input', handleEditorInput);
     dom.openFileBtn.addEventListener('click', () => dom.fileInput.click());
     dom.fileInput.addEventListener('change', handleOpenFile);
+
+    // [MODIFIED] Add event listener for the print button
+    dom.printPreviewBtn.addEventListener('click', handlePrintPreview);
 
     dom.moveSelectedBtn.addEventListener('click', () => {
         const selected = Array.from(dom.sessionList.querySelectorAll('.select-checkbox:checked')).map(cb => ({ id: cb.dataset.id, type: cb.dataset.type }));

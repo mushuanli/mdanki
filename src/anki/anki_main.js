@@ -1,3 +1,4 @@
+// src/anki/anki_main.js
 import { createBackButton } from './breadcrumbsUI.js';
 import { setupPreview } from './previewUI.js';
 import { setupAnkiEventListeners, handleGoBack } from './anki_events.js';
@@ -12,6 +13,15 @@ import { rerenderAnki } from './anki_ui.js';
 export async function initializeAnkiApp() {
     console.log("Initializing Anki module...");
     
+    // [NEW] Initialize Mermaid.js
+    if (window.mermaid) {
+        mermaid.initialize({
+            startOnLoad: false, // We will manually trigger rendering
+            theme: 'neutral',   // Or 'default', 'dark', 'forest'
+            securityLevel: 'loose'
+        });
+    }
+
     // The dataService's initializeApp loads Anki-specific data.
     await dataService.initializeApp();
     

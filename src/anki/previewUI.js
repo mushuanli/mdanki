@@ -1,4 +1,4 @@
-// src/ui/previewUI.js
+// src/anki/previewUI.js
 import * as dom from './anki_dom.js';
 import { appState, setState } from '../common/state.js';
 import { playMultimedia } from './audioUI.js';
@@ -6,6 +6,8 @@ import { playMultimedia } from './audioUI.js';
 // [MODIFIED] 导入需要的模块
 import * as dataService from '../services/dataService.js';
 import { simpleHash } from '../common/utils.js';
+
+let isPreviewUpdating = false; // <--- 1. 在顶部添加一个锁变量
 
 // --- 新的辅助函数，根据状态获取颜色 ---
 function getClozeColorClassByState(clozeState) {
@@ -256,7 +258,14 @@ export function updateToggleVisibilityButton(isVisible) {
     }
 }
 
-export function updatePreview() {
+export async function updatePreview() {
+    if (isPreviewUpdating) {
+        console.log("Preview update already in progress. Skipping.");
+        return; // 如果正在更新，则直接跳过这次调用
+    }
+    isPreviewUpdating = true; // 上锁
+
+    try {
     const { currentSessionId, currentSubsessionId, fileSubsessions, sessions } = appState;
     
     const session = sessions.find(s => s.id === currentSessionId);
@@ -274,8 +283,59 @@ export function updatePreview() {
     dom.preview.innerHTML = window.marked.parse(markdownText || '');
     processClozeElementsInNode(dom.preview);
     
+    // 3. [新增] 异步渲染 Mermaid 图表
+    // 查找所有语言标记为 mermaid 的代码块
+    const mermaidElements = dom.preview.querySelectorAll('pre code.language-mermaid');
+    
+    const mermaidRenderPromises = Array.from(mermaidElements).map(async (element, index) => {
+        const preElement = element.parentNode;
+            // 添加一个额外的安全检查，虽然在有锁的情况下非必须，但也是个好习惯
+            if (!preElement || !preElement.parentNode) {
+                return; 
+            }
+        const graphDefinition = element.textContent;
+        const graphId = `mermaid-graph-${Date.now()}-${index}`;
+
+        try {
+            // 使用 mermaid.render 生成 SVG
+            const { svg } = await mermaid.render(graphId, graphDefinition);
+            
+            // 创建一个容器来包裹 SVG，方便设置样式
+            const container = document.createElement('div');
+            container.className = 'mermaid-diagram';
+            container.innerHTML = svg;
+            
+                // 再次检查，确保在异步操作后元素仍在DOM中
+                if (preElement.parentNode) {
+                    preElement.parentNode.replaceChild(container, preElement);
+                }
+        } catch (error) {
+            console.error('Mermaid rendering error:', error);
+            // 如果渲染失败，在原地显示错误信息
+            const errorBox = document.createElement('div');
+            errorBox.className = 'error-box';
+            errorBox.innerHTML = `<strong>Mermaid Error:</strong><br><pre>${error.message}</pre>`;
+                if (preElement.parentNode) {
+                    preElement.parentNode.replaceChild(errorBox, preElement);
+                }
+            }
+    });
+
+    // 等待所有 Mermaid 图表都处理完毕
+    await Promise.all(mermaidRenderPromises);
+
+    // 4. [保持] 最后渲染 MathJax 公式
     if (window.MathJax) {
-        window.MathJax.typesetPromise([dom.preview]).catch(err => console.log('MathJax error:', err));
+        try {
+            await window.MathJax.typesetPromise([dom.preview]);
+        } catch (err) {
+            console.log('MathJax error:', err);
+        }
+    }
+    } catch (error) {
+        console.error("Error during preview update:", error);
+    } finally {
+        isPreviewUpdating = false; // 无论成功或失败，最后都要解锁
     }
 }
 
