@@ -80,6 +80,18 @@ async function handleSessionListClick(e) {
         return;
     }
 
+    // --- 新增的自动保存逻辑 ---
+    // 1. 确定被点击项关联的文件ID (如果是文件夹则为null)
+    const clickedFileId = type === 'file' ? id : (item.classList.contains('subsession') ? parent : null);
+
+    // 2. 如果当前有打开的文件(appState.currentSessionId不为null),
+    //    并且用户点击的不是当前文件自身或其子项 (即 clickedFileId !== appState.currentSessionId),
+    //    则说明用户正在切换会话, 此时保存当前编辑器的内容。
+    if (appState.currentSessionId && clickedFileId !== appState.currentSessionId) {
+        await dataService.saveCurrentSessionContent(dom.editor.value);
+    }
+    // --- 自动保存逻辑结束 ---
+
     if (type === 'file') {
         dataService.selectSession(id);
     } else if (type === 'folder') {

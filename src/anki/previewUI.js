@@ -271,6 +271,7 @@ export async function updatePreview() {
     const session = sessions.find(s => s.id === currentSessionId);
     if (!session) {
         dom.preview.innerHTML = '';
+        isPreviewUpdating = false; // 解锁
         return;
     }
 
@@ -341,53 +342,50 @@ export async function updatePreview() {
 
 export function setupPreview() {
     const mathExtension = {
-  name: 'math',
-  level: 'inline', // or 'block'
-  start(src) {
-    return src.match(/\$\$|\\[\(\)\[\]]/)?.index; // 查找 $$ 或 \[ 等数学环境的起始位置
-  },
-  tokenizer(src, tokens) {
-    // 匹配块级公式 $$...$$ 或 \[...\]
-    let match = src.match(/^\$\$\s*([\s\S]+?)\s*\$\$/); // $$
-    if (!match) {
-        match = src.match(/^\\\[\s*([\s\S]+?)\s*\\\]/); // \[ \]
-    }
-    if (match) {
-        return {
-            type: 'math',
-            raw: match[0],
-            text: match[1].trim(),
-            displayMode: true // 标记为块级
-        };
-    }
+        name: 'math',
+        level: 'inline', // Process at inline level
+        start(src) {
+            // Find the first occurrence of a math delimiter
+            return src.match(/\$\$|\\\(|\\\[|\\ce\{/)?.index;
+        },
+        tokenizer(src, tokens) {
+            let match;
+            
+            match = src.match(/^\$\$\s*([\s\S]+?)\s*\$\$/);
+            if (match) return { type: 'math', raw: match[0] };
 
-    // 匹配行内公式 $...$ 或 \(...\)
-    match = src.match(/^\$((?:\\\$|[^$])+?)\$/); // $
-    if (!match) {
-        match = src.match(/^\\\(\s*([\s\S]+?)\s*\\\)/); // \( \)
-    }
-    if (match) {
-        return {
-            type: 'math',
-            raw: match[0],
-            text: match[1].trim(),
-            displayMode: false // 标记为行内
-        };
-    }
-  },
-  renderer(token) {
-    // 最关键的一步：原样返回公式内容，让 MathJax 自己去处理
-    // MathJax 会自动寻找这些分隔符
-    if (token.displayMode) {
-      return `\\[${token.text}\\]`;
-    } else {
-      return `\\(${token.text}\\)`;
-    }
-  }
-};
+            match = src.match(/^\\\[\s*([\s\S]+?)\s*\\\]/);
+            if (match) return { type: 'math', raw: match[0] };
 
-// 使用自定义的数学扩展
-window.marked.use({ extensions: [mathExtension] });
+            match = src.match(/^\\\(\s*([\s\S]+?)\s*\\\)/);
+            if (match) return { type: 'math', raw: match[0] };
+            
+            // Rule for our custom \ce shorthand
+            match = src.match(/^\\ce\{([\s\S]+?)\}/);
+            if (match) return { type: 'math', raw: match[0] };
+            
+            match = src.match(/^\$((?:\\\$|[^$])+?)\$/);
+            if (match) return { type: 'math', raw: match[0] };
+
+            return undefined;
+        },
+        renderer(token) {
+            // ** THE CRITICAL FIX IS HERE **
+            // If the token is our bare \ce command, we must wrap it in
+            // delimiters that MathJax will recognize.
+            if (token.raw.startsWith('\\ce')) {
+                // Wrap the command in inline math delimiters \\(...\\)
+                return `\\(${token.raw}\\)`;
+            }
+            
+            // For all other cases, the delimiters are already part of token.raw.
+            // So, just return it as is.
+            return token.raw;
+        }
+    };
+
+    // Use the improved math extension
+    window.marked.use({ extensions: [mathExtension] });
 
     window.marked.setOptions({ breaks: true });
     addClozeEventListeners();
