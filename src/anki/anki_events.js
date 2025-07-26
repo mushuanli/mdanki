@@ -139,15 +139,41 @@ function handleEditorInput() {
 }
 
 async function handleOpenFile(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-        await dataService.addFile(file.name, event.target.result);
-        rerenderAnki();
+    const files = e.target.files; // 获取所有选中的文件 (FileList)
+    if (!files || files.length === 0) return;
+
+    // 定义一个读取单个文件的Promise函数
+    const readFile = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                // 解析成功后，返回文件名和内容
+                resolve({ name: file.name, content: event.target.result });
+            };
+            reader.onerror = (error) => reject(error);
+            reader.readAsText(file);
+        });
     };
-    reader.readAsText(file);
-    dom.fileInput.value = '';
+
+    try {
+        // 等待所有文件都读取完毕
+        const allFilesData = await Promise.all(Array.from(files).map(readFile));
+
+        // 依次将读取到的文件添加到数据服务中
+        for (const fileData of allFilesData) {
+            await dataService.addFile(fileData.name, fileData.content);
+        }
+
+        // 所有文件都添加完毕后，刷新一次UI
+        rerenderAnki();
+
+    } catch (error) {
+        console.error("读取一个或多个文件时出错:", error);
+        alert("读取文件时发生错误。");
+    } finally {
+        // 清空input的值，以便用户可以再次选择相同的文件
+        dom.fileInput.value = '';
+    }
 }
 
 function wrapSelection(prefix, suffix = prefix) {
