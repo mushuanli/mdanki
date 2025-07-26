@@ -20,53 +20,38 @@ import { initializeMistakesApp } from './mistakes/mistakes_main.js';
  * Manages the visibility of the main application views based on appState.activeView.
  */
 function handleViewChange() {
-    // [调试] 打印当前要切换的视图
-    console.log('[ViewChange] Attempting to switch to view:', appState.activeView);
+    console.log('[ViewChange] Switching to view:', appState.activeView);
 
-    const { activeView } = appState;
-    const navButtons = {
-        anki: document.getElementById('nav-anki'),
-        agent: document.getElementById('nav-agents'),
-        mistakes: document.getElementById('nav-mistakes'),
-    };
-
-    // 隐藏所有视图和特定导航
+    // 隐藏所有视图
     dom.ankiView.style.display = 'none';
     dom.agentView.style.display = 'none';
     dom.mistakesView.style.display = 'none';
     if (dom.agentNav) dom.agentNav.style.display = 'none';
 
-    // 重置按钮状态
-    Object.values(navButtons).forEach(btn => btn?.classList.remove('active'));
+    // 重置所有按钮状态
+    document.querySelectorAll('.app-nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
 
-    // 根据 activeView 显示对应视图并激活按钮
-    switch (activeView) {
+    // 根据 activeView 显示对应视图
+    switch (appState.activeView) {
         case 'anki':
-            console.log('[ViewChange] Showing anki-view.');
             dom.ankiView.style.display = 'flex';
-            navButtons.anki?.classList.add('active');
+            document.getElementById('nav-anki').classList.add('active');
             break;
         case 'agent':
-            console.log('[ViewChange] Showing agent-view.');
             dom.agentView.style.display = 'flex';
-            if (dom.agentNav) {
-                console.log('[ViewChange] Showing ai-agent-nav.');
-                dom.agentNav.style.display = 'flex';
-            } else {
-                // [调试] 如果 agentNav 元素不存在，给出警告
-                console.warn('[ViewChange] dom.agentNav element not found!');
-            }
-            navButtons.agent?.classList.add('active');
+            if (dom.agentNav) dom.agentNav.style.display = 'flex';
+            document.getElementById('nav-agents').classList.add('active');
             break;
         case 'mistakes':
-            console.log('[ViewChange] Showing mistakes-view.');
             dom.mistakesView.style.display = 'flex';
-            navButtons.mistakes?.classList.add('active');
+            document.getElementById('nav-mistakes').classList.add('active');
             break;
         default:
-            console.log(`[ViewChange] Defaulting to anki-view because activeView is '${activeView}'.`);
-            dom.ankiView.style.display = 'flex';
-            navButtons.anki?.classList.add('active');
+            console.warn(`Unknown view: ${appState.activeView}, defaulting to mistakes`);
+            dom.mistakesView.style.display = 'flex';
+            document.getElementById('nav-mistakes').classList.add('active');
             break;
     }
 }
@@ -84,12 +69,28 @@ function setupAppNavigation() {
     appNavContainer.addEventListener('click', (e) => {
         const button = e.target.closest('.app-nav-btn');
         if (!button) return;
-
-        const targetView = button.dataset.target.replace('-view', '');
         
-        // [调试] 打印点击事件和目标视图
-        console.log(`[Navigation] Clicked button for view: '${targetView}'`);
-
+        // 阻止默认的链接跳转行为
+        e.preventDefault();
+        
+        // 根据按钮ID确定目标视图
+        let targetView;
+        switch (button.id) {
+            case 'nav-anki':
+                targetView = 'anki';
+                break;
+            case 'nav-agents':
+                targetView = 'agent';
+                break;
+            case 'nav-mistakes':
+                targetView = 'mistakes';
+                break;
+            default:
+                console.warn('Unknown navigation button:', button.id);
+                return;
+        }
+        
+        console.log(`[Navigation] Switching to view: ${targetView}`);
         dataService.switchView(targetView);
         handleViewChange();
     });

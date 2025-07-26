@@ -13,6 +13,9 @@
     --transition: all 0.3s ease;
     --folder-color: #ffca28;
     --file-color: #64b5f6;
+            /* --- 修改点: 侧边栏宽度变量 --- */
+            --sidebar-width-collapsed: 60px;
+            --sidebar-width-expanded: 220px;
     
     /* AI Agent 特有颜色 */
     --agent-color-1: #4361ee;
@@ -50,7 +53,8 @@ body {
     background: linear-gradient(135deg, #f5f7fa 0%, #e4e7f1 100%);
     color: var(--dark-color); 
     min-height: 100vh; 
-    padding: 20px;
+    padding: 0;
+    display: flex;
 }
 
 .container { 
@@ -58,73 +62,129 @@ body {
     margin: 0 auto; 
 }
 
-header {
-    text-align: center; 
-    margin-bottom: 20px; 
-    padding: 20px;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: var(--border-radius); 
+        /* === 左侧边栏 (修改) === */
+        .sidebar {
+            /* 默认使用折叠后的宽度 */
+            width: var(--sidebar-width-collapsed); 
+    background: white;
     box-shadow: var(--shadow);
-}
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 100;
+            overflow-x: hidden; /* 防止展开时内容溢出 */
+            /* 添加过渡效果 */
+            transition: width var(--transition);
+        }
 
-h1 { 
-    color: var(--secondary-color); 
-    margin-bottom: 10px; 
-    font-size: 2.2rem; 
-}
+        /* 当鼠标悬停在侧边栏上时，展开 */
+        .sidebar:hover {
+            width: var(--sidebar-width-expanded);
+        }
 
-.subtitle { 
-    color: var(--primary-color); 
-    font-size: 1.1rem; 
-    max-width: 800px; 
-    margin: 0 auto 20px; 
-}
 
-/* === 顶部应用导航 === */
-.app-nav { 
-    display: flex; 
-    justify-content: center; 
-    gap: 15px; 
-    margin: 15px 0;
-    border-top: 1px solid #eee; 
-    padding-top: 20px; 
-}
+        /* === 应用导航 (修改) === */
+        .app-nav { 
+            display: flex; 
+            flex-direction: column;
+            gap: 8px; 
+            padding: 20px 0; /* 调整内边距适应折叠状态 */
+            border-bottom: 1px solid #eee;
+        }
 
-.app-nav-btn {
-    background: var(--primary-color); 
-    color: white; 
-    border: none;
-    padding: 12px 25px; 
-    border-radius: 50px; 
-    cursor: pointer;
-    font-size: 1rem; 
-    font-weight: 600; 
-    display: flex; 
-    align-items: center;
-    gap: 8px; 
-    transition: var(--transition);
-    box-shadow: 0 4px 8px rgba(67, 97, 238, 0.2);
-}
+        .app-nav-btn {
+            background: var(--light-color); 
+            color: var(--dark-color); 
+            border: none;
+            height: 50px; /* 固定高度 */
+            padding: 15px 20px; 
+            margin: 0 10px; /* 左右边距 */
+            border-radius: var(--border-radius); 
+            cursor: pointer;
+            font-size: 1rem; 
+            font-weight: 600; 
+            display: flex; 
+            align-items: center;
+            /* 默认只显示图标，图标居中 */
+            justify-content: center; 
+            gap: 12px; 
+            transition: var(--transition);
+            text-decoration: none;
+            border: 2px solid transparent;
+            overflow: hidden; /* 隐藏溢出的内容 */
+        }
+        
+        /* 展开时，恢复左对齐 */
+        .sidebar:hover .app-nav-btn {
+            justify-content: flex-start;
+        }
 
-.app-nav-btn:hover { 
-    transform: translateY(-3px); 
-    box-shadow: 0 6px 15px rgba(67, 97, 238, 0.3); 
-}
+        .app-nav-btn:hover { 
+            background: var(--accent-color);
+            color: white;
+        }
+        
+        /* 只有在展开时，按钮悬停才有位移效果 */
+        .sidebar:hover .app-nav-btn:hover {
+            transform: translateX(5px);
+        }
 
 .app-nav-btn.active { 
-    background: var(--secondary-color); 
-    box-shadow: 0 2px 5px rgba(63, 55, 201, 0.3); 
-    transform: translateY(0); 
+    background: var(--primary-color); 
+    color: white;
+    border-color: var(--secondary-color);
 }
 
+.app-nav-btn i {
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+            flex-shrink: 0; /* 防止图标被压缩 */
+}
+        /* 默认隐藏文字 */
+        .app-nav-btn span {
+            white-space: nowrap; /* 防止文字换行 */
+            opacity: 0;
+            width: 0;
+            transition: opacity 0.2s ease, width 0.2s ease;
+        }
+
+        /* 展开时，显示文字 */
+        .sidebar:hover .app-nav-btn span {
+            opacity: 1;
+            width: auto;
+        }
+
+        /* === 主内容区域 (修改) === */
+        .main-content {
+            /* 默认左边距为折叠后的宽度 */
+            margin-left: var(--sidebar-width-collapsed);
+            flex: 1;
+    padding: 0; /* 移除内边距，因为它会影响 flex 布局 */
+    min-height: 100vh;
+    /* 添加过渡效果 */
+    transition: margin-left var(--transition);
+
+    /* --- 核心修改 --- */
+    display: flex; /* 让 .main-content 自身也成为 flex 容器 */
+    flex-direction: column; /* 子元素垂直排列 */
+        }
+
+        /* 当侧边栏展开时，调整主内容的左边距 */
+        .sidebar:hover + .main-content {
+            margin-left: var(--sidebar-width-expanded);
+        }
+	
 /* === AI Agent 相关样式 === */
 .ai-agent-nav {
     background: rgba(255, 255, 255, 0.95);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
     padding: 12px 20px;
-    margin: 0 auto 20px;
-    max-width: 1800px;
+    margin-bottom: 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -871,6 +931,15 @@ h1 {
     overflow: hidden;
 }
 
+/* 隐藏侧边栏时的样式 */
+.sidebar.collapsed {
+    transform: translateX(-100%);
+}
+
+.main-content.expanded {
+    margin-left: 0;
+}
+
 /* === 杂项与组件 (Modals, Instructions, etc.) === */
 .instructions { 
     background: white; 
@@ -921,11 +990,7 @@ h1 {
     font-size: 0.9rem; 
 }
 .footer { 
-    text-align: center; 
-    margin-top: 35px; 
-    padding: 18px; 
-    color: #666; 
-    font-size: 0.85rem; 
+    display: none;
 }
 .file-input { display: none; }
 .empty-session { 
@@ -1560,10 +1625,44 @@ h1 {
 
 /* === 响应式设计 === */
 @media (max-width: 1200px) {
-    .main-layout { flex-direction: column; }
-    .session-sidebar { width: 100%; max-width: 100%; }
-    .app-container { min-width: 100%; }
-    .mistakes-nav { width: 100%; max-width: 100%; }
+    body {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        position: relative;
+        width: 100%;
+        min-height: auto;
+        flex-direction: row;
+        align-items: center;
+    }
+    
+    .app-nav {
+        flex-direction: row;
+        padding: 15px;
+    }
+    
+    .main-content {
+        margin-left: 0;
+    }
+    
+    .main-layout { 
+        flex-direction: column; 
+    }
+    
+    .session-sidebar { 
+        width: 100%; 
+        max-width: 100%; 
+    }
+    
+    .app-container { 
+        min-width: 100%; 
+    }
+    
+    .mistakes-nav { 
+        width: 100%; 
+        max-width: 100%; 
+    }
 }
 
 @media (max-width: 992px) {
@@ -1578,4 +1677,41 @@ h1 {
     .panel-header .panel-title { justify-content: center; }
     .panel-actions { justify-content: center; }
     .app-nav { flex-wrap: wrap; }
+}
+
+/* 内容包装器 */
+.content-wrapper {
+    flex-grow: 1; /* 这将占据所有可用空间，把 footer 推向底部 */
+    padding: 20px; /* 把原来 main-content 的内边距移到这里 */
+    min-height: 0; /* 在 flex 布局中防止内容溢出问题 */
+}
+
+/* 确保主布局填充全部可用高度 */
+.main-layout {
+  height: 100%; /* 添加高度100% */
+  min-height: 0; /* 覆盖默认最小高度 */
+}
+/* 调整内容包装器高度计算 */
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 40px); /* 减去内边距 */
+}
+/* 修复编辑器容器高度 */
+.app-container {
+  flex: 1; /* 填充剩余空间 */
+  min-height: 0; /* 允许缩小 */
+}
+/* 修复编辑器面板高度 */
+.editor-preview-panel {
+  flex: 1; /* 填充容器高度 */
+  min-height: 0;
+}
+/* 调整编辑器和预览区域 */
+#editorContainer {
+  position: relative;
+  height: 100%; /* 关键：填充父容器高度 */
+}
+#editor, #preview {
+  height: 100%; /* 填充编辑器容器 */
 }
