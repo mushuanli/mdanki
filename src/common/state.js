@@ -12,6 +12,9 @@ let state = {
     // 它将存储类似这样的结构: { [clozeId]: { due, interval, easeFactor, ... } }
     clozeStates: {}, 
     fileSubsessions: {}, // This can be generated at runtime, maybe not persisted
+    // [NEW] Add undo/redo stacks for the Anki editor
+    undoStack: [],
+    redoStack: [],
 
     // --- UI/Session State ---
     // These reflect the current user interaction.

@@ -11,6 +11,9 @@ import { openMoveModal, closeModal, setupModalEventListeners } from './modalUI.j
 import { stopAudio, resumeAudio, pauseAudio } from './audioUI.js';
 import { rerenderAnki } from './anki_ui.js';
 
+let undoDebounceTimer = null;
+const MAX_HISTORY_SIZE = 100; // Limit the history size to prevent memory issues
+
 // --- Event Handlers ---
 
 // Navigation handlers are exported so anki_ui.js can use them
@@ -127,6 +130,12 @@ async function handleDeleteSelected() {
 function handleEditorInput() {
     clearTimeout(window.previewDebounce);
     window.previewDebounce = setTimeout(updatePreview, 300);
+
+    // [MODIFIED] Debounce for saving undo state
+    clearTimeout(undoDebounceTimer);
+    undoDebounceTimer = setTimeout(() => {
+        saveEditorStateForUndo();
+    }, 500); // Save state after 500ms of inactivity
 }
 
 async function handleOpenFile(e) {
@@ -142,6 +151,7 @@ async function handleOpenFile(e) {
 }
 
 function wrapSelection(prefix, suffix = prefix) {
+    saveEditorStateForUndo(); // <<< 添加这一行
     const { selectionStart, selectionEnd, value } = dom.editor;
     const selectedText = value.substring(selectionStart, selectionEnd);
     const newText = `${prefix}${selectedText}${suffix}`;
@@ -152,6 +162,8 @@ function wrapSelection(prefix, suffix = prefix) {
 
 // [MODIFIED] 新增辅助函数用于插入文本
 function insertTextAtCursor(text) {
+    saveEditorStateForUndo(); // <<< 添加这一行
+
     const { selectionStart, selectionEnd } = dom.editor;
     dom.editor.setRangeText(text, selectionStart, selectionEnd, 'end');
     handleEditorInput();
@@ -218,6 +230,7 @@ function handleAudioPrompt() {
     if (newAudioText === null) {
         return;
     }
+    saveEditorStateForUndo(); // <<< 添加这一行
 
     // 4. Update audio content on confirmation
     const trimmedNewAudio = newAudioText.trim();
@@ -243,6 +256,74 @@ function handleAudioPrompt() {
 // ======================================================
 //          [MODIFIED] 新增和修改的函数
 // ======================================================
+/**
+ * Saves the current state of the editor to the undo stack.
+ * This should be called *before* an action modifies the editor content.
+ */
+function saveEditorStateForUndo() {
+    const currentContent = dom.editor.value;
+    const lastState = appState.undoStack[appState.undoStack.length - 1];
+
+    // Don't save if the content hasn't changed
+    if (lastState === currentContent) return;
+
+    const newUndoStack = [...appState.undoStack, currentContent];
+
+    // Limit the size of the undo stack
+    if (newUndoStack.length > MAX_HISTORY_SIZE) {
+        newUndoStack.shift();
+    }
+    
+    // A new action invalidates the redo stack
+    setState({
+        undoStack: newUndoStack,
+        redoStack: []
+    });
+}
+
+/**
+ * Handles the Undo action (Ctrl+Z).
+ */
+function handleUndo() {
+    if (appState.undoStack.length === 0) return;
+
+    const newUndoStack = [...appState.undoStack];
+    const lastState = newUndoStack.pop();
+
+    // Move the current state to the redo stack before reverting
+    const newRedoStack = [dom.editor.value, ...appState.redoStack];
+
+    dom.editor.value = lastState;
+    setState({
+        undoStack: newUndoStack,
+        redoStack: newRedoStack
+    });
+    
+    // Update the preview to reflect the change
+    handleEditorInput();
+}
+
+/**
+ * Handles the Redo action (Ctrl+R).
+ */
+function handleRedo() {
+    if (appState.redoStack.length === 0) return;
+
+    const newRedoStack = [...appState.redoStack];
+    const nextState = newRedoStack.shift(); // Use shift because we prepend to the stack
+
+    // Move the current state to the undo stack before applying the redo state
+    const newUndoStack = [...appState.undoStack, dom.editor.value];
+
+    dom.editor.value = nextState;
+    setState({
+        undoStack: newUndoStack,
+        redoStack: newRedoStack
+    });
+
+    // Update the preview to reflect the change
+    handleEditorInput();
+}
 
 /**
  * [新增] 打印预览内容的处理函数
@@ -558,6 +639,25 @@ export function setupAnkiEventListeners() {
     dom.playBtn.addEventListener('click', resumeAudio);
     dom.pauseBtn.addEventListener('click', pauseAudio);
     dom.stopBtn.addEventListener('click', stopAudio);
+
+        // [NEW] Add keydown event listener for Undo/Redo
+    dom.editor.addEventListener('keydown', (e) => {
+        // Undo: Ctrl + Z
+        if (e.ctrlKey && e.key === 'z') {
+            e.preventDefault(); // Prevent native browser undo
+            handleUndo();
+        }
+        // Redo: Ctrl + R
+        else if (e.ctrlKey && e.key === 'y') {
+            e.preventDefault(); // IMPORTANT: Prevent page reload
+            handleRedo();
+        }
+                // [MODIFIED] Save: Ctrl + S
+        else if (e.ctrlKey && e.key === 's') {
+            e.preventDefault(); // IMPORTANT: Prevent browser's save dialog
+            handleSave();
+        }
+    });
 
     setupModalEventListeners(handleConfirmMove);
     setupReviewUIEventListeners();
