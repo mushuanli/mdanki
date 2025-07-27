@@ -34,13 +34,13 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
     };
     
     // 详情目录始终相对于基础目录
-    let details_dir = base_dir.join("json");
+    let details_dir = base_dir.join("word_json");
 
     if !wordlist_path.exists() {
         return Err(anyhow!("错误: 输入文件 '{}' 不存在", wordlist_path.display()));
     }
     if !details_dir.is_dir() {
-        return Err(anyhow!("错误: 详情目录 'json/' 在 '{}' 中未找到", base_dir.display()));
+        return Err(anyhow!("错误: 详情目录 'word_json/' 在 '{}' 中未找到", base_dir.display()));
     }
 
     // 确保输出目录存在

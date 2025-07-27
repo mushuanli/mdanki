@@ -18,6 +18,8 @@ pub enum Command {
     Init(InitArgs),
     /// 从数据目录生成用于背诵的 Markdown 文件
     Md(MdArgs),
+    /// [新增] 从 .apkg 文件反向生成 Markdown 文件
+    Pkg2md(Pkg2mdArgs), 
 }
 
 /// "pack" 子命令的参数
@@ -55,6 +57,18 @@ pub struct MdArgs {
     /// [可选] 指定输入文件，而不是使用 <dir>/index.json
     #[arg(short, long)]
     pub input: Option<PathBuf>,
+
+    /// [可选] 输出 Markdown 文件的目录
+    #[arg(short, long, default_value = ".")]
+    pub output_dir: PathBuf,
+}
+
+/// "pkg2md" 子命令的参数 (新增)
+#[derive(Args, Debug)]
+pub struct Pkg2mdArgs {
+    /// 要处理的 Anki .apkg 文件路径
+    #[arg(required = true)]
+    pub pkg_file: PathBuf,
 
     /// [可选] 输出 Markdown 文件的目录
     #[arg(short, long, default_value = ".")]

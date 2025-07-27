@@ -33,6 +33,10 @@ async fn main() -> Result<()> {
             // md 功能是同步的，所以可以直接调用
             modules::md::handle_md_command(args)?;
         }
+        // --- 新增: 分发到新的 pkg2md 模块 ---
+        Command::Pkg2md(args) => {
+            modules::pkg2md::handle_pkg2md_command(args)?;
+        }
     }
 
     Ok(())

@@ -6,3 +6,5 @@ package-lock.json
 back
 venv
 *.swp
+tmp/
+build/
