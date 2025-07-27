@@ -30,7 +30,9 @@ db.version(DB_VERSION).stores({
     // *tags: 多值索引，用于标签筛选
     // analysis.reason_for_error: 按错误原因索引
     // review.due: 按复习到期时间索引，用于排序和查询
-    mistakes: '&uuid, subject, *tags, analysis.reason_for_error, review.due'
+    mistakes: '&uuid, subject, *tags, analysis.reason_for_error, review.due',
+    // [新增] 统计表
+    reviewStats: '&id, date, folderId' // id: 'YYYY-MM-DD:folderId', date: 'YYYY-MM-DD'
 });
 
 // [移除] connectToDatabase 函数。Dexie 会在首次操作数据库时自动打开连接，无需手动调用。

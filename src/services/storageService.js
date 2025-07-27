@@ -34,6 +34,70 @@ export async function loadAllData() {
     };
 }
 
+// --- [新增] 复习统计相关的数据服务 ---
+
+/**
+ * 原子性地增加指定日期和目录的复习次数
+ * @param {string} date - 'YYYY-MM-DD' 格式的日期
+ * @param {string} folderId - 目录ID，或 'root'
+ */
+export async function incrementReviewCount(date, folderId) {
+    const id = `${date}:${folderId || 'root'}`;
+    try {
+        // 使用事务确保操作的原子性
+        await db.transaction('rw', db.reviewStats, async () => {
+            const stat = await db.reviewStats.get(id);
+            if (stat) {
+                // 如果存在，则数量+1
+                await db.reviewStats.update(id, { count: stat.count + 1 });
+            } else {
+                // 如果不存在，则创建新纪录
+                await db.reviewStats.add({
+                    id: id,
+                    date: date,
+                    folderId: folderId || 'root',
+                    count: 1
+                });
+            }
+        });
+    } catch (error) {
+        console.error(`Failed to increment review count for ${id}:`, error);
+    }
+}
+
+/**
+ * 获取指定日期范围内的所有复习统计数据
+ * @param {string} startDate - 'YYYY-MM-DD' 格式的开始日期
+ * @param {string} endDate - 'YYYY-MM-DD' 格式的结束日期
+ * @returns {Promise<Array<object>>}
+ */
+export async function getStatsForDateRange(startDate, endDate) {
+    try {
+        return await db.reviewStats
+            .where('date')
+            .between(startDate, endDate, true, true) // 包含开始和结束日期
+            .toArray();
+    } catch (error) {
+        console.error("Failed to get stats for date range:", error);
+        return [];
+    }
+}
+
+/**
+ * 获取今天所有目录的复习总数
+ * @returns {Promise<number>}
+ */
+export async function getTodaysTotalCount() {
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+        const stats = await db.reviewStats.where('date').equals(today).toArray();
+        return stats.reduce((total, current) => total + current.count, 0);
+    } catch (error) {
+        console.error("Failed to get today's total count:", error);
+        return 0;
+    }
+}
+
 /**
  * Persists all core data collections to the database.
  * This function uses a transaction to ensure all writes succeed or fail together,

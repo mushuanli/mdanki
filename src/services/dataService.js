@@ -662,3 +662,97 @@ export async function persistAllAppState() {
         console.error("Failed to persist all application state:", error);
     }
 }
+
+// --- [新增] 复习统计相关业务逻辑 ---
+
+/**
+ * 记录一次复习完成事件
+ * @param {string} fileId - 被复习的卡片所在的文件ID
+ */
+export async function recordReview(fileId) {
+    if (!fileId) return;
+
+    const file = appState.sessions.find(s => s.id === fileId);
+    if (!file) return;
+    
+    const folderId = file.folderId || 'root';
+    const today = new Date().toISOString().slice(0, 10);
+
+    await storage.incrementReviewCount(today, folderId);
+    
+    // 记录后立即更新UI
+    await updateTodaysReviewCountUI();
+}
+
+/**
+ * 更新导航栏中的今日复习计数
+ */
+export async function updateTodaysReviewCountUI() {
+    const count = await storage.getTodaysTotalCount();
+    const countElement = document.getElementById('reviewCount');
+    if (countElement) {
+        countElement.textContent = count;
+    }
+}
+
+/**
+ * 获取并格式化近30天的复习数据以供图表使用
+ * @returns {Promise<object>} - 返回 { labels: string[], datasets: object[] }
+ */
+export async function getReviewStatsForChart() {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - 29);
+
+    const startDateStr = startDate.toISOString().slice(0, 10);
+    const endDateStr = endDate.toISOString().slice(0, 10);
+
+    const rawStats = await storage.getStatsForDateRange(startDateStr, endDateStr);
+
+    // 1. 生成日期标签 (近30天)
+    const labels = [];
+    for (let i = 0; i < 30; i++) {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + i);
+        labels.push(date.toISOString().slice(0, 10));
+    }
+
+    // 2. 按 folderId 对数据进行分组
+    const statsByFolder = rawStats.reduce((acc, stat) => {
+        const folderId = stat.folderId;
+        if (!acc[folderId]) {
+            acc[folderId] = {};
+        }
+        acc[folderId][stat.date] = stat.count;
+        return acc;
+    }, {});
+
+    // 3. 构建 datasets
+    const { folders } = appState;
+    const folderNameMap = folders.reduce((map, folder) => {
+        map[folder.id] = folder.name;
+        return map;
+    }, {});
+    folderNameMap['root'] = '根目录';
+
+    const colorPalette = ['#4361ee', '#e71d36', '#2ec4b6', '#ff9f1c', '#9a031e', '#0ead69', '#f3722c'];
+    let colorIndex = 0;
+
+    const datasets = Object.keys(statsByFolder).map(folderId => {
+        const dailyData = statsByFolder[folderId];
+        const data = labels.map(date => dailyData[date] || 0);
+        const color = colorPalette[colorIndex % colorPalette.length];
+        colorIndex++;
+
+        return {
+            label: folderNameMap[folderId] || '未知目录',
+            data: data,
+            borderColor: color,
+            backgroundColor: `${color}33`, // 带透明度的背景色
+            fill: false,
+            tension: 0.1
+        };
+    });
+
+    return { labels, datasets };
+}

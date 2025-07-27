@@ -3,6 +3,7 @@ import * as dom from './anki_dom.js';
 import { appState, setState } from '../common/state.js';
 import * as dataService from '../services/dataService.js';
 import { updatePreview, toggleAllClozeVisibility, invertAllCloze } from './previewUI.js';
+import * as statsUI from './statsUI.js';
 
 // [MODIFIED] 导入新的 reviewSession 模块
 import { startReviewSession } from './reviewSession.js'; 
@@ -161,7 +162,18 @@ async function handleOpenFile(e) {
 
         // 依次将读取到的文件添加到数据服务中
         for (const fileData of allFilesData) {
-            await dataService.addFile(fileData.name, fileData.content);
+            const originalName = fileData.name;
+            const lastDotIndex = originalName.lastIndexOf('.');
+
+            // 判断条件 lastDotIndex > 0 可以：
+            // 1. 处理 "file.txt" (lastDotIndex > 0) -> "file"
+            // 2. 忽略 "filename" (没有扩展名, lastDotIndex = -1) -> "filename"
+            // 3. 忽略 ".bashrc" (以点开头, lastDotIndex = 0) -> ".bashrc"
+            const nameWithoutExtension = (lastDotIndex > 0)
+                ? originalName.substring(0, lastDotIndex)
+                : originalName;
+
+            await dataService.addFile(nameWithoutExtension, fileData.content);
         }
 
         // 所有文件都添加完毕后，刷新一次UI
@@ -685,6 +697,16 @@ export function setupAnkiEventListeners() {
         }
     });
 
+    // [新增] 为统计按钮绑定事件
+    document.getElementById('showStatsBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        statsUI.openStatsModal();
+        // 关闭下拉菜单
+        document.getElementById('reviewDropdownMenu').style.display = 'none';
+    });
+
     setupModalEventListeners(handleConfirmMove);
     setupReviewUIEventListeners();
+    // [新增] 设置统计模态框的事件监听
+    statsUI.setupStatsModalEventListeners();
 }

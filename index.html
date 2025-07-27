@@ -6,6 +6,8 @@
     <title>智能学习套件</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script> 
+    <!-- [新增] 引入Chart.js库 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script>
       window.MathJax = {
@@ -228,6 +230,7 @@
                                 </button>
                                 <div id="reviewDropdownMenu" class="dropdown-menu" style="display: none;">
                                     <a href="#" id="customStudyBtn"><i class="fas fa-wrench"></i> 自定义复习...</a>
+                                    <a href="#" id="showStatsBtn"><i class="fas fa-chart-line"></i> 统计</a>
                                 </div>
                             </div>
                             <button id="toggleVisibilityClozeBtn" class="panel-btn" title="全部隐藏">
@@ -588,6 +591,22 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
                     <button type="button" class="btn-secondary" id="customStudyCancelBtn">取消</button>
                 <button type="submit" class="btn-primary" id="startCustomStudyBtn" form="customStudyForm">开始自定义复习</button>
                 </div>
+            </div> <!-- <--- 新增的闭合标签，用于关闭 .modal-content -->
+        </div> <!-- <--- 新增的闭合标签，用于关闭 .modal-overlay#customStudyModal -->
+
+    <!-- [新增] 统计模态框 -->
+    <div class="modal-overlay" id="statsModal" style="display: none;">
+        <div class="modal-content large"> <!-- 添加一个 'large' 类以获得更宽的模态框 -->
+            <div class="modal-header">
+                <h2>复习统计</h2>
+                <button class="modal-close" id="statsModalCloseBtn">×</button>
+            </div>
+            <div class="modal-body">
+                <p>近30天每日复习卡片数量统计</p>
+                <div class="chart-container" style="position: relative; height:60vh; width:100%">
+                    <canvas id="statsChart"></canvas>
+                </div>
+            </div>
             </div>
         </div>
 </body>

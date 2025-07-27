@@ -192,7 +192,8 @@ function formatDateToSubscript(date) {
 
 function addClozeEventListeners() {
     // --- 1. 单击事件监听器 (用于复习) ---
-    dom.preview.addEventListener('click', (e) => {
+    // [修改] 将事件处理器设为 async
+    dom.preview.addEventListener('click', async (e) => {
         const cloze = e.target.closest('.cloze');
         if (!cloze) return;
 
@@ -227,6 +228,8 @@ function addClozeEventListeners() {
 
             // d. 根据评分决定卡片的可见性
             if (rating === 3) { // 如果是 "简单"
+                await dataService.recordReview(fileId);
+
                 // 保持卡片打开，并应用 'easy-open' 样式
                 cloze.classList.remove('hidden', 'permanent-view');
                 cloze.classList.add('easy-open');
@@ -309,6 +312,7 @@ function addClozeEventListeners() {
             return;
         }
 
+        const isChecked = target.checked;
         // 步骤 2: 确定被点击的复选框是所有复选框中的第几个
         const allCheckboxes = Array.from(dom.preview.querySelectorAll('li input[type="checkbox"]'));
         const clickedIndex = allCheckboxes.indexOf(target);
@@ -316,13 +320,15 @@ function addClozeEventListeners() {
             return;
         }
 
-        const isChecked = target.checked;
         const editorContent = dom.editor.value;
         const lines = editorContent.split('\n');
         
         // 用于识别任务列表项的正则表达式
         const taskLineRegex = /^\s*- \[( |x)\]/;
-        let taskCounter = 0; // 专门用于对源文本中的任务项进行计数
+        let taskCounter = 0;
+        let contentChanged = false; // 标志位，判断文本是否真的被修改
+        // [核心修改] 统计逻辑现在与文本修改逻辑紧密耦合，确保只有在文本更新时才可能触发统计
+        let shouldRecordReview = false;
 
         // 步骤 3: 遍历每一行来定位和修改目标行
         const newLines = lines.map(line => {
@@ -334,28 +340,48 @@ function addClozeEventListeners() {
             // 如果这一行是任务项，检查它是否是我们要找的那个
             if (taskCounter === clickedIndex) {
                 taskCounter++; // 别忘了增加计数器
-                
+                let modifiedLine = line;
                 // 正是这一行！现在进行修改
                 if (isChecked) {
                     // --- 场景：勾选复选框 ---
-                    // 1. 去掉旧的日期块（如果有的话），避免重复
-                    let content = line.replace(/\{[^}]+\}/g, '').trim();
-                    // 2. 提取纯任务文本
-                    let taskText = content.replace(/^\s*- \[\s\]\s*/, '');
-                    
-                    // 3. 创建新的日期块
-                    const displayDate = formatDateToSubscript(new Date());
-                    const machineDate = new Date().toISOString();
-                    const newDateBlock = `{${displayDate}|${machineDate}}`;
-                    
-                    // 4. 组装成新的、已完成的任务行
-                    return `- [x] ${newDateBlock} ${taskText}`;
+                    const dateBlockRegex = /\{([^}]+?)\|([^}]+?)\}/;
+                    const match = line.match(dateBlockRegex);
+                    const todayStr = new Date().toISOString().slice(0, 10);
+                    let isAlreadyCompletedToday = false;
+
+                    if (match && match[2]) { // 如果存在有效的时间戳块
+                        try {
+                            const existingDate = new Date(match[2]);
+                            if (existingDate.toISOString().slice(0, 10) === todayStr) {
+                                isAlreadyCompletedToday = true;
+                            }
+                        } catch (err) { /* 忽略格式错误的日期 */ }
+                    }
+
+                    if (isAlreadyCompletedToday) {
+                        // 如果今天已经完成，只需确保它显示为[x]即可，不统计，不更新日期
+                        modifiedLine = line.replace(/^- \[\s\]/, '- [x]');
+                    } else {
+                        // 如果是新的完成（今天首次、或从别的日期改到今天）
+                        shouldRecordReview = true; // 标记需要统计
+                        const content = line.replace(/\{[^}]+\}/g, '').trim();
+                        const taskText = content.replace(/^\s*- \[\s\]\s*/, '');
+                        const displayDate = formatDateToSubscript(new Date());
+                        const machineDate = new Date().toISOString();
+                        const newDateBlock = `{${displayDate}|${machineDate}}`;
+                        modifiedLine = `- [x] ${newDateBlock} ${taskText}`;
+                    }
                 } else {
                     // --- 场景：取消勾选 ---
-                    // 1. 只需将 "[x]" 替换为 "[ ]"
-                    // 2. 您的原始逻辑保留了日期，这种做法可以保持任务的元数据，这里我们遵循它。
-                    return line.replace('[x]', '[ ]');
+                    // 不会触发统计，只需修改状态
+                    modifiedLine = line.replace('- [x]', '- [ ]');
                 }
+                
+                if (modifiedLine !== line) {
+                    contentChanged = true;
+                }
+                return modifiedLine;
+
             } else {
                 // 是任务行，但不是被点击的那个，原样返回
                 taskCounter++;
@@ -363,10 +389,15 @@ function addClozeEventListeners() {
             }
         });
 
-        // 步骤 4: 将修改后的行数组合并成新文本，并更新编辑器
-        const newEditorContent = newLines.join('\n');
-        
-        if (editorContent !== newEditorContent) {
+        // 只有在文本内容确实发生变化时才执行后续操作
+        if (contentChanged) {
+            // 如果需要，执行统计
+            if (shouldRecordReview) {
+                await dataService.recordReview(appState.currentSessionId);
+            }
+
+            // 更新编辑器内容并保存
+            const newEditorContent = newLines.join('\n');
             const cursorPos = dom.editor.selectionStart;
             dom.editor.value = newEditorContent;
             dom.editor.setSelectionRange(cursorPos, cursorPos);

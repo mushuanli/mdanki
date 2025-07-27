@@ -24,6 +24,8 @@ export async function initializeAnkiApp() {
 
     // The dataService's initializeApp loads Anki-specific data.
     await dataService.initializeApp();
+        // [新增] 初始化时更新一次今日复习计数
+    await dataService.updateTodaysReviewCountUI();
     
     // Setup UI components that need to exist before the first render.
     createBackButton(handleGoBack);
