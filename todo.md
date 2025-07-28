@@ -74,3 +74,62 @@ gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/screen -dNOPAUSE -d
 先一步步阅读分析文件架构，代码逻辑，提供软件设计，然后输出实现方案，反思方案是否完整体现了上面设计，
 最后输出代码。
 ```
+
+```
+
+将下面单词信息扩展成下面json形式，输出 json数组。difficulty难度系数是1-5.example_en是容易入门的英文例句，example_cn是对应翻译。image_prompt 是根据example_en场景和单词意思生成。memory_tips是单词记忆技巧，synonym_diff近义词快速区分方法
+{
+"name": "accomplish",
+"symbol": "/əˈkʌmplɪʃ/",
+"chn": "vt. 完成",
+"example_en": "She worked hard to accomplish the project.",
+"example_cn": "她努力工作以完成项目。",
+"word_family": "accomplished（adj. 完成的；熟练的）, accomplishment（n. 成就；完成）, accomplisher（n. 完成者）",
+"memory_tips": "记忆技巧：可以将'accomplish'拆分为'ac'（表示'加强'）+ 'complish'（类似'complete'完成），联想为'加强完成'。词源来自古法语'acomplir'，意为'完成'。",
+"difficulty": "3",
+"collocations": "accomplish a task（完成任务）, accomplish a goal（实现目标）, accomplish nothing（一事无成）",
+"image_prompt": "一位年轻女性在办公室认真工作，桌上堆满了文件和笔记本电脑，她正在专注地完成一个项目。"
+"synonym_diff": {
+  "words": "achieve, complete, fulfill, attain, execute, perform, realize",
+  "quick_guide": "完成任务用 complete，实现理想用 achieve/realize，满足要求用 fulfill，达到水平用 attain，执行过程用 execute/perform。",
+  "details": [
+    {
+      "word": "achieve",
+      "focus": "通过长期努力达成目标（如梦想、成功）",
+      "example": "She achieved her dream of becoming a scientist."
+    },
+    {
+      "word": "complete",
+      "focus": "彻底结束具体任务或补全缺失部分（如作业、建筑）",
+      "example": "He completed the report before the deadline."
+    },
+    {
+      "word": "fulfill",
+      "focus": "满足责任、承诺或期望（如合同、使命）",
+      "example": "The product fulfills all safety requirements."
+    },
+    {
+      "word": "attain",
+      "focus": "通过努力获得某物（如水平、地位）",
+      "example": "He attained mastery in piano after years of practice."
+    },
+    {
+      "word": "execute/perform",
+      "focus": "高效执行或履行（如计划、手术）",
+      "example": "The team executed the marketing strategy perfectly."
+    },
+    {
+      "word": "realize",
+      "focus": "使想法成为现实（如愿景、潜力）",
+      "example": "They realized their plan of building an eco-friendly village."
+    }
+  ]
+}
+}
+---
+
+---
+下面给出了一些word_family例子请参考, 并根据常用语等完善word_family使得学生能够互相联系:
+
+
+```

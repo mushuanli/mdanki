@@ -47,19 +47,13 @@ pub struct InitArgs {
     pub template: Option<PathBuf>,
 }
 
-/// "md" 子命令的参数 (已更新)
-#[derive(Args, Debug)]
+#[derive(Parser, Debug)]
 pub struct MdArgs {
-    /// 主要的数据目录，应包含 json/ 子目录
-    #[arg(required = true)]
-    pub dir: PathBuf,
+    /// 输入路径 (可以是包含 index.json 的目录，或直接是 index.json 文件)
+    pub path: PathBuf,
 
-    /// [可选] 指定输入文件，而不是使用 <dir>/index.json
-    #[arg(short, long)]
-    pub input: Option<PathBuf>,
-
-    /// [可选] 输出 Markdown 文件的目录
-    #[arg(short, long, default_value = ".")]
+    /// 输出目录
+    #[arg(short, long, default_value = "output")]
     pub output_dir: PathBuf,
 }
 
