@@ -1598,3 +1598,91 @@ body {
     .panel-actions { justify-content: center; }
     .app-nav { flex-wrap: wrap; }
 }
+
+/* ====================================================== */
+/*          [新增] Toggle List / Details-Summary 样式      */
+/* ====================================================== */
+.toggle-list {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: var(--border-radius);
+    margin: 1.2em 0;
+    overflow: hidden; /* 确保子元素圆角正确 */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.toggle-list summary {
+    padding: 12px 18px;
+    font-weight: 600;
+    color: var(--primary-color);
+    background-color: #f1f3f5;
+    cursor: pointer;
+    outline: none; /* 移除点击时的默认轮廓 */
+    list-style: none; /* 移除默认的三角箭头 (在某些浏览器中) */
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.toggle-list summary::-webkit-details-marker {
+    display: none; /* 移除 Chrome/Safari 的默认箭头 */
+}
+
+.toggle-list summary:hover {
+    background-color: #e9ecef;
+}
+
+/* 自定义三角箭头 */
+.toggle-list summary::before {
+    content: '▶';
+    font-size: 0.8em;
+    margin-right: 12px;
+    transform: rotate(0deg);
+    transition: transform 0.2s ease-in-out;
+    color: var(--accent-color);
+}
+
+.toggle-list[open] > summary::before {
+    transform: rotate(90deg);
+}
+
+.toggle-content {
+    padding: 15px 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+/* 移除第一个子元素的上外边距，使其与标题对齐更美观 */
+.toggle-content > *:first-child {
+    margin-top: 0;
+}
+/* 移除最后一个子元素的下外边距 */
+.toggle-content > *:last-child {
+    margin-bottom: 0;
+}
+/* 让summary中的checkbox和文字对齐 */
+.toggle-list summary {
+    padding: 12px 18px;
+    font-weight: 600;
+    color: var(--primary-color);
+    background-color: #f1f3f5;
+    cursor: pointer;
+    outline: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s ease;
+    gap: 8px; /* [新增] 为内部元素提供间距 */
+}
+
+/* [新增] 为复选框和标题文本添加样式 */
+.toggle-list summary input[type="checkbox"] {
+    flex-shrink: 0;
+    margin: 0;
+    width: 1.2em;
+    height: 1.2em;
+    cursor: pointer; /* 确保在复选框上也是指针手势 */
+}
+
+.toggle-title-text {
+    flex-grow: 1;
+}

@@ -90,21 +90,37 @@ function processClozeElementsInNode(node) {
  * [新增] 处理任务列表，添加悬停提示和隐藏时间戳
  */
 function processTaskLists() {
-    const taskItems = dom.preview.querySelectorAll('li');
-    const timeRegex = /\{([^}]+)\}/; // 匹配 {...} 中的内容
+    const taskItems = dom.preview.querySelectorAll('li, details'); // 修改选择器
+    const timeRegex = /\{([^}]+)\}/;
 
     taskItems.forEach(item => {
-        // 寻找复选框
-        const checkbox = item.querySelector('input[type="checkbox"]');
+        const checkbox = item.tagName === 'LI' 
+            ? item.querySelector('input[type="checkbox"]') 
+            : item.querySelector('summary input[type="checkbox"]');
+
         if (!checkbox) return;
 
         // 步骤 1: 确保复选框是可点击的 (这一步保持不变)
         checkbox.disabled = false;
+
+        // ======================================================
+        //          ▼▼▼ 第 2 处核心修改（也是最终修复） ▼▼▼
+        // 目的：正确定位到包含任务文本和日期的元素，无论其结构如何。
         // ======================================================
 
-        // 步骤 2: [核心修改] 精确查找并替换时间戳文本节点
-        // 遍历 li 的所有直接子节点
-        Array.from(item.childNodes).forEach(node => {
+        // 步骤 2: 定义真正持有文本的元素
+        let textHolderElement;
+        if (item.tagName === 'LI') {
+            textHolderElement = item; // 对于 <li>, 它自己就是文本持有者
+        } else { // 对于 <details>
+            textHolderElement = item.querySelector('.toggle-title-text'); // 文本在 <span class="toggle-title-text"> 内部
+        }
+
+        // 如果找不到文本持有元素，则跳过，增加健壮性
+        if (!textHolderElement) return;
+
+        // 步骤 3: [修正] 遍历 textHolderElement 的子节点来查找时间戳
+        Array.from(textHolderElement.childNodes).forEach(node => {
             // 我们只关心文本节点，并且内容要匹配时间戳格式
             if (node.nodeType === Node.TEXT_NODE && timeRegex.test(node.nodeValue)) {
                 const match = node.nodeValue.match(timeRegex);
@@ -150,11 +166,11 @@ function processTaskLists() {
                     
                     // 3. 更新原始节点：只保留纯任务文本
                     node.nodeValue = textContent;
-                    
-                    // 4. 在任务文本节点之前插入可见的日期节点
-                    item.insertBefore(displayNode, node);
-                    
-                    // 5. 将隐藏的数据块附加到<li>的末尾（它的位置不影响显示）
+                
+                    // 4. 在任务文本节点之前插入可见的日期节点（在正确的父元素下）
+                    textHolderElement.insertBefore(displayNode, node);
+                
+                    // 5. 将隐藏的数据块附加到最外层的<li>或<details>的末尾
                     item.appendChild(storageNode);
                     
                 } catch (e) {
@@ -308,34 +324,33 @@ function addClozeEventListeners() {
     dom.preview.addEventListener('change', async (e) => {
         const target = e.target;
         // 步骤 1: 确保事件源是列表项中的一个复选框
-        if (target.tagName !== 'INPUT' || target.type !== 'checkbox' || !target.closest('li')) {
+    if (target.tagName !== 'INPUT' || target.type !== 'checkbox' || (!target.closest('li') && !target.closest('summary'))) {
             return;
         }
 
-        const isChecked = target.checked;
-        // 步骤 2: 确定被点击的复选框是所有复选框中的第几个
-        const allCheckboxes = Array.from(dom.preview.querySelectorAll('li input[type="checkbox"]'));
-        const clickedIndex = allCheckboxes.indexOf(target);
-        if (clickedIndex === -1) {
-            return;
+    const isChecked = target.checked;
+    const allCheckboxes = Array.from(dom.preview.querySelectorAll('li input[type="checkbox"], summary input[type="checkbox"]'));
+    const clickedIndex = allCheckboxes.indexOf(target);
+    if (clickedIndex === -1) {
+        return;
+    }
+
+    const editorContent = dom.editor.value;
+    const lines = editorContent.split('\n');
+
+    const taskLineRegex = /^\s*- \[( |x)\]/;
+    const toggleTaskLineRegex = /^::>\s*\[( |x)\]/;
+    let taskCounter = 0;
+    let contentChanged = false;
+    let shouldRecordReview = false;
+
+    const newLines = lines.map(line => {
+        const isTaskLine = taskLineRegex.test(line);
+        const isToggleTaskLine = !isTaskLine && toggleTaskLineRegex.test(line);
+
+        if (!isTaskLine && !isToggleTaskLine) {
+            return line;
         }
-
-        const editorContent = dom.editor.value;
-        const lines = editorContent.split('\n');
-        
-        // 用于识别任务列表项的正则表达式
-        const taskLineRegex = /^\s*- \[( |x)\]/;
-        let taskCounter = 0;
-        let contentChanged = false; // 标志位，判断文本是否真的被修改
-        // [核心修改] 统计逻辑现在与文本修改逻辑紧密耦合，确保只有在文本更新时才可能触发统计
-        let shouldRecordReview = false;
-
-        // 步骤 3: 遍历每一行来定位和修改目标行
-        const newLines = lines.map(line => {
-            // 如果这一行不是任务项，直接返回原样
-            if (!taskLineRegex.test(line)) {
-                return line;
-            }
 
             // 如果这一行是任务项，检查它是否是我们要找的那个
             if (taskCounter === clickedIndex) {
@@ -350,44 +365,42 @@ function addClozeEventListeners() {
                     let isAlreadyCompletedToday = false;
 
                     if (match && match[2]) { // 如果存在有效的时间戳块
-                        try {
-                            const existingDate = new Date(match[2]);
-                            if (existingDate.toISOString().slice(0, 10) === todayStr) {
-                                isAlreadyCompletedToday = true;
-                            }
-                        } catch (err) { /* 忽略格式错误的日期 */ }
+                    try {
+                        if (new Date(match[2]).toISOString().slice(0, 10) === todayStr) isAlreadyCompletedToday = true;
+                    } catch (err) {}
                     }
 
-                    if (isAlreadyCompletedToday) {
-                        // 如果今天已经完成，只需确保它显示为[x]即可，不统计，不更新日期
-                        modifiedLine = line.replace(/^- \[\s\]/, '- [x]');
-                    } else {
-                        // 如果是新的完成（今天首次、或从别的日期改到今天）
-                        shouldRecordReview = true; // 标记需要统计
-                        const content = line.replace(/\{[^}]+\}/g, '').trim();
-                        const taskText = content.replace(/^\s*- \[\s\]\s*/, '');
-                        const displayDate = formatDateToSubscript(new Date());
-                        const machineDate = new Date().toISOString();
-                        const newDateBlock = `{${displayDate}|${machineDate}}`;
-                        modifiedLine = `- [x] ${newDateBlock} ${taskText}`;
-                    }
+                if (isAlreadyCompletedToday) {
+                    modifiedLine = isTaskLine 
+                        ? line.replace(/^- \[\s\]/, '- [x]')
+                        : line.replace(/^::> \[\s\]/, '::> [x]');
                 } else {
-                    // --- 场景：取消勾选 ---
-                    // 不会触发统计，只需修改状态
-                    modifiedLine = line.replace('- [x]', '- [ ]');
+                    shouldRecordReview = true;
+                    const content = line.replace(/\{[^}]+\}/g, '').trim();
+                    const displayDate = formatDateToSubscript(new Date());
+                    const machineDate = new Date().toISOString();
+                    const newDateBlock = `{${displayDate}|${machineDate}}`;
+                    if (isTaskLine) {
+                        const taskText = content.replace(/^\s*- \[\s\]\s*/, '');
+                        modifiedLine = `- [x] ${newDateBlock} ${taskText}`;
+                    } else {
+                        const taskText = content.replace(/^::>\s*\[\s\]\s*/, '');
+                        modifiedLine = `::> [x] ${newDateBlock} ${taskText}`;
+                    }
                 }
-                
-                if (modifiedLine !== line) {
-                    contentChanged = true;
-                }
-                return modifiedLine;
-
             } else {
-                // 是任务行，但不是被点击的那个，原样返回
-                taskCounter++;
-                return line;
+                modifiedLine = isTaskLine 
+                    ? line.replace('- [x]', '- [ ]')
+                    : line.replace('::> [x]', '::> [ ]');
             }
-        });
+        
+            if (modifiedLine !== line) contentChanged = true;
+            return modifiedLine;
+        } else {
+            taskCounter++;
+            return line;
+        }
+    });
 
         // 只有在文本内容确实发生变化时才执行后续操作
         if (contentChanged) {
@@ -515,6 +528,8 @@ export async function updatePreview() {
 
         try {
             // 使用 mermaid.render 生成 SVG
+        // 使用 mermaid.parse 进行语法验证而不渲染
+        await mermaid.parse(graphDefinition);
             const { svg } = await mermaid.render(graphId, graphDefinition);
             
             // 创建一个容器来包裹 SVG，方便设置样式
@@ -527,6 +542,7 @@ export async function updatePreview() {
                     preElement.parentNode.replaceChild(container, preElement);
                 }
         } catch (error) {
+/*
             console.error('Mermaid rendering error:', error);
             // 如果渲染失败，在原地显示错误信息
             const errorBox = document.createElement('div');
@@ -535,6 +551,7 @@ export async function updatePreview() {
                 if (preElement.parentNode) {
                     preElement.parentNode.replaceChild(errorBox, preElement);
                 }
+*/
             }
     });
 
@@ -557,6 +574,12 @@ export async function updatePreview() {
 }
 
 export function setupPreview() {
+    mermaid.initialize({
+    startOnLoad: false,
+    securityLevel: 'strict',
+    suppressErrors: true,
+    maxTextSize: 100000 // 增加最大文本大小限制
+    });
     const mathExtension = {
         name: 'math',
         level: 'inline', // Process at inline level
@@ -611,8 +634,81 @@ export function setupPreview() {
         }
     };
 
-    // Use the improved math extension
-    window.marked.use({ extensions: [mathExtension] });
+    // 添加 toggle list 扩展
+    const toggleListExtension = {
+        name: 'toggleList',
+        level: 'block',
+        start(src) {
+            const match = src.match(/\n::>/);
+            return match ? match.index : undefined;
+        },
+        tokenizer(src, tokens) {
+            const titleRule = /^::>\s*(.*)(?:\n|$)/;
+            const titleMatch = titleRule.exec(src);
+    
+            if (titleMatch) {
+                const title = titleMatch[1].trim();
+                let raw = titleMatch[0];
+                let body = '';
+                let contentSrc = src.substring(raw.length);
+                
+                // 查找第一个非空内容行以确定基准缩进
+                const firstContentLineMatch = contentSrc.match(/^( *)(?=\S)/m);
+                const indent = firstContentLineMatch ? firstContentLineMatch[1].length : 0;
+    
+                if (indent > 0) {
+                    const indentRegex = new RegExp(`^ {${indent}}`, 'gm');
+                    // 匹配所有缩进的行，或完全是空/空格的行
+                    const contentBlockRegex = new RegExp(`^((?: {${indent}}.*|\\s*)\\n?)+`, 'm');
+                    const contentMatch = contentBlockRegex.exec(contentSrc);
+    
+                    if (contentMatch) {
+                        const blockContent = contentMatch[0];
+                        raw += blockContent;
+                        // 去除每行的前导缩进
+                        body = blockContent.replace(indentRegex, '');
+                    }
+                }
+    
+                const token = {
+                    type: 'toggleList',
+                    raw,
+                    title,
+                    body,
+                    tokens: []
+                };
+    
+                this.lexer.blockTokens(token.body, token.tokens);
+                return token;
+            }
+        },
+        renderer(token) {
+            const checkboxRegex = /^\s*\[( |x)\]\s*(.*)/;
+            const titleMatch = token.title.match(checkboxRegex);
+            
+            let summaryContent = '';
+            if (titleMatch) {
+                const checked = titleMatch[1] === 'x' ? 'checked' : '';
+                const titleText = titleMatch[2];
+                summaryContent = `<input type="checkbox" ${checked}><span class="toggle-title-text">${titleText}</span>`;
+            } else {
+                summaryContent = `<span class="toggle-title-text">${token.title}</span>`;
+            }
+
+            const bodyHtml = this.parser.parse(token.tokens);
+            return `
+                <details class="toggle-list">
+                    <summary>${summaryContent}</summary>
+                    <div class="toggle-content">
+                        ${bodyHtml}
+                    </div>
+                </details>`;
+        }
+    };
+
+
+    // 使用扩展（添加到mathExtension之后）
+    window.marked.use({ extensions: [mathExtension, toggleListExtension] });
 
     // 【修改】在这里添加 gfm: true 选项
     window.marked.setOptions({ 
