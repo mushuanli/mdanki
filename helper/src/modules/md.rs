@@ -1,29 +1,27 @@
 // src/modules/md.rs
 
 use anyhow::{anyhow, Context, Result};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize}; // 引入 Serialize
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-// --- 数据结构定义 ---
-// 这些结构体现在能完全反映 index.json 和 word_json/*.json 的结构
-
-#[derive(Deserialize, Debug, Clone)]
+// --- 数据结构定义 (已更新，增加 Serialize 和所有字段) ---
+#[derive(Deserialize, Serialize, Debug, Clone)]
 struct SynonymDetail {
     word: String,
     focus: String,
     example: String,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 struct SynonymDiff {
     words: String,
     quick_guide: String,
     details: Vec<SynonymDetail>,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 struct WordEntry {
     name: String,
     chn: Option<String>,
@@ -31,12 +29,11 @@ struct WordEntry {
     example_en: Option<String>,
     example_cn: Option<String>,
     word_family: Option<String>,
+    memory_tips: Option<String>,
+    difficulty: Option<String>, // 新增
     collocations: Option<String>,
-    memory_tips: Option<String>, // 新增“记忆技巧”字段
+    image_prompt: Option<String>, // 新增
     synonym_diff: Option<SynonymDiff>,
-    // memory_tips, difficulty, image_prompt 等字段虽然存在于JSON中，
-    // 但当前格式化逻辑不需要它们，所以可以省略以简化代码。
-    // 如果未来需要，可以在这里添加。
 }
 
 // 引用您在 cli.rs 中定义的 MdArgs 结构体
@@ -68,17 +65,19 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
     // 2. 读取并解析主 index.json 文件
     let index_content = fs::read_to_string(&index_path)
         .with_context(|| format!("错误: 无法读取文件 '{}'", index_path.display()))?;
-    let wordlist: Vec<WordEntry> = serde_json::from_str(&index_content)
+    let mut wordlist: Vec<WordEntry> = serde_json::from_str(&index_content)
         .with_context(|| format!("错误: 解析文件 '{}' 失败", index_path.display()))?;
 
     // 3. 遍历词汇表并生成内容
     let mut unit_outputs: HashMap<String, String> = HashMap::new();
     let mut current_unit_num: Option<String> = None;
+    let mut was_updated = false; // 新增：用于标记 index.json 是否被修改
 
     println!("\n开始处理词汇表...");
 
-    for mut item in wordlist {
-        // 4. 检查是否是单元标记 (只有 name, 没有 chn)
+    // 使用可变引用进行迭代，以便能直接修改 item
+    for item in &mut wordlist {
+        // 4. 处理单元标记
         if item.chn.is_none() {
             // 如果一个条目只有 name 没有 chn，则认为是单元标记
             current_unit_num = Some(item.name.clone());
@@ -100,22 +99,25 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
 
         // 5. 如果缺少例句 (example_en)，则从 word_json 加载并合并数据
         if item.example_en.is_none() {
+            was_updated = true; // 标记发生了更新
             let sanitized_name = sanitize_word_for_filename(&item.name);
             let detail_json_path = details_dir.join(format!("{}.json", sanitized_name));
 
             if detail_json_path.exists() {
-                println!("  [i] '{}' 信息不全, 从 {} 加载...", item.name, detail_json_path.display());
+                println!("  [i] '{}' 信息不全, 从 {} 加载并补充...", item.name, detail_json_path.display());
                 match fs::read_to_string(&detail_json_path)
                     .and_then(|content| serde_json::from_str::<WordEntry>(&content).map_err(Into::into))
                 {
                     Ok(detail_data) => {
-                        // 合并字段 (仅当原字段为 None 时更新)
+                        // 合并所有可能缺失的字段
+                        item.symbol.clone_from(&detail_data.symbol);
                         item.example_en.clone_from(&detail_data.example_en);
                         item.example_cn.clone_from(&detail_data.example_cn);
                         item.word_family.clone_from(&detail_data.word_family);
+                        item.memory_tips.clone_from(&detail_data.memory_tips);
+                        item.difficulty.clone_from(&detail_data.difficulty);
                         item.collocations.clone_from(&detail_data.collocations);
-                        item.symbol.clone_from(&detail_data.symbol);
-                        item.memory_tips.clone_from(&detail_data.memory_tips); // 合并记忆技巧
+                        item.image_prompt.clone_from(&detail_data.image_prompt);
                         if item.synonym_diff.is_none() {
                             item.synonym_diff = detail_data.synonym_diff;
                         }
@@ -141,19 +143,19 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
 
         // 构建“词族、词组、记忆”部分，能优雅地处理字段缺失
         let mut extra_info_parts = Vec::new();
-        if let Some(wf) = item.word_family {
+        if let Some(wf) = &item.word_family {
             extra_info_parts.push(format!("词族: {}", wf.replace('|', ",")));
         }
-        if let Some(c) = item.collocations {
+        if let Some(c) = &item.collocations {
             extra_info_parts.push(format!("词组: {}", c));
         }
-        if let Some(mt) = item.memory_tips {
+        if let Some(mt) = &item.memory_tips {
             extra_info_parts.push(format!("记忆: {}", mt));
         }
         let extra_info_block = extra_info_parts.join(" ¶ ");
 
         // 构建“辨析”部分
-        let synonym_block = item.synonym_diff.map(|sd| {
+        let synonym_block = item.synonym_diff.as_ref().map(|sd| {
             let details_formatted = sd.details.iter()
                 .map(|d| format!("< {} - {} ¶ {} >", d.word.trim(), d.focus.trim(), d.example.trim()))
                 .collect::<Vec<_>>()
@@ -190,10 +192,24 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
     for (unit_num, content) in unit_outputs {
         // 2. 输出文件名为 <基础名>_U{unitNum}.md
         let output_filename = args.output_dir.join(format!("{}_U{}.md", base_name, unit_num));
-        match fs::write(&output_filename, content) {
+        match fs::write(&output_filename, &content) {
             Ok(_) => println!("  [✓] 成功生成文件: {}", output_filename.display()),
             Err(e) => eprintln!("  [✗] 错误: 写入文件 '{}' 失败. {}", output_filename.display(), e),
         }
+    }
+    
+    // --- 新增：回写更新后的 index.json ---
+    if was_updated {
+        println!("\n[i] 检测到 index.json 内容已补充，正在回写更新...");
+        let updated_json_content = serde_json::to_string_pretty(&wordlist)
+            .context("错误: 无法将更新后的数据序列化为 JSON")?;
+        
+        fs::write(&index_path, updated_json_content)
+            .with_context(|| format!("错误: 无法将更新后的内容写入到 '{}'", index_path.display()))?;
+        
+        println!("[✓] 成功更新文件: {}", index_path.display());
+    } else {
+        println!("\n[i] index.json 内容完整，无需更新。");
     }
 
     println!("\n处理完成!");
@@ -209,23 +225,11 @@ fn resolve_paths(path: &Path) -> Result<(PathBuf, PathBuf, String)> {
 
     if canonical_path.is_dir() {
         let index_path = canonical_path.join("index.json");
-        let base_name = canonical_path.file_name()
-            .and_then(|name| name.to_str())
-            .map(String::from)
-            .ok_or_else(|| anyhow!("无法从目录 '{}' 获取文件名", canonical_path.display()))?;
+        let base_name = canonical_path.file_name().and_then(|s| s.to_str()).map(String::from).ok_or_else(|| anyhow!("无法从目录获取文件名"))?;
         Ok((index_path, canonical_path, base_name))
     } else if canonical_path.is_file() {
-        let input_dir = canonical_path.parent()
-            .ok_or_else(|| anyhow!("无法获取文件 '{}' 的父目录", canonical_path.display()))?
-            .to_path_buf();
-        
-        // --- 修正点在这里 ---
-        // 基础名称现在从父目录获取，而不是文件名
-        let base_name = input_dir.file_name()
-            .and_then(|name| name.to_str())
-            .map(String::from)
-            .ok_or_else(|| anyhow!("无法从父目录 '{}' 获取基础名称", input_dir.display()))?;
-            
+        let input_dir = canonical_path.parent().ok_or_else(|| anyhow!("无法获取父目录"))?.to_path_buf();
+        let base_name = input_dir.file_name().and_then(|s| s.to_str()).map(String::from).ok_or_else(|| anyhow!("无法从父目录获取基础名称"))?;
         Ok((canonical_path, input_dir, base_name))
     } else {
         Err(anyhow!("路径 '{}' 既不是文件也不是目录", path.display()))

@@ -16,10 +16,10 @@ pub enum Command {
     Pack(PackArgs),
     /// 初始化项目目录，通过 AI 生成单词卡片和媒体文件
     Init(InitArgs),
-    /// 从数据目录生成用于背诵的 Markdown 文件
+    /// 生成 Markdown 文件并智能更新数据源
     Md(MdArgs),
-    /// [新增] 从 .apkg 文件反向生成 Markdown 文件
-    Pkg2md(Pkg2mdArgs), 
+    /// 从 .apkg 文件反向生成 Markdown 文件
+    Pkg2md(Pkg2mdArgs),
 }
 
 /// "pack" 子命令的参数
@@ -47,12 +47,20 @@ pub struct InitArgs {
     pub template: Option<PathBuf>,
 }
 
-#[derive(Parser, Debug)]
+/// 生成 Markdown 文件并智能更新数据源。
+///
+/// 此命令从指定的数据源（目录或 index.json 文件）生成用于背诵的 Markdown 文件。
+/// 如果 index.json 中的单词条目不完整 (如缺少例句 'example_en')，
+/// 它会自动从同级的 'word_json/' 目录中查找并补全信息。
+///
+/// 最重要的是，所有补全后的完整数据将自动回写至 index.json 文件，实现数据源的“一次性”更新。
+#[derive(Args, Debug)]
 pub struct MdArgs {
-    /// 输入路径 (可以是包含 index.json 的目录，或直接是 index.json 文件)
+    /// 数据源路径 (可为包含 index.json 的工作目录，或直接指定该文件)
+    #[arg(required = true)]
     pub path: PathBuf,
 
-    /// 输出目录
+    /// [可选] 指定输出 Markdown 文件的目录
     #[arg(short, long, default_value = "output")]
     pub output_dir: PathBuf,
 }
