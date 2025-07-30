@@ -181,4 +181,19 @@ gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/screen -dNOPAUSE -d
 
 ```
 
+```
+联系初高中高频单词，给下面所有单词增加synonym_diff。 words 写这个词的初高中出现的近义词, quick_guide 写快速区分方法。 例子如下（注意如果一个单词没有chn 那么表示是单元名，不需要处理）：
+{
+"name": "accomplish",
+"symbol": "/əˈkʌmplɪʃ/",
+"chn": "vt. 完成",
+"synonym_diff": {
+"words": "achieve, complete, fulfill, attain, execute, perform, realize",
+  "quick_guide": "完成任务用 complete，实现理想用 achieve/realize，满足要求用 fulfill，达到水平用 attain，执行过程用 execute/perform。"
+]
+}
+}
+---
+
+```
 

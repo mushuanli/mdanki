@@ -17,8 +17,10 @@ struct SynonymDetail {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 struct SynonymDiff {
+    #[serde(default)]
     words: String,
     quick_guide: String,
+    #[serde(default)]
     details: Vec<SynonymDetail>,
 }
 
@@ -65,9 +67,12 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
     if !index_path.exists() {
         return Err(anyhow!("错误: Index 文件 '{}' 不存在", index_path.display()));
     }
-    if !details_dir.is_dir() {
-        return Err(anyhow!("错误: 'word_json' 目录在 '{}' 中未找到", input_dir.display()));
-    }
+    
+    // [主要修改] 移除对 `word_json` 目录的预先检查。
+    // 我们将在需要时再检查它。
+    // if !details_dir.is_dir() {
+    //     return Err(anyhow!("错误: 'word_json' 目录在 '{}' 中未找到", input_dir.display()));
+    // }
 
     // 确保输出目录存在
     fs::create_dir_all(&args.output_dir)
@@ -114,37 +119,54 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
             let sanitized_name = sanitize_word_for_filename(&item.name);
             let detail_json_path = details_dir.join(format!("{}.json", sanitized_name));
 
-            if detail_json_path.exists() {
-                println!("  [i] '{}' 信息不全, 从 {} 加载并补充...", item.name, detail_json_path.display());
-                match fs::read_to_string(&detail_json_path)
-                    .and_then(|content| serde_json::from_str::<WordEntry>(&content).map_err(Into::into))
-                {
-                    Ok(detail_data) => {
-                        // 合并所有可能缺失的字段
-                        item.symbol.clone_from(&detail_data.symbol);
-                        item.example_en.clone_from(&detail_data.example_en);
-                        item.example_cn.clone_from(&detail_data.example_cn);
-                        item.word_family.clone_from(&detail_data.word_family);
-                        item.memory_tips.clone_from(&detail_data.memory_tips);
-                        item.difficulty.clone_from(&detail_data.difficulty);
-                        item.collocations.clone_from(&detail_data.collocations);
-                        item.image_prompt.clone_from(&detail_data.image_prompt);
+            // [逻辑移动] 在这里，我们真正需要详情文件了。
+            // 我们直接尝试读取文件，而不是先检查它是否存在。
+            // `fs::read_to_string` 的错误会告诉我们文件是否不存在。
+            println!("  [i] '{}' 信息不全, 尝试从 {} 加载并补充...", item.name, detail_json_path.display());
 
-                        // 2. (要求2) 合并时，如果 index.json 已有 synonym_diff，则保留它。
-                        // 只有当 item (来自 index.json) 的 synonym_diff 为 None 时，才从 detail_data 补充。
-                        // 这个逻辑符合要求，无需修改。
-                        if item.synonym_diff.is_none() {
-                            item.synonym_diff = detail_data.synonym_diff;
+            match fs::read_to_string(&detail_json_path) {
+                Ok(content) => {
+                    // 文件读取成功，现在解析它
+                    match serde_json::from_str::<WordEntry>(&content) {
+                        Ok(detail_data) => {
+                            // 合并所有可能缺失的字段
+                            item.symbol.clone_from(&detail_data.symbol);
+                            item.example_en.clone_from(&detail_data.example_en);
+                            item.example_cn.clone_from(&detail_data.example_cn);
+                            item.word_family.clone_from(&detail_data.word_family);
+                            item.memory_tips.clone_from(&detail_data.memory_tips);
+                            item.difficulty.clone_from(&detail_data.difficulty);
+                            item.collocations.clone_from(&detail_data.collocations);
+                            item.image_prompt.clone_from(&detail_data.image_prompt);
+                            if item.synonym_diff.is_none() {
+                                item.synonym_diff = detail_data.synonym_diff;
+                            }
+                        },
+                        Err(e) => {
+                             eprintln!("[!] 警告: 解析详情文件 {} 失败: {}. 已跳过 '{}'.", detail_json_path.display(), e, item.name);
+                             continue;
                         }
-                    },
-                    Err(e) => {
-                         eprintln!("[!] 警告: 解析详情文件 {} 失败: {}. 已跳过 '{}'.", detail_json_path.display(), e, item.name);
-                         continue;
                     }
                 }
-            } else {
-                eprintln!("[!] 警告: '{}' 缺少例句且未找到详情文件, 已跳过. (路径: {})", item.name, detail_json_path.display());
-                continue;
+                Err(e) => {
+                    // [主要修改] 文件读取失败，我们需要诊断原因。
+                    // 首先检查是不是因为整个 `word_json` 目录都不存在。
+                    if !details_dir.is_dir() {
+                        // 如果目录不存在，这是一个配置问题，应立即终止程序。
+                        return Err(anyhow!(
+                            "错误: 需要从详情文件补充数据，但 'word_json' 目录在 '{}' 中未找到。",
+                            input_dir.display()
+                        ));
+                    }
+                    
+                    // 如果目录存在，那说明只是这一个单词的详情文件缺失。
+                    // 这是一个警告，我们可以继续处理其他单词。
+                    eprintln!(
+                        "[!] 警告: 无法读取详情文件 {}: {}. 已跳过 '{}'.",
+                        detail_json_path.display(), e, item.name
+                    );
+                    continue; // 跳过当前单词的处理
+                }
             }
         }
 
@@ -172,26 +194,30 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
 
         // 构建“辨析”部分
         let synonym_block = item.synonym_diff.as_ref().map(|sd| {
-            let details_formatted = sd.details.iter()
-                .map(|d| format!("< {} - {} ¶ {} >", d.word.trim(), d.focus.trim(), d.example.trim()))
-                .collect::<Vec<_>>()
-                .join(" ¶ ");
-            format!("辨析: {} ¶¶ {} ¶ ", sd.quick_guide.trim(), details_formatted)
+            // 我们只取 quick_guide 的内容，不再处理和格式化 details 列表。
+            format!("辨析: {}", sd.quick_guide.trim())
         }).unwrap_or_default();
 
         // 准备音频部分的内容
         let audio_word = name.trim_start_matches('*');
 
-        // 8. 构建最终的 Markdown 行
+        // 构建最终的 Markdown 行
+        // 注意： extra_info_block 和 synonym_block 之间用 ¶¶ 分隔。
+        // 如果其中一个为空，连接后不会产生多余的分隔符。
+        let final_extra_block = [extra_info_block, synonym_block]
+            .into_iter()
+            .filter(|s| !s.is_empty())
+            .collect::<Vec<_>>()
+            .join(" ¶¶ ");
+
         let markdown_row = format!(
-            "| {} | -- {}: {} ¶¶ 例句: {} ¶ {} ¶¶ {} ¶¶ {} --^^audio: {} . {} ^^|\n",
+            "| {} | -- {}: {} ¶¶ 例句: {} ¶ {} ¶¶ {} --^^audio: {} . {} ^^|\n",
             chn,                 // 1. 中文释义
             name,                // 2. 单词
             symbol,              // 3. 音标
             example_en,          // 4. 英文例句
             example_cn,          // 5. 中文例句
-            extra_info_block,    // 6. 词族/词组/记忆区块
-            synonym_block,       // 7. 词义辨析区块
+            final_extra_block,   // 6. & 7. 合并后的额外信息区块 (词族/词组/记忆/辨析)
             audio_word,          // 8. 音频单词
             example_en           // 9. 音频例句
         );
