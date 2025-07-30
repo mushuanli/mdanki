@@ -133,3 +133,52 @@ gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/screen -dNOPAUSE -d
 
 
 ```
+
+```
+给下面所有单词增加synonym_diff近义词快速区分方法, 例子如下（注意如果一个单词没有chn 那么表示是单元名，不需要处理）：
+{
+"name": "accomplish",
+"symbol": "/əˈkʌmplɪʃ/",
+"chn": "vt. 完成",
+"synonym_diff": {
+"words": "achieve, complete, fulfill, attain, execute, perform, realize",
+"quick_guide": "完成任务用 complete，实现理想用 achieve/realize，满足要求用 fulfill，达到水平用 attain，执行过程用 execute/perform。",
+"details": [
+{
+"word": "achieve",
+"focus": "通过长期努力达成目标（如梦想、成功）",
+"example": "She achieved her dream of becoming a scientist."
+},
+{
+"word": "complete",
+"focus": "彻底结束具体任务或补全缺失部分（如作业、建筑）",
+"example": "He completed the report before the deadline."
+},
+{
+"word": "fulfill",
+"focus": "满足责任、承诺或期望（如合同、使命）",
+"example": "The product fulfills all safety requirements."
+},
+{
+"word": "attain",
+"focus": "通过努力获得某物（如水平、地位）",
+"example": "He attained mastery in piano after years of practice."
+},
+{
+"word": "execute/perform",
+"focus": "高效执行或履行（如计划、手术）",
+"example": "The team executed the marketing strategy perfectly."
+},
+{
+"word": "realize",
+"focus": "使想法成为现实（如愿景、潜力）",
+"example": "They realized their plan of building an eco-friendly village."
+}
+]
+}
+}
+---
+
+```
+
+

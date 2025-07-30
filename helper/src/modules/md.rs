@@ -1,8 +1,9 @@
 // src/modules/md.rs
 
 use anyhow::{anyhow, Context, Result};
-use serde::{Deserialize, Serialize}; // 引入 Serialize
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -24,15 +25,25 @@ struct SynonymDiff {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 struct WordEntry {
     name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     chn: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     symbol: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     example_en: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     example_cn: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     word_family: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     memory_tips: Option<String>,
-    difficulty: Option<String>, // 新增
+    #[serde(skip_serializing_if = "Option::is_none")]
+    difficulty: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     collocations: Option<String>,
-    image_prompt: Option<String>, // 新增
+    #[serde(skip_serializing_if = "Option::is_none")]
+    image_prompt: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     synonym_diff: Option<SynonymDiff>,
 }
 
@@ -118,6 +129,10 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
                         item.difficulty.clone_from(&detail_data.difficulty);
                         item.collocations.clone_from(&detail_data.collocations);
                         item.image_prompt.clone_from(&detail_data.image_prompt);
+
+                        // 2. (要求2) 合并时，如果 index.json 已有 synonym_diff，则保留它。
+                        // 只有当 item (来自 index.json) 的 synonym_diff 为 None 时，才从 detail_data 补充。
+                        // 这个逻辑符合要求，无需修改。
                         if item.synonym_diff.is_none() {
                             item.synonym_diff = detail_data.synonym_diff;
                         }
@@ -132,8 +147,8 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
                 continue;
             }
         }
-        
-        // --- 格式化输出 (全新逻辑) ---
+
+        // --- 格式化输出 ---
         let chn = item.chn.as_deref().unwrap_or("").trim().replace('\n', " ");
         let name = item.name.trim();
         let symbol = item.symbol.as_deref().unwrap_or("");
@@ -147,7 +162,8 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
             extra_info_parts.push(format!("词族: {}", wf.replace('|', ",")));
         }
         if let Some(c) = &item.collocations {
-            extra_info_parts.push(format!("词组: {}", c));
+            // [修改] 对 collocations 也进行替换
+            extra_info_parts.push(format!("词组: {}", c.replace('|', ",")));
         }
         if let Some(mt) = &item.memory_tips {
             extra_info_parts.push(format!("记忆: {}", mt));
@@ -187,18 +203,18 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
         }
     }
 
-    // 6. 写入文件 (使用新的命名规则)
+    // 6. 写入文件
     println!("\n--- 开始写入 Markdown 文件 ---");
     for (unit_num, content) in unit_outputs {
-        // 2. 输出文件名为 <基础名>_U{unitNum}.md
-        let output_filename = args.output_dir.join(format!("{}_U{}.md", base_name, unit_num));
+        // 4. (要求4) 输出文件名使用 - 连接，例如 <基础名>-U{unitNum}.md
+        let output_filename = args.output_dir.join(format!("{}-U{}.md", base_name, unit_num));
         match fs::write(&output_filename, &content) {
             Ok(_) => println!("  [✓] 成功生成文件: {}", output_filename.display()),
             Err(e) => eprintln!("  [✗] 错误: 写入文件 '{}' 失败. {}", output_filename.display(), e),
         }
     }
-    
-    // --- 新增：回写更新后的 index.json ---
+
+    // 7. 回写更新后的 index.json
     if was_updated {
         println!("\n[i] 检测到 index.json 内容已补充，正在回写更新...");
         let updated_json_content = serde_json::to_string_pretty(&wordlist)
@@ -218,7 +234,10 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
 
 // --- 辅助函数 ---
 
-/// 根据输入路径解析出 index 文件路径、输入目录和用于输出的基础名称。
+/// [修改] 根据输入路径解析出 index 文件路径、输入目录和用于输出的基础名称。
+/// (要求4) 现在会根据输入文件名决定基础名称：
+/// - 如果是目录，或文件是 `index.json`，则基础名为目录名。
+/// - 如果是其他文件（如 `EW10A.json`），则基础名为不带扩展名的文件名 (`EW10A`)。
 fn resolve_paths(path: &Path) -> Result<(PathBuf, PathBuf, String)> {
     let canonical_path = path.canonicalize()
         .with_context(|| format!("错误: 无法解析路径 '{}'", path.display()))?;
@@ -229,7 +248,22 @@ fn resolve_paths(path: &Path) -> Result<(PathBuf, PathBuf, String)> {
         Ok((index_path, canonical_path, base_name))
     } else if canonical_path.is_file() {
         let input_dir = canonical_path.parent().ok_or_else(|| anyhow!("无法获取父目录"))?.to_path_buf();
-        let base_name = input_dir.file_name().and_then(|s| s.to_str()).map(String::from).ok_or_else(|| anyhow!("无法从父目录获取基础名称"))?;
+
+        // [修改] 根据文件名决定 base_name
+        let base_name = if canonical_path.file_name() == Some(OsStr::new("index.json")) {
+            // 如果文件名是 index.json, 使用父目录名作为 base_name
+            input_dir.file_name()
+                     .and_then(|s| s.to_str())
+                     .map(String::from)
+                     .ok_or_else(|| anyhow!("无法从父目录 '{}' 获取基础名称", input_dir.display()))?
+        } else {
+            // 否则，使用文件名（不含扩展名）作为 base_name
+            canonical_path.file_stem()
+                          .and_then(|s| s.to_str())
+                          .map(String::from)
+                          .ok_or_else(|| anyhow!("无法从文件名 '{}' 获取基础名称", canonical_path.display()))?
+        };
+        
         Ok((canonical_path, input_dir, base_name))
     } else {
         Err(anyhow!("路径 '{}' 既不是文件也不是目录", path.display()))
