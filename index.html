@@ -44,6 +44,11 @@
                 <i class="fas fa-robot"></i>
                 <span>AI Agents</span>
             </a>
+                        <!-- [新增] 设置按钮 -->
+            <a href="#" class="app-nav-btn" id="nav-settings">
+                <i class="fas fa-cog"></i>
+                <span>设置</span>
+            </a>
         </nav>
     </div>
 
@@ -417,7 +422,65 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
             </div>
             <!-- 错题本视图结束 -->
 
+            <!-- ====================================================== -->
+            <!--                  [新增] 设置视图                     -->
+            <!-- ====================================================== -->
+            <div id="settings-view" class="main-layout" style="display: none;">
+                <div class="app-container">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <i class="fas fa-cog"></i> 应用程序设置
+                            </div>
+                        </div>
+                        <div class="panel-content" style="padding: 25px; overflow-y: auto;">
+                            <!-- 主题设置区域 -->
+                            <div class="settings-section">
+                                <h3 class="settings-section-title">外观与主题</h3>
+                                <div class="form-group">
+                                    <label for="theme-selector">选择一个主题</label>
+                                    <select id="theme-selector" class="form-control">
+                                        <option value="">默认 (亮色)</option>
+                                        <option value="dark">暗黑模式</option>
+                                        <option value="large-font">大号字体</option>
+                                        <option value="larger-font">更大号字体</option>
+                                    </select>
+                                    <p class="form-text" style="margin-top: 8px; font-size: var(--text-sm); color: var(--text-secondary);">
+                                        改变应用程序的视觉主题。
+                                    </p>
+                                </div>
+                            </div>
 
+                            <!-- [新增] 数据与同步设置区域 -->
+                            <div class="settings-section">
+                                <h3 class="settings-section-title">数据与同步</h3>
+                                <div class="form-group">
+                                    <label for="autosave-interval">自动保存间隔 (分钟)</label>
+                                    <input type="number" id="autosave-interval" class="form-control" min="0" value="5">
+                                    <p class="form-text" style="margin-top: 8px; font-size: var(--text-sm); color: var(--text-secondary);">
+                                        数据将按此时间间隔自动保存到本地数据库。设置为 0 可禁用自动保存。
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- [新增] 导入/导出按钮 -->
+                            <div class="form-group" style="margin-top: 25px;">
+                                <label>数据库同步</label>
+                                <div style="display: flex; gap: 15px;">
+                                    <button id="export-db-btn" class="btn-secondary" style="flex: 1;"><i class="fas fa-download"></i> 导出数据</button>
+                                    <button id="import-db-btn" class="btn-danger" style="flex: 1;"><i class="fas fa-upload"></i> 导入数据</button>
+                                </div>
+                                <input type="file" id="import-file-input" accept=".json" style="display: none;">
+                                <p class="form-text" style="margin-top: 8px; font-size: var(--text-sm); color: var(--text-secondary);">
+                                    导出所有数据到一个JSON文件。导入文件将会覆盖当前所有数据，请谨慎操作。
+                                </p>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 设置视图结束 -->
 
             <input type="file" id="fileInput" class="file-input" accept=".md, .txt" multiple>
 

@@ -1,11 +1,11 @@
 // src/services/dataService.js
 
 import { appState, setState } from '../common/state.js';
-import { calculateNextReview } from './srs.js'; // 导入 SRS 模块
+import { calculateNextReview } from './srs.js'; 
 import * as storage from './storageService.js';
-// [MODIFIED] 导入哈希函数
 import { generateId, simpleHash } from '../common/utils.js';
 import { INITIAL_CONTENT } from '../common/config.js';
+import { db } from '../common/db.js';
 
 import * as llmService from './llm/llmService.js'; // <-- 新增导入
 import { renderHistoryPanel, updateStreamingChunkInDOM, finalizeStreamingUI } from '../agent/agent_ui.js'; 
@@ -18,43 +18,54 @@ const EASY_BONUS = 1.3;   // “简单”按钮的额外奖励
 const INTERVAL_MODIFIER = 1.0; // 间隔调整系数
 const HARD_INTERVAL_FACTOR = 1.2; // “困难”按钮的间隔系数
 
+// 获取所有需要备份的表的名称
+const tablesToBackup = Object.keys(db.tables.reduce((acc, table) => ({...acc, [table.name]: true }), {}));
+
 // --- Private Helpers ---
 
-function parseHeadings(content) {
+/**
+ * [重写] 从内容中解析出一、二级标题，并构建层级结构。
+ * @param {string} content - 待解析的 Markdown 文本。
+ * @returns {Array<object>} - 返回一个包含层级关系的标题对象数组。
+ */
+function parseAndStructureHeadings(content) {
     const headingRegex = /^(#{1,2})\s+(.+)$/gm;
-    const headings = [];
+    const structuredHeadings = [];
+    let lastH1 = null;
     let match;
+
     while ((match = headingRegex.exec(content)) !== null) {
+        const level = match[1].length;
+        const text = match[2].trim();
+        
         const heading = {
-            level: match[1].length,
-            text: match[2].trim(),
-            start: match.index,
-            end: match.index + match[0].length,
-            content: ''
+            id: generateId(),
+            text: text,
+            level: level,
+            // 完整内容用于点击后在编辑器中显示
+            content: `#`.repeat(level) + ` ${text}\n\n` + (content.substring(match.index + match[0].length).split(/^#{1,2}\s/m)[0] || '').trim(),
         };
-        headings.push(heading);
+
+        if (level === 1) {
+            heading.children = []; // H1 标题可以有子标题
+            structuredHeadings.push(heading);
+            lastH1 = heading;
+        } else if (level === 2 && lastH1) {
+            // 如果这是一个 H2 并且前面有一个 H1，则将其作为 H1 的子项
+            lastH1.children.push(heading);
+        }
     }
-    for (let i = 0; i < headings.length; i++) {
-        const start = headings[i].end + 1;
-        const end = i < headings.length - 1 ? headings[i + 1].start : content.length;
-        headings[i].content = content.substring(start, end).trim();
-    }
-    return headings;
+    return structuredHeadings;
 }
 
+/**
+ * [重写] 为指定文件创建层级化的子会话。
+ * @param {string} fileId - 文件ID。
+ * @param {string} content - 文件内容。
+ */
 function createSubsessionsForFile(fileId, content) {
-    const headings = parseHeadings(content);
-    const subsessions = headings
-        .filter(h => h.level === 1 || h.level === 2)
-        .map(heading => ({
-            id: generateId(),
-            parentId: fileId,
-            title: heading.text,
-            content: `# ${heading.text}\n\n${heading.content}`,
-            level: heading.level
-        }));
-    
-    const newFileSubsessions = { ...appState.fileSubsessions, [fileId]: subsessions };
+    const structuredHeadings = parseAndStructureHeadings(content);
+    const newFileSubsessions = { ...appState.fileSubsessions, [fileId]: structuredHeadings };
     setState({ fileSubsessions: newFileSubsessions });
 }
 
@@ -79,20 +90,17 @@ export async function initializeApp() {
             currentFolderId: persistentAppState.currentFolderId || null,
             currentSubsessionId: persistentAppState.currentSubsessionId || null,
             folderStack: persistentAppState.folderStack || [],
-            fileSubsessions: {} // Will be generated
+            fileSubsessions: {},
+            // [新增] 加载设置，并提供默认值
+            settings: {
+                autoSaveInterval: persistentAppState.autoSaveInterval ?? 5, // 默认为5分钟
+            }
         };
 
         // Generate subsessions for all loaded files
         loadedState.sessions.forEach(session => {
-            const subsessions = parseHeadings(session.content)
-                .filter(h => h.level === 1 || h.level === 2)
-                .map(h => ({
-                    id: generateId(),
-                    parentId: session.id,
-                    title: h.text,
-                    content: `# ${h.text}\n\n${h.content}`,
-                    level: h.level
-                }));
+            // 调用重写后的函数
+            const subsessions = parseAndStructureHeadings(session.content);
             loadedState.fileSubsessions[session.id] = subsessions;
         });
         
@@ -137,6 +145,8 @@ export async function persistState() {
                 currentFolderId: appState.currentFolderId,
                 currentSubsessionId: appState.currentSubsessionId,
                 folderStack: appState.folderStack,
+                // [新增] 持久化自动保存设置
+                autoSaveInterval: appState.settings.autoSaveInterval,
             },
         });
         console.log("State persisted successfully.");
@@ -182,11 +192,14 @@ export async function removeItems(itemsToRemove) {
     let sessions = [...appState.sessions];
     let folders = [...appState.folders];
     let fileSubsessions = {...appState.fileSubsessions};
+    let clozeStates = {...appState.clozeStates}; // [新增] 获取 clozeStates 的副本
+
+    // [新增] 创建一个集合来存储所有需要被删除的文件的ID
+    const fileIdsToDelete = new Set();
 
     itemsToRemove.forEach(item => {
         if (item.type === 'file') {
-            sessions = sessions.filter(s => s.id !== item.id);
-            delete fileSubsessions[item.id];
+            fileIdsToDelete.add(item.id);
         } else if (item.type === 'folder') {
             const folderIdsToDelete = new Set([item.id]);
             // Simple recursive delete
@@ -201,17 +214,60 @@ export async function removeItems(itemsToRemove) {
                     }
                 });
             }
+            // 查找并添加所有在这些文件夹内的文件ID
+            sessions.forEach(s => {
+                if (folderIdsToDelete.has(s.folderId)) {
+                    fileIdsToDelete.add(s.id);
+                }
+            });
+
+            // 从内存中过滤掉被删除的文件夹
             folders = folders.filter(f => !folderIdsToDelete.has(f.id));
-            sessions = sessions.filter(s => !folderIdsToDelete.has(s.folderId));
         }
     });
 
+    // [新增] 根据收集到的文件ID，一次性清理所有相关数据
+    if (fileIdsToDelete.size > 0) {
+        // 1. 清理 sessions
+        sessions = sessions.filter(s => !fileIdsToDelete.has(s.id));
+
+        // 2. 清理 fileSubsessions
+        fileIdsToDelete.forEach(id => {
+            delete fileSubsessions[id];
+        });
+
+        // 3. 清理 clozeStates
+        const remainingClozeStates = {};
+        for (const clozeId in clozeStates) {
+            // 保留那些 fileId 不在待删除列表中的 cloze 状态
+            if (!fileIdsToDelete.has(clozeStates[clozeId].fileId)) {
+                remainingClozeStates[clozeId] = clozeStates[clozeId];
+            }
+        }
+        clozeStates = remainingClozeStates;
+        
+        // 4. (可选但推荐) 清理 reviewStats。这需要直接操作数据库，因为 reviewStats 不在 appState 中。
+        const folderIdsOfDeletedFiles = new Set(
+            appState.sessions
+                .filter(s => fileIdsToDelete.has(s.id))
+                .map(s => s.folderId || 'root')
+        );
+
+        // 注意：由于 reviewStats 的 key 是 'YYYY-MM-DD:folderId'，精确删除比较复杂。
+        // 一个简化的策略是暂时不清理 reviewStats，因为它只影响历史统计，不影响核心功能。
+        // 彻底的清理需要更复杂的数据库查询。
+    }
+
+    // 更新当前会话ID，如果它被删除了
     let currentSessionId = appState.currentSessionId;
-    if (idsToRemove.has(currentSessionId)) {
+    if (idsToRemove.has(currentSessionId) || fileIdsToDelete.has(currentSessionId)) {
         currentSessionId = sessions.length > 0 ? sessions[0].id : null;
     }
     
-    setState({ sessions, folders, fileSubsessions, currentSessionId });
+    // 使用清理后的数据更新状态
+    setState({ sessions, folders, fileSubsessions, clozeStates, currentSessionId });
+    
+    // 持久化，现在 storageService 会收到正确的数据
     await persistState();
 }
 
@@ -638,7 +694,8 @@ export function selectTopic(topicId) {
 
 // --- View Router ---
 export function switchView(viewName) {
-    if (viewName === 'anki' || viewName === 'agent' || viewName === 'mistakes' ) {
+    // [修正] 将 'settings' 添加到合法的视图名称列表中
+    if (viewName === 'anki' || viewName === 'agent' || viewName === 'mistakes' || viewName === 'settings') {
         setState({ activeView: viewName });
     } else {
         console.warn(`[DataService] Invalid view name passed to switchView: '${viewName}'`);
@@ -755,4 +812,20 @@ export async function getReviewStatsForChart() {
     });
 
     return { labels, datasets };
+}
+
+/**
+ * [新增] 自动保存当前所有模块的状态。
+ * 这是一个安全的、全面的保存操作。
+ */
+export async function autoSave() {
+    // 检查是否有活动的会话和编辑器内容
+    const editor = document.getElementById('editor');
+    if (!appState.currentSessionId || !editor) return;
+
+    console.log(`[${new Date().toLocaleTimeString()}] Triggering auto-save...`);
+    // 首先，将编辑器中的最新内容同步到 state 中
+    await saveCurrentSessionContent(editor.value);
+    // 然后，持久化所有应用的状态
+    await persistAllAppState();
 }

@@ -14,6 +14,8 @@ import { initializeAgentApp } from './agent/agent_main.js';
 // --- [ADDED] MISTAKES Feature Import ---
 // Assuming a modular structure similar to other features
 import { initializeMistakesApp } from './mistakes/mistakes_main.js';
+// [新增] 引入 settings 模块的初始化函数
+import { initializeSettingsApp } from './settings/settings_main.js';
 
 
 /**
@@ -26,6 +28,7 @@ function handleViewChange() {
     dom.ankiView.style.display = 'none';
     dom.agentView.style.display = 'none';
     dom.mistakesView.style.display = 'none';
+    dom.settingsView.style.display = 'none'; // [新增] 隐藏设置视图
     if (dom.agentNav) dom.agentNav.style.display = 'none';
 
     // 重置所有按钮状态
@@ -48,6 +51,12 @@ function handleViewChange() {
             dom.mistakesView.style.display = 'flex';
             document.getElementById('nav-mistakes').classList.add('active');
             break;
+        // [新增] 处理 settings 视图的 case
+        case 'settings':
+            dom.settingsView.style.display = 'flex';
+            document.getElementById('nav-settings').classList.add('active');
+            break;
+
         default:
             console.warn(`Unknown view: ${appState.activeView}, defaulting to mistakes`);
             dom.mistakesView.style.display = 'flex';
@@ -84,6 +93,10 @@ function setupAppNavigation() {
                 break;
             case 'nav-mistakes':
                 targetView = 'mistakes';
+                break;
+            // [新增] 处理 settings 导航按钮的 case
+            case 'nav-settings':
+                targetView = 'settings';
                 break;
             default:
                 console.warn('Unknown navigation button:', button.id);
@@ -130,7 +143,8 @@ async function main() {
         await Promise.all([
             initializeAnkiApp(),
             initializeAgentApp(),
-            initializeMistakesApp() // [ADDED] Initialize the mistakes module
+            initializeMistakesApp(),
+            initializeSettingsApp() // [新增] 初始化设置模块
         ]);
         
         // 3. Setup top-level navigation and automatic persistence
