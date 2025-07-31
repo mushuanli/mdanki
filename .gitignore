@@ -5,6 +5,7 @@ target/
 package-lock.json
 back
 venv
+*.pem
 *.swp
 tmp/
 build/

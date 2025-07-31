@@ -1,0 +1,20 @@
+server:
+  type: "openai" # 支持 openai, gemini 等
+  url: "https://api.openai.com/v1/chat/completions"
+  token: "YOUR_OPENAI_API_KEY_HERE" # 请替换为你的真实API Key
+  default_model: "gpt-3.5-turbo"
+  auth_token: "a-very-secret-and-strong-random-string"
+  # 如果要启用TLS，可以在这里取消注释并使用 server init 生成的文件
+  ssl_cert: "data/cert.pem"
+  ssl_key: "data/key.pem"
+
+database:
+  path: "data/chat_main.db"
+
+storage:
+  chat_dir: "data/chats"
+  attachment_dir: "data/attachments"
+
+# 可选的并发控制
+concurrency:
+  max_concurrent_tasks: 5
