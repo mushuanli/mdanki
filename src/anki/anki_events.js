@@ -15,22 +15,28 @@ import { rerenderAnki } from './anki_ui.js';
 let undoDebounceTimer = null;
 const MAX_HISTORY_SIZE = 100; // Limit the history size to prevent memory issues
 
+// [NEW] 用于跟踪 Shift-Click 多选操作的最后一个复选框索引
+let lastCheckedIndex = -1;
+
 // --- Event Handlers ---
 
 // Navigation handlers are exported so anki_ui.js can use them
 export function handleGoBack() {
     dataService.goBack();
     rerenderAnki();
+    lastCheckedIndex = -1; // [NEW] 重置选择状态
 }
 
 export function handleGoToFolder(folderId, stackIndex) {
     dataService.goToFolder(folderId, stackIndex);
     rerenderAnki();
+    lastCheckedIndex = -1; // [NEW] 重置选择状态
 }
 
 export function handleGoToRoot() {
     dataService.goToRoot();
     rerenderAnki();
+    lastCheckedIndex = -1; // [NEW] 重置选择状态
 }
 
 async function handleNewFile() {
@@ -57,15 +63,59 @@ async function handleSave() {
     }
 }
 
+// [NEW] 处理复选框选择逻辑，包括Shift-Click
+function handleSelection(event, checkbox) {
+    const allCheckboxes = Array.from(dom.sessionList.querySelectorAll('.select-checkbox'));
+    const currentIndex = allCheckboxes.indexOf(checkbox);
+
+    // 检查是否按下了 Shift 键，并且之前已经点击过一个复选框
+    if (event.shiftKey && lastCheckedIndex > -1) {
+        const start = Math.min(currentIndex, lastCheckedIndex);
+        const end = Math.max(currentIndex, lastCheckedIndex);
+
+        // 遍历范围内的所有复选框
+        for (let i = start; i <= end; i++) {
+            // 将范围内的所有项都设置为与当前点击项相同的状态（勾选或取消勾选）
+            allCheckboxes[i].checked = checkbox.checked;
+        }
+    }
+
+    // 更新最后一次点击的索引
+    lastCheckedIndex = currentIndex;
+
+    // 更新“全选”复选框的状态
+    const allSelected = allCheckboxes.every(cb => cb.checked);
+    const someSelected = allCheckboxes.some(cb => cb.checked);
+    if (allSelected && allCheckboxes.length > 0) {
+        dom.selectAllCheckbox.checked = true;
+        dom.selectAllCheckbox.indeterminate = false;
+    } else if (someSelected) {
+        dom.selectAllCheckbox.checked = false;
+        dom.selectAllCheckbox.indeterminate = true; // “部分选中”状态
+    } else {
+        dom.selectAllCheckbox.checked = false;
+        dom.selectAllCheckbox.indeterminate = false;
+    }
+}
+
+
+// [REWRITTEN] 重写会话列表的点击处理函数，以支持多选
 async function handleSessionListClick(e) {
     const item = e.target.closest('.session-item');
     if (!item) return;
 
-    const { id, type, parent } = item.dataset;
+    // --- 1. 检查点击目标，区分“选择”与“导航” ---
+    if (e.target.matches('.select-checkbox')) {
+        // 如果点击的是复选框，则执行选择逻辑，然后停止
+        handleSelection(e, e.target);
+        return;
+    }
+
     const action = e.target.closest('.actions span');
 
     if (action) {
         e.stopPropagation();
+        const { id, type } = item.dataset;
         if (action.classList.contains('delete-btn')) {
             if (confirm(`确定删除此 ${type === 'file' ? '文件' : '目录'}?`)) {
                 await dataService.removeItems([{ id, type }]);
@@ -84,8 +134,13 @@ async function handleSessionListClick(e) {
         return;
     }
 
-    // --- 新增的自动保存逻辑 ---
-    // 1. 确定被点击项关联的文件ID (如果是文件夹则为null)
+    // --- 2. 如果代码执行到这里，说明是导航点击 ---
+    // 重置多选状态，因为即将发生导航
+    lastCheckedIndex = -1; 
+    
+    const { id, type, parent } = item.dataset;
+
+    // 自动保存逻辑
     const clickedFileId = type === 'file' ? id : (item.classList.contains('subsession') ? parent : null);
 
     // 2. 如果当前有打开的文件(appState.currentSessionId不为null),
@@ -226,7 +281,7 @@ function handleAudioPrompt() {
     const cursorPos = editor.selectionStart;
 
     // Regex to find all clozes, including those with audio prompts
-    const clozeRegex = /--.*?--(?:\^\^audio:.*?\^\^)?/g;
+    const clozeRegex = /--(?:\s*\[[^\]]*\])?\s*.*?--(?:\^\^audio:.*?\^\^)?/g;
     let match;
     let targetCloze = null;
 
@@ -250,13 +305,14 @@ function handleAudioPrompt() {
     }
 
     // Regex to parse the content and audio from the found cloze
-    const parseRegex = /^--(.*?)--(?:(?:\^){2}audio:(.*)(?:\^){2})?$/;
+    const parseRegex = /^--(\[\s*[^\]]*\s*\]\s*)?(.*?)--(?:(?:\^){2}audio:(.*)(?:\^){2})?$/;
     const parts = targetCloze.content.match(parseRegex);
 
     if (!parts) return; // Should not happen if the main regex matches
 
-    const clozeText = parts[1] ? parts[1].trim() : '';
-    const existingAudio = parts[2] ? parts[2].trim() : '';
+    const locatorPart = parts[1] || '';
+    const clozeText = parts[2] ? parts[2].trim() : '';
+    const existingAudio = parts[3] ? parts[3].trim() : '';
 
     // 2. If cloze has audio, dialog shows audio. (Requirement 2)
     // 3. If cloze has no audio, dialog shows cloze content. (Requirement 3)
@@ -275,10 +331,9 @@ function handleAudioPrompt() {
     let replacementString;
 
     if (trimmedNewAudio) {
-        replacementString = `--${clozeText}--^^audio:${trimmedNewAudio}^^`;
+        replacementString = `--${locatorPart}${clozeText}--^^audio:${trimmedNewAudio}^^`;
     } else {
-        // If the new audio text is empty, remove the audio part
-        replacementString = `--${clozeText}--`;
+        replacementString = `--${locatorPart}${clozeText}--`;
     }
 
     // Replace the old cloze string with the new one in the editor
@@ -291,13 +346,24 @@ function handleAudioPrompt() {
     editor.focus();
 }
 
-// ======================================================
-//          [MODIFIED] 新增和修改的函数
-// ======================================================
-/**
- * Saves the current state of the editor to the undo stack.
- * This should be called *before* an action modifies the editor content.
- */
+function handleClozeButtonClick() {
+    saveEditorStateForUndo();
+    const { selectionStart, selectionEnd, value } = dom.editor;
+    const selectedText = value.substring(selectionStart, selectionEnd);
+    
+    const defaultLocator = `c${Date.now()}`;
+    const newText = `--[${defaultLocator}] ${selectedText}--`;
+
+    dom.editor.setRangeText(newText, selectionStart, selectionEnd, 'end');
+    
+    const locatorStart = selectionStart + 3;
+    const locatorEnd = locatorStart + defaultLocator.length;
+    dom.editor.setSelectionRange(locatorStart, locatorEnd);
+
+    handleEditorInput();
+    dom.editor.focus();
+}
+
 function saveEditorStateForUndo() {
     const currentContent = dom.editor.value;
     const lastState = appState.undoStack[appState.undoStack.length - 1];
@@ -383,40 +449,17 @@ function handlePrintPreview() {
             <style>
                 /* 打印专用样式 */
                 @media print {
-                    body { 
-                        margin: 20px; 
-                        -webkit-print-color-adjust: exact; /* 确保背景色和颜色在打印时正确显示 */
-                        print-color-adjust: exact;
-                    }
-                    /* 隐藏不希望打印的元素，如操作按钮 */
-                    .cloze-actions, .media-icon {
-                        display: none !important;
-                    }
-                    /* 确保所有Cloze内容在打印时都是可见的 */
-                    .cloze.hidden .cloze-content, .cloze .cloze-content {
-                        display: inline !important;
-                        visibility: visible !important;
-                        color: black !important; /* 强制文字为黑色 */
-                    }
-                    .cloze .placeholder {
-                        display: none !important;
-                    }
-                    /* 确保Cloze的背景颜色能被打印 */
-                    .cloze {
-                        -webkit-print-color-adjust: exact;
-                        print-color-adjust: exact;
-                    }
+                    body { margin: 20px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .cloze-actions, .media-icon { display: none !important; }
+                    .cloze.hidden .cloze-content, .cloze .cloze-content { display: inline !important; visibility: visible !important; color: black !important; }
+                    .cloze .placeholder { display: none !important; }
+                    .cloze { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                 }
-                body {
-                    font-family: sans-serif;
-                }
+                body { font-family: sans-serif; }
             </style>
         </head>
         <body>
-            <div class="preview" style="display: block !important;">
-                ${previewContent}
-            </div>
-            <!-- 重新引入MathJax以渲染数学公式 -->
+            <div class="preview" style="display: block !important;">${previewContent}</div>
             <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
             <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
             <script>
@@ -567,8 +610,7 @@ function setupReviewUIEventListeners() {
     // 下拉菜单逻辑
     reviewOptionsBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const isShown = reviewDropdownMenu.style.display === 'block';
-        reviewDropdownMenu.style.display = isShown ? 'none' : 'block';
+        reviewDropdownMenu.style.display = reviewDropdownMenu.style.display === 'block' ? 'none' : 'block';
     });
 
     document.addEventListener('click', (e) => {
@@ -630,16 +672,17 @@ export function setupAnkiEventListeners() {
 
     dom.selectAllCheckbox.addEventListener('change', (e) => {
         dom.sessionList.querySelectorAll('.select-checkbox').forEach(cb => cb.checked = e.target.checked);
+        // [NEW] 重置 shift-click 状态
+        lastCheckedIndex = -1;
     });
 
     dom.toggleSessionBtn.addEventListener('click', () => {
         dom.sessionSidebar.classList.toggle('hidden-session');
-        const isHidden = dom.sessionSidebar.classList.contains('hidden-session');
-        dom.toggleSessionBtn.innerHTML = isHidden ? '<i class="fas fa-arrow-right"></i>' : '<i class="fas fa-arrow-left"></i>';
+        dom.toggleSessionBtn.innerHTML = dom.sessionSidebar.classList.contains('hidden-session') ? '<i class="fas fa-arrow-right"></i>' : '<i class="fas fa-arrow-left"></i>';
     });
 
     dom.toggleEditorBtn.addEventListener('click', handleToggleEditor);
-    dom.clozeBtn.addEventListener('click', () => wrapSelection('--', '--'));
+    dom.clozeBtn.addEventListener('click', handleClozeButtonClick);
     dom.boldBtn.addEventListener('click', () => wrapSelection('**'));
     dom.italicBtn.addEventListener('click', () => wrapSelection('*'));
     // [MODIFIED] 为新按钮添加事件监听器

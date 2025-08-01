@@ -354,8 +354,8 @@ export function goToRoot() {
  * @param {string} clozeContent 
  * @returns {object}
  */
-export function getOrCreateClozeState(fileId, clozeContent) {
-    const clozeId = `${fileId}_${simpleHash(clozeContent)}`;
+export function getOrCreateClozeState(fileId, clozeContent, clozeId) {
+    // const clozeId = `${fileId}_${simpleHash(clozeContent)}`; // 这行逻辑已被移走
     const allStates = appState.clozeStates;
     
     if (allStates[clozeId]) {

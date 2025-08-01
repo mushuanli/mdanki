@@ -84,10 +84,14 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
     let mut wordlist: Vec<WordEntry> = serde_json::from_str(&index_content)
         .with_context(|| format!("错误: 解析文件 '{}' 失败", index_path.display()))?;
 
-    // 3. 遍历词汇表并生成内容
-    let mut unit_outputs: HashMap<String, String> = HashMap::new();
+    // [MODIFIED] unit_outputs 现在存储一个 Vec<String>，每行是一个元素
+    let mut unit_outputs: HashMap<String, Vec<String>> = HashMap::new();
     let mut current_unit_num: Option<String> = None;
-    let mut was_updated = false; // 新增：用于标记 index.json 是否被修改
+    let mut was_updated = false;
+
+    // [MODIFIED] 我们需要追踪每个单词第一次出现时，它在单元输出Vec中的索引
+    // HashMap<word_name, (count, first_occurrence_index_in_vec)>
+    let mut word_tracking: HashMap<String, (u32, usize)> = HashMap::new();
 
     println!("\n开始处理词汇表...");
 
@@ -97,16 +101,23 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
         if item.chn.is_none() {
             // 如果一个条目只有 name 没有 chn，则认为是单元标记
             current_unit_num = Some(item.name.clone());
-            unit_outputs.entry(item.name.clone()).or_insert_with(|| {
-                "| 中文 | 单词 |\n| :--- | :--- |\n".to_string()
-            });
+            // [MODIFIED] 初始化时只放入表格头
+            unit_outputs
+                .entry(item.name.clone())
+                .or_insert_with(|| vec!["| 中文 | 单词 |\n| :--- | :--- |\n".to_string()]);
             println!("\n--- 切换到 Unit {} ---", item.name);
             continue;
         }
 
-        // --- 开始处理单词条目 ---
-        let unit_num = match &current_unit_num {
-            Some(num) => num,
+        // --- [FIXED] 修正作用域问题 ---
+        // 1. 在循环的顶部声明 unit_num_str
+        let unit_num_str: String;
+
+        // 2. 使用 match 语句为 unit_num_str 赋值
+        match &current_unit_num {
+            Some(num) => {
+                unit_num_str = num.clone();
+            }
             None => {
                 eprintln!("[!] 警告: 单词 '{}' 找不到所属单元，已跳过。", item.name);
                 continue;
@@ -170,9 +181,44 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
             }
         }
 
-        // --- 格式化输出 ---
-        let chn = item.chn.as_deref().unwrap_or("").trim().replace('\n', " ");
+
+        // --- [MODIFIED] 全新的、更复杂的 locator 生成逻辑 ---
         let name = item.name.trim();
+        let locator: String;
+
+        // 获取当前单元的输出Vec的可变引用
+        let current_unit_output = unit_outputs.get_mut(&unit_num_str).unwrap();
+
+        // 更新追踪信息
+        let (count, first_occurrence_index) = word_tracking.entry(name.to_string()).or_insert((0, current_unit_output.len()));
+        *count += 1;
+
+        if *count == 1 {
+            // 第一次出现，locator 就是单词本身
+            locator = name.to_string();
+            println!("  [✓] 已处理单词: {} (首次出现)", name);
+        } else if *count == 2 {
+            // 第二次出现 (即第一次重复)
+            // 1. 回溯修改第一次出现的那一行的 locator
+            if let Some(first_row) = current_unit_output.get_mut(*first_occurrence_index) {
+                // 用 `replace` 替换第一次出现的 locator
+                // 我们假设 `[name]` 的格式是唯一的，这在我们的场景下是安全的
+                *first_row = first_row.replace(
+                    &format!("--[{}]", name), 
+                    &format!("--[{}-1]", name)
+                );
+            }
+            // 2. 为当前行生成带 '-2' 的 locator
+            locator = format!("{}-2", name);
+            println!("  [✓] 已处理单词: {} (重复出现，locator: {})", name, locator);
+        } else {
+            // 第三次及以后的出现
+            locator = format!("{}-{}", name, *count);
+            println!("  [✓] 已处理单词: {} (重复出现，locator: {})", name, locator);
+        }
+
+        // --- 格式化输出 (保持不变) ---
+        let chn = item.chn.as_deref().unwrap_or("").trim().replace('\n', " ");
         let symbol = item.symbol.as_deref().unwrap_or("");
         
         let example_en = item.example_en.as_deref().unwrap_or("");
@@ -181,21 +227,24 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
         // 构建“词族、词组、记忆”部分，能优雅地处理字段缺失
         let mut extra_info_parts = Vec::new();
         if let Some(wf) = &item.word_family {
-            extra_info_parts.push(format!("词族: {}", wf.replace('|', ",")));
+            let formatted_wf = wf.replace('\n', " ¶ ").replace('|', ",");
+            extra_info_parts.push(format!("词族: {}", formatted_wf));
         }
         if let Some(c) = &item.collocations {
-            // [修改] 对 collocations 也进行替换
-            extra_info_parts.push(format!("词组: {}", c.replace('|', ",")));
+            let formatted_c = c.replace('\n', " ¶ ").replace('|', ",");
+            extra_info_parts.push(format!("词组: {}", formatted_c));
         }
         if let Some(mt) = &item.memory_tips {
-            extra_info_parts.push(format!("记忆: {}", mt));
+            let formatted_mt = mt.replace('\n', " ¶ ");
+            extra_info_parts.push(format!("记忆: {}", formatted_mt));
         }
         let extra_info_block = extra_info_parts.join(" ¶ ");
 
         // 构建“辨析”部分
         let synonym_block = item.synonym_diff.as_ref().map(|sd| {
-            // 我们只取 quick_guide 的内容，不再处理和格式化 details 列表。
-            format!("辨析: {}", sd.quick_guide.trim())
+            // [MODIFIED] 对辨析部分也进行换行符替换
+            let formatted_guide = sd.quick_guide.trim().replace('\n', " ¶ ");
+            format!("辨析: {}", formatted_guide)
         }).unwrap_or_default();
 
         // 准备音频部分的内容
@@ -210,29 +259,29 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
             .collect::<Vec<_>>()
             .join(" ¶¶ ");
 
+        // 使用新生成的 locator 构建 Markdown 行
         let markdown_row = format!(
-            "| {} | -- {}: {} ¶¶ 例句: {} ¶ {} ¶¶ {} --^^audio: {} . {} ^^|\n",
+            "| {} | --[{}] {}: {} ¶¶ 例句: {} ¶ {} ¶¶ {} --^^audio: {} . {} ^^|\n",
             chn,                 // 1. 中文释义
-            name,                // 2. 单词
-            symbol,              // 3. 音标
-            example_en,          // 4. 英文例句
-            example_cn,          // 5. 中文例句
-            final_extra_block,   // 6. & 7. 合并后的额外信息区块 (词族/词组/记忆/辨析)
+            locator,             // [NEW] 2. 唯一的定位词
+            name,                // 3. 单词（可见内容）
+            symbol,              // 4. 音标
+            example_en,          // 5. 英文例句
+            example_cn,          // 6. 中文例句
+            final_extra_block,   // 7. 合并后的额外信息区块
             audio_word,          // 8. 音频单词
             example_en           // 9. 音频例句
         );
 
-        // 追加到当前单元的输出中
-        if let Some(output) = unit_outputs.get_mut(unit_num) {
-            output.push_str(&markdown_row);
-            println!("  [✓] 已处理单词: {}", name);
-        }
+        // 将新生成的行添加到当前单元的输出 Vec 中
+        current_unit_output.push(markdown_row);
     }
 
     // 6. 写入文件
     println!("\n--- 开始写入 Markdown 文件 ---");
-    for (unit_num, content) in unit_outputs {
-        // 4. (要求4) 输出文件名使用 - 连接，例如 <基础名>-U{unitNum}.md
+    for (unit_num, lines_vec) in unit_outputs {
+        // [MODIFIED] 在写入前将 Vec<String> 连接成一个大字符串
+        let content = lines_vec.join("");
         let output_filename = args.output_dir.join(format!("{}-U{}.md", base_name, unit_num));
         match fs::write(&output_filename, &content) {
             Ok(_) => println!("  [✓] 成功生成文件: {}", output_filename.display()),

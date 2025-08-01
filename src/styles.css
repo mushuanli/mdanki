@@ -2036,3 +2036,32 @@ body {
     .panel-actions { justify-content: center; }
     .app-nav { flex-wrap: wrap; }
 }
+/* === 在你的 styles.css 文件中添加这段代码 === */
+
+/* Cloze 错误状态：重复的定位符 */
+.cloze.cloze-error-duplicate {
+    /* 使用一个显眼的红色边框来警告用户 */
+    border: 2px solid var(--danger-color, #EF4444) !important;
+    
+    /* 添加一个轻微的红色背景，但不要太刺眼 */
+    background-color: var(--danger-light, #FEE2E2) !important;
+    
+    /* 可以添加一个闪烁或脉冲的动画来吸引注意 */
+    animation: pulse-error 1s infinite alternate;
+}
+
+/* 错误状态的占位符也应有特殊颜色 */
+.cloze.cloze-error-duplicate .placeholder {
+    color: var(--danger-color, #EF4444) !important;
+    font-weight: bold;
+}
+
+/* 定义闪烁动画 */
+@keyframes pulse-error {
+    from {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+    to {
+        box-shadow: 0 0 0 5px rgba(239, 68, 68, 0);
+    }
+}

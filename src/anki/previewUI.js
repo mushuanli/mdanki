@@ -29,9 +29,34 @@ function getClozeColorClassByState(clozeState) {
     return 'cloze-28plus'; // 默认到期颜色
 }
 
+// [NEW] 检查并高亮显示重复的 locator
+function highlightDuplicateLocators() {
+    const locatorsInFile = new Map();
+    // 收集所有带 locator 的 cloze
+    dom.preview.querySelectorAll('.cloze[data-locator]').forEach(clozeEl => {
+        const locator = clozeEl.dataset.locator;
+        if (!locatorsInFile.has(locator)) {
+            locatorsInFile.set(locator, []);
+        }
+        locatorsInFile.get(locator).push(clozeEl);
+    });
+
+    // 遍历并高亮重复项
+    for (const [locator, elements] of locatorsInFile.entries()) {
+        if (elements.length > 1) {
+            elements.forEach(el => {
+                el.classList.add('cloze-error-duplicate');
+                el.title = `错误：定位符 "[${locator}]" 在此文件中重复！这可能导致复习状态错乱。`;
+            });
+        }
+    }
+}
+
+
 function processClozeElementsInNode(node) {
     if (node.nodeType === Node.TEXT_NODE) {
-        const clozeRegex = /--(.*?)--(?:\^\^audio:(.*?)\^\^)?/g;
+        // [MODIFIED] 使用新的正则表达式来捕获可选的定位符
+        const clozeRegex = /--(?:\s*\[([^\]]*)\])?\s*(.*?)--(?:\^\^audio:(.*?)\^\^)?/g;
         const parent = node.parentNode;
         if (!parent || ['CODE', 'PRE', 'SCRIPT', 'STYLE'].includes(parent.tagName)) return;
         
@@ -44,17 +69,44 @@ function processClozeElementsInNode(node) {
             if (match.index > lastIndex) {
                 fragments.push(document.createTextNode(node.nodeValue.substring(lastIndex, match.index)));
             }
+            
+            // [MODIFIED] 从新的捕获组中提取数据
+            const locator = match[1];        // 捕获组1: 定位信息
+            const clozeContent = match[2];     // 捕获组2: 可见内容
+            const multimedia = match[3] ? match[3].trim() : null; // 捕获组3: 音频信息
 
-            const clozeContent = match[1];
             const contentWithBreaks = clozeContent.replace(/¶/g, '<br>');
-            const multimedia = match[2] ? match[2].trim() : null;
             const fileId = appState.currentSessionId;
-            const clozeState = dataService.getOrCreateClozeState(fileId, clozeContent);
+
+            // [MODIFIED] 核心ID生成逻辑
+            let clozeId;
+            let locatorKey = null;
+            if (locator && locator.trim()) {
+                locatorKey = locator.trim();
+                // 优先使用 locator 生成哈希
+                const uniquePart = simpleHash(locatorKey);
+                clozeId = `${fileId}_${uniquePart}`;
+            } else {
+                // 回退到兼容模式，使用内容生成哈希
+                const uniquePart = simpleHash(clozeContent);
+                clozeId = `${fileId}_${uniquePart}`;
+            }
+            
+            // [MODIFIED] 将计算好的 clozeId 传递给数据服务
+            const clozeState = dataService.getOrCreateClozeState(fileId, clozeContent, clozeId);
 
             const clozeSpan = document.createElement('span');
             clozeSpan.className = `cloze hidden ${getClozeColorClassByState(clozeState)}`;
-            clozeSpan.dataset.content = clozeContent;
-            if (multimedia) clozeSpan.dataset.multimedia = multimedia;
+            
+            // [MODIFIED] 存储更多数据以供后续使用
+            clozeSpan.dataset.clozeId = clozeId; // 存储完整的ID
+            clozeSpan.dataset.content = clozeContent; // 存储可见内容
+            if (locatorKey) {
+                clozeSpan.dataset.locator = locatorKey; // 如果有locator，也存起来用于检查重复
+            }
+            if (multimedia) {
+                clozeSpan.dataset.multimedia = multimedia;
+            }
             
             clozeSpan.innerHTML = `
                 ${multimedia ? '<span class="media-icon" title="播放音频"><i class="fas fa-volume-up"></i></span>' : ''}
@@ -219,16 +271,22 @@ function addClozeEventListeners() {
             const button = e.target.closest('.cloze-btn');
             const rating = parseInt(button.dataset.rating, 10);
             const fileId = appState.currentSessionId;
+            
+            // [MODIFIED] 直接从 dataset 获取 ID 和内容
+            const clozeId = cloze.dataset.clozeId;
             const clozeContent = cloze.dataset.content;
 
-            // 首先，清除任何可能存在的自动关闭计时器
+            if (!clozeId) {
+                console.error("无法更新Cloze状态：缺少clozeId。");
+                return;
+            }
+
             clearTimeout(cloze.closeTimer);
 
-            // 步骤 1: 更新后台数据状态
-            dataService.updateClozeState(fileId, clozeContent, rating);
+            // [MODIFIED] 调用更新后的 dataService 函数，传入 clozeId
+            dataService.updateClozeState(fileId, clozeContent, rating, clozeId);
 
-            // 步骤 2: 获取更新后的最新状态，以便更新UI
-            const newState = dataService.getOrCreateClozeState(fileId, clozeContent);
+            const newState = dataService.getOrCreateClozeState(fileId, clozeContent, clozeId);
             const newColorClass = getClozeColorClassByState(newState);
 
             // 步骤 3: 直接操作DOM来更新UI，而不是完全重绘
@@ -328,29 +386,23 @@ function addClozeEventListeners() {
             return;
         }
 
-    const isChecked = target.checked;
-    const allCheckboxes = Array.from(dom.preview.querySelectorAll('li input[type="checkbox"], summary input[type="checkbox"]'));
-    const clickedIndex = allCheckboxes.indexOf(target);
-    if (clickedIndex === -1) {
-        return;
-    }
+        const isChecked = target.checked;
+        const allCheckboxes = Array.from(dom.preview.querySelectorAll('li input[type="checkbox"], summary input[type="checkbox"]'));
+        const clickedIndex = allCheckboxes.indexOf(target);
+        if (clickedIndex === -1) return;
 
-    const editorContent = dom.editor.value;
-    const lines = editorContent.split('\n');
+        const editorContent = dom.editor.value;
+        const lines = editorContent.split('\n');
+        const taskLineRegex = /^\s*- \[( |x)\]/;
+        const toggleTaskLineRegex = /^::>\s*\[( |x)\]/;
+        let taskCounter = 0;
+        let contentChanged = false;
+        let shouldRecordReview = false;
 
-    const taskLineRegex = /^\s*- \[( |x)\]/;
-    const toggleTaskLineRegex = /^::>\s*\[( |x)\]/;
-    let taskCounter = 0;
-    let contentChanged = false;
-    let shouldRecordReview = false;
-
-    const newLines = lines.map(line => {
-        const isTaskLine = taskLineRegex.test(line);
-        const isToggleTaskLine = !isTaskLine && toggleTaskLineRegex.test(line);
-
-        if (!isTaskLine && !isToggleTaskLine) {
-            return line;
-        }
+        const newLines = lines.map(line => {
+            const isTaskLine = taskLineRegex.test(line);
+            const isToggleTaskLine = !isTaskLine && toggleTaskLineRegex.test(line);
+            if (!isTaskLine && !isToggleTaskLine) return line;
 
             // 如果这一行是任务项，检查它是否是我们要找的那个
             if (taskCounter === clickedIndex) {
@@ -369,38 +421,36 @@ function addClozeEventListeners() {
                         if (new Date(match[2]).toISOString().slice(0, 10) === todayStr) isAlreadyCompletedToday = true;
                     } catch (err) {}
                     }
-
-                if (isAlreadyCompletedToday) {
-                    modifiedLine = isTaskLine 
-                        ? line.replace(/^- \[\s\]/, '- [x]')
-                        : line.replace(/^::> \[\s\]/, '::> [x]');
-                } else {
-                    shouldRecordReview = true;
-                    const content = line.replace(/\{[^}]+\}/g, '').trim();
-                    const displayDate = formatDateToSubscript(new Date());
-                    const machineDate = new Date().toISOString();
-                    const newDateBlock = `{${displayDate}|${machineDate}}`;
-                    if (isTaskLine) {
-                        const taskText = content.replace(/^\s*- \[\s\]\s*/, '');
-                        modifiedLine = `- [x] ${newDateBlock} ${taskText}`;
+                    if (isAlreadyCompletedToday) {
+                        modifiedLine = isTaskLine 
+                            ? line.replace(/^- \[\s\]/, '- [x]')
+                            : line.replace(/^::> \[\s\]/, '::> [x]');
                     } else {
-                        const taskText = content.replace(/^::>\s*\[\s\]\s*/, '');
-                        modifiedLine = `::> [x] ${newDateBlock} ${taskText}`;
+                        shouldRecordReview = true;
+                        const content = line.replace(/\{[^}]+\}/g, '').trim();
+                        const displayDate = formatDateToSubscript(new Date());
+                        const machineDate = new Date().toISOString();
+                        const newDateBlock = `{${displayDate}|${machineDate}}`;
+                        if (isTaskLine) {
+                            const taskText = content.replace(/^\s*- \[\s\]\s*/, '');
+                            modifiedLine = `- [x] ${newDateBlock} ${taskText}`;
+                        } else {
+                            const taskText = content.replace(/^::>\s*\[\s\]\s*/, '');
+                            modifiedLine = `::> [x] ${newDateBlock} ${taskText}`;
+                        }
                     }
+                } else {
+                    modifiedLine = isTaskLine 
+                        ? line.replace('- [x]', '- [ ]')
+                        : line.replace('::> [x]', '::> [ ]');
                 }
+                if (modifiedLine !== line) contentChanged = true;
+                return modifiedLine;
             } else {
-                modifiedLine = isTaskLine 
-                    ? line.replace('- [x]', '- [ ]')
-                    : line.replace('::> [x]', '::> [ ]');
+                taskCounter++;
+                return line;
             }
-        
-            if (modifiedLine !== line) contentChanged = true;
-            return modifiedLine;
-        } else {
-            taskCounter++;
-            return line;
-        }
-    });
+        });
 
         // 只有在文本内容确实发生变化时才执行后续操作
         if (contentChanged) {
@@ -494,48 +544,45 @@ export async function updatePreview() {
     isPreviewUpdating = true; // 上锁
 
     try {
-    const { currentSessionId, currentSubsessionId, fileSubsessions, sessions } = appState;
-    
-    const session = sessions.find(s => s.id === currentSessionId);
-    if (!session) {
-        dom.preview.innerHTML = '';
-        isPreviewUpdating = false; // 解锁
-        return;
-    }
+        const { currentSessionId, currentSubsessionId, fileSubsessions, sessions } = appState;
+        const session = sessions.find(s => s.id === currentSessionId);
+        if (!session) {
+            dom.preview.innerHTML = '';
+            isPreviewUpdating = false;
+            return;
+        }
+        let markdownText = session.content;
+        if (currentSubsessionId) {
+            const subsession = fileSubsessions[currentSessionId]?.find(s => s.id === currentSubsessionId);
+            if (subsession) markdownText = subsession.content;
+        }
+        dom.preview.innerHTML = window.marked.parse(markdownText || '');
+        processClozeElementsInNode(dom.preview);
+        processTaskLists();
+        
+        // [NEW] 检查并高亮显示重复的 locator
+        highlightDuplicateLocators();
 
-    let markdownText = session.content;
-    if (currentSubsessionId) {
-        const subsession = fileSubsessions[currentSessionId]?.find(s => s.id === currentSubsessionId);
-        if (subsession) markdownText = subsession.content;
-    }
-
-    dom.preview.innerHTML = window.marked.parse(markdownText || '');
-    processClozeElementsInNode(dom.preview);
-        processTaskLists(); // [新增] 调用任务列表处理函数
-    
     // 3. [新增] 异步渲染 Mermaid 图表
     // 查找所有语言标记为 mermaid 的代码块
-    const mermaidElements = dom.preview.querySelectorAll('pre code.language-mermaid');
+        const mermaidElements = dom.preview.querySelectorAll('pre code.language-mermaid');
     
-    const mermaidRenderPromises = Array.from(mermaidElements).map(async (element, index) => {
-        const preElement = element.parentNode;
+        const mermaidRenderPromises = Array.from(mermaidElements).map(async (element, index) => {
+            const preElement = element.parentNode;
             // 添加一个额外的安全检查，虽然在有锁的情况下非必须，但也是个好习惯
-            if (!preElement || !preElement.parentNode) {
-                return; 
-            }
-        const graphDefinition = element.textContent;
-        const graphId = `mermaid-graph-${Date.now()}-${index}`;
-
-        try {
+            if (!preElement || !preElement.parentNode) return;
+            const graphDefinition = element.textContent;
+            const graphId = `mermaid-graph-${Date.now()}-${index}`;
+            try {
             // 使用 mermaid.render 生成 SVG
         // 使用 mermaid.parse 进行语法验证而不渲染
-        await mermaid.parse(graphDefinition);
-            const { svg } = await mermaid.render(graphId, graphDefinition);
+                await mermaid.parse(graphDefinition);
+                const { svg } = await mermaid.render(graphId, graphDefinition);
             
             // 创建一个容器来包裹 SVG，方便设置样式
-            const container = document.createElement('div');
-            container.className = 'mermaid-diagram';
-            container.innerHTML = svg;
+                const container = document.createElement('div');
+                container.className = 'mermaid-diagram';
+                container.innerHTML = svg;
             
                 // 再次检查，确保在异步操作后元素仍在DOM中
                 if (preElement.parentNode) {
@@ -556,20 +603,20 @@ export async function updatePreview() {
     });
 
     // 等待所有 Mermaid 图表都处理完毕
-    await Promise.all(mermaidRenderPromises);
+        await Promise.all(mermaidRenderPromises);
 
     // 4. [保持] 最后渲染 MathJax 公式
-    if (window.MathJax) {
-        try {
-            await window.MathJax.typesetPromise([dom.preview]);
-        } catch (err) {
-            console.log('MathJax error:', err);
+        if (window.MathJax) {
+            try {
+                await window.MathJax.typesetPromise([dom.preview]);
+            } catch (err) {
+                console.log('MathJax error:', err);
+            }
         }
-    }
     } catch (error) {
         console.error("Error during preview update:", error);
     } finally {
-        isPreviewUpdating = false; // 无论成功或失败，最后都要解锁
+        isPreviewUpdating = false;
     }
 }
 
@@ -706,15 +753,10 @@ export function setupPreview() {
         }
     };
 
-
-    // 使用扩展（添加到mathExtension之后）
     window.marked.use({ extensions: [mathExtension, toggleListExtension] });
-
-    // 【修改】在这里添加 gfm: true 选项
     window.marked.setOptions({ 
         breaks: true,
-        gfm: true // 启用GitHub Flavored Markdown支持
+        gfm: true
     });
-    
     addClozeEventListeners();
 }
