@@ -6,11 +6,18 @@ pub enum AppError {
     #[error("I/O Error: {0}")]
     Io(#[from] std::io::Error),
 
+    // This wrapper allows adding context to I/O errors
+    #[error("I/O Error: {context} ({source})")]
+    IoWithContext {
+        context: String,
+        source: std::io::Error,
+    },
+
     #[error("JSON parsing error: {0}")]
-    JsonError(#[from] serde_json::Error), // 新增
+    JsonError(#[from] serde_json::Error),
 
     #[error("Base58 decoding error: {0}")]
-    Bs58Error(#[from] bs58::decode::Error), // 新增
+    Bs58Error(#[from] bs58::decode::Error),
 
     #[error("Protocol parsing error: {0}")]
     ParseError(String),

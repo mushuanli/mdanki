@@ -1,5 +1,5 @@
 // src/common/crypto.rs
-use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey, SIGNATURE_LENGTH, PUBLIC_KEY_LENGTH};
+use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey, PUBLIC_KEY_LENGTH};
 use rand::rngs::OsRng;
 use crate::error::{AppError, Result};
 
@@ -27,7 +27,9 @@ impl KeyPair {
     /// Exports the private key to a Base58Check encoded string with version byte 0.
     pub fn private_key_to_bs58(&self) -> String {
         // FIX: This method now compiles due to the "check" feature in Cargo.toml
-        bs58::encode(self.signing_key.to_bytes()).with_check_version(0).into_string()
+        bs58::encode(self.signing_key.to_bytes()) // <--- THE PROBLEM IS HERE
+            .with_check_version(0)
+            .into_string()
     }
 
     /// Exports the public key to a Base58Check encoded string with version byte 1.
@@ -48,8 +50,16 @@ pub fn verify_signature(public_key_bs58: &str, message: &[u8], signature: &[u8])
         .map_err(|e| AppError::AuthError(format!("Invalid public key format or checksum: {}", e)))?;
 
     // 2. Try to convert the resulting Vec<u8> into a fixed-size array for the verifying key.
-    let pub_key_array: &[u8; PUBLIC_KEY_LENGTH] = pub_key_bytes_vec.as_slice().try_into()
-         .map_err(|_| AppError::AuthError("Invalid public key length".to_string()))?;
+    if pub_key_bytes_vec.len() != 33 || pub_key_bytes_vec[0] != 1 {
+        return Err(AppError::AuthError(
+            "Invalid public key version or length".to_string(),
+        ));
+    }
+
+    let pub_key_data = &pub_key_bytes_vec[1..];
+    let pub_key_array: &[u8; ed25519_dalek::PUBLIC_KEY_LENGTH] = pub_key_data
+        .try_into()
+        .map_err(|_| AppError::AuthError("Invalid public key length".to_string()))?;
 
     // 3. Create a VerifyingKey from the byte array. Map the specific crypto error to our AppError.
     let verifying_key = VerifyingKey::from_bytes(pub_key_array)

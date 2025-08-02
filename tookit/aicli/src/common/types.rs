@@ -2,7 +2,6 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
-use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ChatLog {
@@ -53,6 +52,7 @@ pub enum PacketType {
     CmdGet = 0x03,         
     CmdDelete = 0x04,      
     CmdResend = 0x05,      
+    CmdUpdate = 0x06, // NEW: Command to update a task
     AttachmentChunk = 0x10,
     Ack = 0x80,            
     ResponseList = 0x81,   
@@ -71,6 +71,8 @@ impl PacketType {
             0x03 => Some(PacketType::CmdGet),
             0x04 => Some(PacketType::CmdDelete),
             0x05 => Some(PacketType::CmdResend),
+            0x06 => Some(PacketType::CmdUpdate), // NEW
+
             0x10 => Some(PacketType::AttachmentChunk),
             0x80 => Some(PacketType::Ack),
             0x81 => Some(PacketType::ResponseList),

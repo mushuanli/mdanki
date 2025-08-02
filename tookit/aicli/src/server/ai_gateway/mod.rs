@@ -1,10 +1,10 @@
 // src/server/ai_gateway/mod.rs
 
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
+use serde::{ Serialize};
 
 use crate::common::config::Config;
-use crate::error::{AppError, Result};
+use crate::error::{ Result};
 use crate::server::ai_gateway::openai::OpenAiClient;
 
 // A generic message structure that all AI clients can work with.

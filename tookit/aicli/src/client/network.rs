@@ -1,17 +1,20 @@
 // src/client/network.rs
 
-use crate::common::config::CONFIG;
 use crate::common::frame::{encode_frame, read_frame};
 use crate::common::types::PacketType;
 use crate::error::{AppError, Result};
+use tokio::io::{AsyncRead, AsyncWrite, AsyncWriteExt};
 
-use ed25519_dalek::{Signer, SigningKey, KEYPAIR_LENGTH, SECRET_KEY_LENGTH};
+use ed25519_dalek::{Signer, SigningKey, SECRET_KEY_LENGTH};
 use serde_json::{json, from_slice};
 use std::fs;
+use std::io::ErrorKind;
 use std::str::FromStr;
-use tokio::io::{AsyncRead, AsyncWrite, AsyncWriteExt};
-use tokio::net::TcpStream;
 use uuid::Uuid;
+// TLS support
+use tokio_rustls::rustls;
+use tokio_rustls::TlsConnector;
+use std::sync::Arc;
 
 // REFACTOR: This is the data structure for a task as received from the server.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -80,60 +83,93 @@ impl<S: AsyncRead + AsyncWrite + Unpin> NetworkClient<S> {
 
     /// Sends a chat file to the server for execution.
     pub async fn execute_chat(&mut self, chat_file_content: &str) -> Result<Uuid> {
-        let payload = self
-            .send_and_receive(
-                PacketType::CmdExec,
-                chat_file_content.as_bytes(),
-                PacketType::Ack,
-            )
-            .await?;
-        
-        let uuid_str = String::from_utf8(payload)
-            .map_err(|_| AppError::ParseError("Server sent invalid UUID".to_string()))?;
-            
-        Uuid::from_str(&uuid_str)
-            .map_err(|_| AppError::ParseError("Failed to parse UUID from server".to_string()))
+        let payload = self.send_and_receive(PacketType::CmdExec, chat_file_content.as_bytes(), PacketType::Ack).await?;
+        let uuid_str = String::from_utf8(payload).map_err(|_| AppError::ParseError("Server sent invalid UUID".to_string()))?;
+        Uuid::from_str(&uuid_str).map_err(|_| AppError::ParseError("Failed to parse UUID from server".to_string()))
+    }
+
+    // NEW function
+    pub async fn update_task(&mut self, uuid: Uuid, content: &str) -> Result<()> {
+        let payload = serde_json::to_vec(&serde_json::json!({ "uuid": uuid, "content": content }))?;
+        self.send_and_receive(PacketType::CmdUpdate, &payload, PacketType::Ack).await?;
+        Ok(())
     }
 
     // --- We will implement list, get, delete here later ---
 }
 
-// This is the public-facing part that deals with concrete TcpStream.
-impl NetworkClient<TcpStream> {
+// Define a type alias for our client's stream for simplicity
+pub type TlsClientStream = tokio_rustls::client::TlsStream<tokio::net::TcpStream>;
+
+// The concrete implementation now uses the TlsClientStream type
+impl NetworkClient<TlsClientStream> {
     pub async fn connect(server_addr: &str, username: &str, private_key_path: &str) -> Result<Self> {
-        // 1. Load private key
-        let private_key_bs58 = fs::read_to_string(private_key_path)?;
+        let private_key_content = fs::read_to_string(private_key_path).map_err(|e| {
+            if e.kind() == ErrorKind::NotFound {
+                AppError::AuthError(format!("Private key file not found at '{}'. Please run 'client init' first.", private_key_path))
+            } else {
+                AppError::IoWithContext { context: format!("Failed to read private key file '{}'", private_key_path), source: e }
+            }
+        })?;
+
+        // --- START ROBUST FIX ---
+        // Take only the first line of the file and ignore any surrounding whitespace.
+        // This is much safer than relying on the whole file content.
+        let key_str_on_first_line = private_key_content.lines().next().unwrap_or("").trim();
         
-        // FIX (E0599): Use the correct bs58 method `with_check` to validate checksum and version byte.
-        // The private key is encoded with version 0.
-        let key_bytes_vec = bs58::decode(private_key_bs58.trim())
-            .with_check(Some(0)) 
+        if key_str_on_first_line.is_empty() {
+            return Err(AppError::AuthError(format!("Private key file '{}' is empty or contains no key.", private_key_path)));
+        }
+
+
+        let decoded_with_version = bs58::decode(key_str_on_first_line)
+            .with_check(None) // Decode with checksum, but don't check version byte yet.
             .into_vec()
             .map_err(|e| AppError::AuthError(format!("Invalid private key format or checksum: {}", e)))?;
-        
-        // FIX: Safely convert Vec<u8> to [u8; 32] and handle potential length errors instead of using .unwrap().
-        let key_array: [u8; SECRET_KEY_LENGTH] = key_bytes_vec.try_into()
-            .map_err(|_| AppError::AuthError("Private key has incorrect length".to_string()))?;
-            
-        let signing_key = SigningKey::from_bytes(&key_array);
-        
-        // 2. Connect to server
-        let mut stream = TcpStream::connect(server_addr).await?;
-        log::info!("Connected to server at {}", server_addr);
 
-        // 3. Send username
+        // --- MANUAL VERSION CHECK AND STRIP ---
+        if decoded_with_version.is_empty() || decoded_with_version[0] != 0 {
+            return Err(AppError::AuthError("Private key has incorrect version byte. Expected 0.".to_string()));
+        }
+        let key_bytes_vec = &decoded_with_version[1..]; // This slice is the actual 32-byte key
+        // --- END MANUAL CHECK ---
+        
+        let key_array: [u8; SECRET_KEY_LENGTH] = key_bytes_vec.try_into().map_err(|_| AppError::AuthError(format!("Private key has incorrect length. Expected 32, got {}.", key_bytes_vec.len())))?;
+        let signing_key = SigningKey::from_bytes(&key_array);
+
+        // Configure TLS to be insecure for local testing with self-signed certs.
+        struct NoVerification;
+        impl rustls::client::ServerCertVerifier for NoVerification {
+            fn verify_server_cert(&self, _: &rustls::Certificate, _: &[rustls::Certificate], _: &rustls::ServerName, _: &mut dyn Iterator<Item = &[u8]>, _: &[u8], _: std::time::SystemTime) -> std::result::Result<rustls::client::ServerCertVerified, rustls::Error> {
+                Ok(rustls::client::ServerCertVerified::assertion())
+            }
+        }
+        
+        let config = rustls::ClientConfig::builder()
+            .with_safe_defaults()
+            .with_custom_certificate_verifier(Arc::new(NoVerification))
+            .with_no_client_auth();
+        
+        let connector = TlsConnector::from(Arc::new(config));
+        let domain = rustls::ServerName::try_from("localhost").map_err(|_| AppError::NetworkError("Invalid DNS name for TLS".to_string()))?;
+        
+        // 3. Connect to server with TCP and then perform TLS handshake
+        let tcp_stream = tokio::net::TcpStream::connect(server_addr).await?;
+        let mut stream = connector.connect(domain, tcp_stream).await?;
+        
+        log::info!("TLS connection established to server at {}", server_addr);
+        
+        // 4. Send username
         let auth_req_payload = json!({ "username": username }).to_string();
         let auth_req_frame = encode_frame(PacketType::CmdAuthRequest, auth_req_payload.as_bytes());
         stream.write_all(&auth_req_frame).await?;
 
-        // 4. Receive challenge
-        let challenge_frame = read_frame(&mut stream).await?
-            .ok_or_else(|| AppError::AuthError("Server disconnected before challenge".to_string()))?;
+        let challenge_frame = read_frame(&mut stream).await?.ok_or_else(|| AppError::AuthError("Server disconnected before challenge".to_string()))?;
         if challenge_frame.packet_type != PacketType::CmdAuthChallenge {
             return Err(AppError::AuthError("Expected challenge from server".to_string()));
         }
         let challenge_val: serde_json::Value = from_slice(&challenge_frame.payload)?;
-        let challenge_bs58 = challenge_val["challenge"].as_str().unwrap();
+        let challenge_bs58 = challenge_val["challenge"].as_str().ok_or(AppError::ParseError("Challenge missing in server response".to_string()))?;
         let challenge = bs58::decode(challenge_bs58).into_vec()?;
 
         // 5. Sign challenge and send response

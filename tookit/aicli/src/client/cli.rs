@@ -1,21 +1,33 @@
 // src/client/cli.rs
 
-use crate::client::network::{NetworkClient, RemoteTask};
+// We need the new TlsClientStream type in this file's scope
+use crate::client::network::{NetworkClient, TlsClientStream};
 use crate::error::{AppError, Result};
-use crate::common::protocol::{format_chat_log, parse_chat_file};
-use crate::common::types::ChatLog;
 use crate::common::crypto::KeyPair;
 
 use crate::ClientCommands;
+use crate::client::local_store::{LocalStore, SyncStatus}; // REMOVED: LocalSessionInfo (unused)
+
 use std::fs;
 use std::pin::Pin;
 use std::future::Future;
-use std::path::Path; // Add this import
-use tokio::net::TcpStream;
+use std::path::Path;
 use uuid::Uuid;
+use once_cell::sync::Lazy;
 
-// FIX: Make the constant public so other modules in the crate can see it.
-pub const SERVER_ADDR: &str = "127.0.0.1:9501";
+// NEW: Use Lazy static to read env vars once
+pub static SERVER_ADDR: Lazy<String> = Lazy::new(|| {
+    std::env::var("AICLI_SERVER_ADDR").unwrap_or_else(|_| "127.0.0.1:9501".to_string())
+});
+pub static CLIENT_USERNAME: Lazy<String> = Lazy::new(|| {
+    std::env::var("AICLI_USERNAME").unwrap_or_else(|_| "admin".to_string())
+});
+
+// NEW constants for paths
+pub const USER_PRIVATE_KEY_PATH: &str = "data/user.key";
+pub const USER_PUBLIC_KEY_PATH: &str = "data/user.pub";
+pub const CLIENT_DATA_DIR: &str = "data/client";
+pub const CLIENT_INDEX_PATH: &str = "data/client/index.json";
 
 // Helper to sanitize a title into a valid filename
 fn sanitize_filename(title: &str) -> String {
@@ -29,104 +41,135 @@ fn sanitize_filename(title: &str) -> String {
 // Add BoxFuture type alias
 type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 
-// Modify connect_and_run to use boxed futures
-async fn connect_and_run<T>(cmd: impl for<'a> FnOnce(&'a mut NetworkClient<TcpStream>) -> BoxFuture<'a, Result<T>>) -> Result<T> {
-    let username = "testuser";
-    // Point to the key inside the data/ directory
-    let private_key_path = "data/user.key"; 
-    let mut client = NetworkClient::connect(SERVER_ADDR, username, private_key_path).await?;
+// Modify connect_and_run to use the correct TlsClientStream type
+async fn connect_and_run<T>(cmd: impl for<'a> FnOnce(&'a mut NetworkClient<TlsClientStream>) -> BoxFuture<'a, Result<T>>) -> Result<T> {
+    let mut client = NetworkClient::connect(&SERVER_ADDR, &CLIENT_USERNAME, USER_PRIVATE_KEY_PATH).await?;
     cmd(&mut client).await
 }
 
 // Main dispatcher function for all client commands
 pub async fn handle_client_command(command: ClientCommands) -> Result<()> {
+    // Ensure client data directory exists for downloads
+    fs::create_dir_all(CLIENT_DATA_DIR)?;
+
     match command {
-        ClientCommands::CreateUserKey => {
-            // FIX: Ensure data directory exists
-            let data_dir = Path::new("data");
-            fs::create_dir_all(data_dir)?;
+        // MODIFIED: Init command logic
+        ClientCommands::Init => {
+            println!("Initializing client...");
 
-            // FIX: Define key file paths inside the data directory
-            let private_key_file = data_dir.join("user.key");
-            let public_key_file = data_dir.join("user.pub");
-            
-            let keypair = KeyPair::new();
+            // 1. Create directories
+            fs::create_dir_all(CLIENT_DATA_DIR)
+                .map_err(|e| AppError::IoWithContext { context: format!("Failed to create directory '{}'", CLIENT_DATA_DIR), source: e })?;
 
-            fs::write(&private_key_file, keypair.private_key_to_bs58())?;
-            fs::write(&public_key_file, keypair.public_key_to_bs58())?;
+            // 2. Create keys if they don't exist
+            if Path::new(USER_PRIVATE_KEY_PATH).exists() {
+                println!(" ✓ Key pair already exists at '{}'. Skipping generation.", USER_PRIVATE_KEY_PATH);
+            } else {
+                let keypair = KeyPair::new();
+                fs::write(USER_PRIVATE_KEY_PATH, keypair.private_key_to_bs58())?;
+                fs::write(USER_PUBLIC_KEY_PATH, keypair.public_key_to_bs58())?;
+                println!(" ✓ Generated new key pair.");
+                println!("   - Private Key: {}", USER_PRIVATE_KEY_PATH);
+                println!("   - Public Key : {}", USER_PUBLIC_KEY_PATH);
+                println!("   (Share the public key with the server admin)");
+            }
             
-            println!("Successfully generated user keys in 'data/' directory:");
-            println!("- Private Key (DO NOT SHARE): {}", private_key_file.display());
-            println!("- Public Key (Share with admin): {}", public_key_file.display());
-            println!("\nYour public key is:\n{}", keypair.public_key_to_bs58());
+            // 3. Create index file if it doesn't exist
+            if !Path::new(CLIENT_INDEX_PATH).exists() {
+                 fs::write(CLIENT_INDEX_PATH, "{}")?;
+                 println!(" ✓ Created empty session index at '{}'.", CLIENT_INDEX_PATH);
+            } else {
+                 println!(" ✓ Session index already exists at '{}'.", CLIENT_INDEX_PATH);
+            }
+
+            println!("\nInitialization complete.");
         }
         ClientCommands::New { title } => {
-            let mut new_log = ChatLog::new(title.clone());
-            new_log.interactions.push(crate::common::types::Interaction::User { content: "Your first prompt here.".to_string() });
-            
-            let content = format_chat_log(&new_log);
-            let filename = sanitize_filename(&title);
-
-            fs::write(&filename, content)?;
-            println!("Successfully created new chat template: {}", filename);
+            let mut store = LocalStore::load()?;
+            let new_log = store.create_session(title)?;
+            println!("Successfully created new local session.");
+            println!("UUID: {}", new_log.uuid);
         }
         ClientCommands::Tui => {
             return crate::client::tui::run().await;
         }
-        // --- FIX: Implement all missing commands ---
-        ClientCommands::Send { file_path } => {
-            let content = fs::read_to_string(&file_path)?;
+        // MODIFIED: Send command now takes a UUID
+        ClientCommands::Send { uuid } => {
+            let uuid = Uuid::parse_str(&uuid).map_err(|_| AppError::ParseError("Invalid UUID format".into()))?;
+            let mut store = LocalStore::load()?;
             
-            // Optional: Parse locally to validate and get title for status message
-            let chat_log = parse_chat_file(&content)?;
-            println!("Sending chat '{}' from file '{}'...", chat_log.title, file_path);
+            let content = store.get_session_content(uuid)?;
+            println!("Sending session '{}'...", uuid);
 
-            let uuid = connect_and_run(|client| {
+            connect_and_run(|client| {
                 Box::pin(async move {
                     client.execute_chat(&content).await
                 })
             }).await?;
             
-            println!("Successfully sent task to server. Task UUID: {}", uuid);
+            // Update local status after successful send
+            store.update_session_status(uuid, SyncStatus::Synced, None)?;
+            println!("Successfully sent session to server. Status updated to 'Synced'.");
         }
+        // MODIFIED: List now shows local sessions
         ClientCommands::List => {
-            let tasks = connect_and_run(|client| {
-                Box::pin(async move {
-                    client.list_tasks().await
-                })
-            }).await?;
+            let store = LocalStore::load()?;
+            let sessions = store.list_sessions();
             
-            if tasks.is_empty() {
-                println!("No tasks found on server.");
+            if sessions.is_empty() {
+                println!("No local sessions found. Use 'client new <title>' to create one.");
             } else {
-                println!("{:<38} {:<12} {}", "UUID", "Status", "Title");
+                println!("{:<38} {:<10} {:<10} {}", "UUID", "Status", "Remote", "Title");
                 println!("{}", "-".repeat(80));
-                for task in tasks {
-                    println!("{:<38} {:<12} {}", task.uuid, task.status, task.title);
+                for s in sessions {
+                    let remote_status = s.remote_status.as_deref().unwrap_or("-");
+                    println!("{:<38} {:<10} {:<10} {}", s.uuid, format!("{:?}", s.sync_status), remote_status, s.title);
                 }
             }
         }
+        // MODIFIED: Get is now a "pull/sync" operation
         ClientCommands::Get { uuid } => {
             let uuid = Uuid::parse_str(&uuid).map_err(|_| AppError::ParseError("Invalid UUID format".into()))?;
-            let content = connect_and_run(|client| {
+            
+            println!("Fetching remote session '{}'...", uuid);
+            let remote_content = connect_and_run(|client| {
                 Box::pin(async move {
                     client.download_task(uuid).await
                 })
             }).await?;
             
-            let filename = format!("{}.txt", uuid);
-            fs::write(&filename, &content)?;
-            println!("Successfully downloaded task {} to file '{}'", uuid, filename);
-            println!("\n--- Content ---\n{}", content);
+            // This is a simplified pull. A real one would fetch remote metadata first.
+            let remote_task_info_for_update = crate::client::network::RemoteTask {
+                uuid,
+                // We parse the file to get the real title, etc.
+                title: "Updated from remote".to_string(), // Placeholder
+                status: "Synced".to_string(), // Placeholder
+                created_at: chrono::Utc::now(), // Placeholder
+                error_message: None,
+            };
+
+            let mut store = LocalStore::load()?;
+            store.update_from_remote(&remote_content, &remote_task_info_for_update)?;
+
+            println!("Successfully synced session {} from server to local storage.", uuid);
         }
+        // MODIFIED: Delete acts locally and remotely
         ClientCommands::Delete { uuid } => {
             let uuid = Uuid::parse_str(&uuid).map_err(|_| AppError::ParseError("Invalid UUID format".into()))?;
+            
+            // 1. Request remote deletion
+            println!("Requesting deletion of remote task {}...", uuid);
             connect_and_run(|client| {
                 Box::pin(async move {
                     client.delete_task(uuid).await
                 })
             }).await?;
-            println!("Successfully requested deletion of task {}", uuid);
+            println!("Remote task deleted.");
+
+            // 2. Delete locally
+            let mut store = LocalStore::load()?;
+            store.delete_session(uuid)?;
+            println!("Local session files for {} deleted.", uuid);
         }
         ClientCommands::Resend { uuid } => {
             let uuid = Uuid::parse_str(&uuid).map_err(|_| AppError::ParseError("Invalid UUID format".into()))?;

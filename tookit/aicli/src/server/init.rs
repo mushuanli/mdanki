@@ -33,17 +33,6 @@ pub fn run() -> Result<()> {
         println!("✓ Successfully generated '{}' and '{}'.", cert_path.display(), key_path.display());
     }
 
-    println!("\nConfiguration complete! Please ensure your 'config.yaml' has an `ssl_cert` and `ssl_key` entry if you plan to use TLS.");
-    println!("Example for data/config.yaml:");
-    // FIX: Update the example to reflect the new paths
-    println!(r#"
-server:
-  # ... other settings
-  # To enable TLS, you'll need to adapt the server listener code to use these files.
-  # For now, this just creates the files for you.
-  # ssl_cert: "data/cert.pem" 
-  # ssl_key: "data/key.pem"
-"#);
-
+    println!("\nConfiguration complete! ");
     Ok(())
 }

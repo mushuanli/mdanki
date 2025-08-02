@@ -17,5 +17,7 @@ pub enum Action {
     CreateTask(ChatLog),
     DeleteTask(Uuid),
     ResendTask(Uuid),
-    DownloadTask(Uuid),
+    StartEdit(Uuid),
+    SaveEdit,
+    CancelEdit,
 }

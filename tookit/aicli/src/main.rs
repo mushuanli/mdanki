@@ -1,20 +1,28 @@
 // src/main.rs
 
-// Add these to the top
 #[macro_use]
 extern crate log;
 mod common;
 mod error;
 mod server;
-mod client; // We'll need this later
+mod client;
 
+use std::path::PathBuf; // 引入 PathBuf
 use clap::{Parser, Subcommand};
-use crate::common::crypto::KeyPair; // NEW
 
-use client::cli; // Import the cli handler module
+use crate::client::cli;
+use crate::client::cli::{SERVER_ADDR, CLIENT_USERNAME, CLIENT_DATA_DIR};
+
+// Define the help text for environment variables
+const AFTER_HELP: &str = "\
+ENVIRONMENT VARIABLES:
+    AICLI_SERVER_ADDR    Sets the server address (e.g., 127.0.0.1:9501)
+    AICLI_USERNAME       Sets the username for authentication
+";
 
 #[derive(Parser, Debug)]
 #[command(author, version, about = "A Rust-based AI Chat CLI and Server", long_about = None)]
+// REMOVED: No longer need after_help on the top-level command.
 struct Args {
     #[command(subcommand)]
     command: Commands,
@@ -28,6 +36,7 @@ enum Commands {
         server_cmd: ServerCommands,
     },
     /// Client-related commands
+    #[command(after_help = AFTER_HELP)] // MOVED HERE
     Client {
         #[command(subcommand)]
         client_cmd: ClientCommands,
@@ -40,20 +49,34 @@ pub enum ServerCommands {
     Run,
     /// Initialize server configuration (e.g., generate SSL certs)
     Init,
-    /// Add a new user with their public key
-    AddUser { username: String, public_key: String },
+    /// Add a new user with their public key from a file
+    AddUser { 
+        #[arg(short, long)]
+        username: String, 
+        
+        /// Path to the user's public key file (e.g., data/user.pub)
+        #[arg(short, long, value_name = "FILE_PATH")]
+        key_file: PathBuf,
+    },
     /// Delete a user
     DelUser { username: String },
-    /// Update an existing user's public key
-    SetUser { username: String, public_key: String },
+    /// Update an existing user's public key from a file
+    SetUser { 
+        #[arg(short, long)]
+        username: String, 
+        
+        /// Path to the new public key file
+        #[arg(short, long, value_name = "FILE_PATH")]
+        key_file: PathBuf,
+    },
     /// List all registered users
     ListUsers,
 }
 
 #[derive(Subcommand, Debug)]
 pub enum ClientCommands {
-    /// Create a new user key pair
-    CreateUserKey,
+    /// Initialize client, creating keys and data directories
+    Init, // MODIFIED
 
     /// Create a new chat template file
     New {
@@ -63,8 +86,8 @@ pub enum ClientCommands {
 
     /// Send a chat file to the server for processing
     Send {
-        /// Path to the .txt chat file
-        file_path: String,
+        /// UUID of the local session to send
+        uuid: String, 
         // Later we can add: #[arg(short, long)] attachments: Vec<String>
     },
     /// Run the interactive Terminal UI
@@ -93,18 +116,33 @@ async fn main() {
     // Initialize logger
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
+    // Parse command line arguments
     let args = Args::parse();
     let result = match args.command {
-        Commands::Server { server_cmd } => match server_cmd {
-            ServerCommands::Run => server::run().await,
-            ServerCommands::Init => server::init::run(),
-            // NEW: Handle user management commands
-            ServerCommands::AddUser { username, public_key } => server::user_mgnt::add_user(username, public_key).await,
-            ServerCommands::DelUser { username } => server::user_mgnt::delete_user(username).await,
-            ServerCommands::SetUser { username, public_key } => server::user_mgnt::set_user(username, public_key).await,
-            ServerCommands::ListUsers => server::user_mgnt::list_users().await,
+        Commands::Server { server_cmd } => {
+            // Server mode, run server logic directly
+            match server_cmd {
+                ServerCommands::Run => server::run().await,
+                ServerCommands::Init => server::init::run(),
+                // 更新这里的调用
+                ServerCommands::AddUser { username, key_file } => server::user_mgnt::add_user(username, key_file).await,
+                ServerCommands::DelUser { username } => server::user_mgnt::delete_user(username).await,
+                ServerCommands::SetUser { username, key_file } => server::user_mgnt::set_user(username, key_file).await,
+                ServerCommands::ListUsers => server::user_mgnt::list_users().await,
+            }
         },
-        Commands::Client { client_cmd } => cli::handle_client_command(client_cmd).await,
+        Commands::Client { client_cmd } => {
+            // Client mode, print client config and then run client logic
+            println!("--- AI-CLI-RS Client Info ---");
+            // MODIFIED: Improved print statements
+	    println!(" -> Set with environment variable: AICLI_SERVER_ADDR， AICLI_USERNAME");
+            println!("Server Address : {} (set via AICLI_SERVER_ADDR)", *SERVER_ADDR);
+            println!("Username       : {} (set via AICLI_USERNAME)", *CLIENT_USERNAME);
+            println!("Client Data Dir: {}", CLIENT_DATA_DIR);
+            println!("-----------------------------");
+
+            cli::handle_client_command(client_cmd).await
+        },
     };
 
     if let Err(e) = result {

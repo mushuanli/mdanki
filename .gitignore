@@ -6,6 +6,10 @@ package-lock.json
 back
 venv
 *.pem
+*.pub
+*.key
 *.swp
+*.db
+a.txt
 tmp/
 build/

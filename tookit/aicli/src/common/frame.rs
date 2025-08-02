@@ -2,7 +2,7 @@
 
 use crate::common::types::PacketType;
 use crate::error::{AppError, Result};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::{AsyncReadExt};
 
 #[derive(Debug)]
 pub struct Frame {

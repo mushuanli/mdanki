@@ -1,20 +1,23 @@
 // src/client/tui/mod.rs
-use crate::client::network::{NetworkClient, RemoteTask};
-use crate::common::protocol::format_chat_log;
-use crate::error::{AppError, Result}; // FIX: Import AppError
+
+use crate::error::Result;
+use crate::common::protocol::parse_chat_file; // <-- FIXED: Added this import
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::prelude::*;
 use std::{io, sync::Arc, time::Duration};
 use tokio::sync::{mpsc, Mutex};
-use tokio::net::TcpStream;
-use super::cli::SERVER_ADDR;
+use ratatui_textarea::TextArea;
+
+// MODIFIED: Use shared constants from the cli module
+use super::cli::{SERVER_ADDR, CLIENT_USERNAME, USER_PRIVATE_KEY_PATH};
+use crate::client::network::NetworkClient;
 
 use self::{
-    app::App,
+    app::{App, AppMode}, // <-- FIXED: Corrected AppMode path
     ui::draw,
     action::Action,
 };
@@ -33,7 +36,7 @@ pub async fn run() -> Result<()> {
     let (tx, mut rx) = mpsc::unbounded_channel::<Action>();
 
     // Create App state
-    let app = Arc::new(Mutex::new(App::new()));
+    let app = Arc::new(Mutex::new(App::new()?));
 
     // Initial refresh
     // FIX: Channel send can fail if the receiver is dropped.
@@ -67,18 +70,35 @@ pub async fn run() -> Result<()> {
             // Drop the lock before spawning a task to avoid deadlocks
             drop(app_lock);
             
-            // FIX: Add Action::CreateTask to the list of actions that trigger network I/O
-            if matches!(action, Action::Refresh | Action::DeleteTask(_) | Action::ResendTask(_) | Action::CreateTask(_) | Action::ResendTask(_) | Action::DownloadTask(_)) {
+        // MODIFIED: StartEdit no longer triggers network I/O.
+        // It reads from the local store first.
+        let should_trigger_network = matches!(action, 
+            Action::Refresh |      // Sync with remote
+            Action::DeleteTask(_) |  // Tell remote to delete
+            Action::ResendTask(_) |  // Send to remote
+            Action::SaveEdit         // Send update to remote
+        );
+
+            if should_trigger_network {
                 let app_clone = app.clone();
                 let tx_clone = tx.clone();
                 tokio::spawn(async move {
-                    // IMPROVEMENT: If the action fails, update the UI with the error message.
-                    if let Err(e) = handle_action(action, app_clone.clone(), tx_clone).await {
-                        let mut app = app_clone.lock().await;
-                        app.status_message = Some(format!("Action failed: {}", e));
-                    }
+                if let Err(e) = handle_network_action(action, app_clone.clone(), tx_clone).await {
+                    let mut app = app_clone.lock().await;
+                    app.status_message = Some(format!("Error: {}", e));
+                }
                 });
             }
+        // Handle actions that only affect local state
+        else if matches!(action, Action::StartEdit(_)) {
+            let app_clone = app.clone();
+            tokio::spawn(async move {
+                if let Err(e) = handle_local_action(action, app_clone.clone()).await {
+                     let mut app = app_clone.lock().await;
+                    app.status_message = Some(format!("Error: {}", e));
+                }
+            });
+        }
         }
     }
 
@@ -88,50 +108,88 @@ pub async fn run() -> Result<()> {
 
 // FIX: This function performs operations that can fail, so it should return a Result.
 // This allows us to use the `?` operator inside it.
-async fn handle_action(action: Action, app: Arc<Mutex<App<'static>>>, tx: mpsc::UnboundedSender<Action>) -> Result<()> {
-    // TODO: proper auth
-    // FIX: Update the hardcoded path to the private key
-    let mut client = NetworkClient::connect(SERVER_ADDR, "testuser", "data/user.key").await?;
+async fn handle_network_action(action: Action, app: Arc<Mutex<App<'static>>>, _tx: mpsc::UnboundedSender<Action>) -> Result<()> {
+    // This function now only handles actions that require a network client
+    let mut client = NetworkClient::connect(&SERVER_ADDR, &CLIENT_USERNAME, USER_PRIVATE_KEY_PATH).await?;
     
     match action {
         Action::Refresh => {
-            let tasks = client.list_tasks().await?;
-            let mut app = app.lock().await;
-            app.tasks = tasks;
-            if app.task_list_state.selected().is_none() && !app.tasks.is_empty() {
-                app.task_list_state.select(Some(0));
+            let remote_tasks = client.list_tasks().await?;
+            let mut app_lock = app.lock().await;
+            app_lock.status_message = Some(format!("Found {} remote tasks. Syncing...", remote_tasks.len()));
+            drop(app_lock);
+
+            // Create a new client for concurrent downloads
+            // This is an optimization to speed up sync
+            for task in remote_tasks {
+                 let mut download_client = NetworkClient::connect(&SERVER_ADDR, &CLIENT_USERNAME, USER_PRIVATE_KEY_PATH).await?;
+                 let content = download_client.download_task(task.uuid).await?;
+                 let mut app_lock = app.lock().await;
+                 app_lock.store.update_from_remote(&content, &task)?;
             }
-            app.status_message = Some("Tasks refreshed.".into());
+
+            let mut app_lock = app.lock().await;
+            app_lock.reload_sessions();
+            app_lock.status_message = Some("Sync with server complete.".into());
         },
-        // ADDED: Handle the CreateTask action
-        Action::CreateTask(chat_log) => {
-            let content = format_chat_log(&chat_log);
-            let uuid = client.execute_chat(&content).await?;
-            tx.send(Action::Refresh).ok(); // Refresh list to show the new 'pending' task
-            app.lock().await.status_message = Some(format!("Task {} sent to server.", uuid));
-        },
+
         Action::DeleteTask(uuid) => {
             client.delete_task(uuid).await?;
-            tx.send(Action::Refresh).ok(); // Trigger a refresh after delete
-            app.lock().await.status_message = Some(format!("Task {} deleted.", uuid));
+            // A local deletion is also needed
+            let mut app = app.lock().await;
+            app.store.delete_session(uuid)?; 
+            app.reload_sessions();
+            app.status_message = Some(format!("Task {} deleted.", uuid));
         },
-        Action::ResendTask(uuid) => {
-            client.resend_task(uuid).await?;
-            tx.send(Action::Refresh).ok();
-            app.lock().await.status_message = Some(format!("Task {} re-queued.", uuid));
+        Action::ResendTask(uuid) => { // Send/Resend logic
+            let content = app.lock().await.store.get_session_content(uuid)?;
+            client.execute_chat(&content).await?;
+            let mut app = app.lock().await;
+            app.store.update_session_status(uuid, crate::client::local_store::SyncStatus::Synced, None)?;
+            app.reload_sessions();
+            app.status_message = Some(format!("Session {} sent to server.", uuid));
         },
-        Action::DownloadTask(uuid) => {
-            let content = client.download_task(uuid).await?;
-            let filename = format!("{}.txt", uuid);
-            tokio::fs::write(&filename, content).await?;
-            app.lock().await.status_message = Some(format!("Task downloaded to {}", filename));
+        // NEW: Handle edit flow
+        Action::SaveEdit => {
+            let mut app_lock = app.lock().await;
+            if let Some(uuid) = app_lock.editor_task_uuid {
+                let content = app_lock.editor_textarea.lines().join("\n");
+                
+                // First, save it locally
+                let log_to_save = parse_chat_file(&content)?; // <-- This now compiles
+                app_lock.store.save_session(&log_to_save)?;
+                app_lock.store.save_index()?;
+                
+                // Then, send update to server
+                client.update_task(uuid, &content).await?;
+
+                app_lock.status_message = Some(format!("Session {} saved and synced.", uuid));
+                app_lock.mode = AppMode::TaskList;
+                app_lock.reload_sessions();
+            }
         },
-        _ => {}, // Other actions don't have I/O
+        // All other actions are handled in App::update or handle_local_action
+        _ => {},
     };
 
     Ok(())
 }
 
+// NEW: A handler for actions that are purely local
+async fn handle_local_action(action: Action, app: Arc<Mutex<App<'static>>>) -> Result<()> {
+    match action {
+        Action::StartEdit(uuid) => {
+            let mut app_lock = app.lock().await;
+            let content = app_lock.store.get_session_content(uuid)?;
+            app_lock.editor_textarea = TextArea::new(content.lines().map(String::from).collect());
+            app_lock.editor_task_uuid = Some(uuid);
+            app_lock.mode = AppMode::EditingTask;
+            app_lock.status_message = Some("Session loaded from local file into editor.".into());
+        }
+        _ => {}
+    }
+    Ok(())
+}
 
 // --- TUI Boilerplate Helper ---
 struct Tui {

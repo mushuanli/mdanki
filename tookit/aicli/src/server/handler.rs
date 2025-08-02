@@ -1,75 +1,46 @@
 // src/server/handler.rs
 
 use crate::common::config::CONFIG;
-use crate::common::protocol::{format_chat_log, parse_chat_file};
-use crate::common::types::{ChatLog, Interaction, PacketType};
-use crate::common::frame::{read_frame, encode_frame}; // <-- Import shared frame logic
+use crate::common::frame::{encode_frame, read_frame};
+use crate::common::protocol::parse_chat_file;
+use crate::common::types::PacketType;
 use crate::common::crypto::verify_signature;
 use crate::error::{AppError, Result};
 use crate::server::db::Database;
 use crate::server::worker::AiTask;
-use rand::RngCore; // NEW
-use serde_json::{json, from_slice}; // NEW
+use chrono::Utc;
+use rand::RngCore;
+use serde_json::{from_slice, json, Value};
+use std::fs;
 use std::net::SocketAddr;
 use std::path::Path;
 use std::sync::Arc;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::TcpStream;
+use tokio::io::{AsyncRead, AsyncWrite, AsyncWriteExt};
 use tokio::sync::mpsc;
 use uuid::Uuid;
-use std::fs;
-use chrono::Utc; // FIX: Import Utc here
 
-// ADDED: This new handler function for CmdExec
-async fn handle_exec(
-    stream: &mut TcpStream,
-    db: &Database,
-    task_sender: &mpsc::Sender<AiTask>,
-    payload: &[u8],
-    addr: &SocketAddr,
-) -> Result<()> {
-    // 1. Parse the chat log from the payload
-    let content = String::from_utf8(payload.to_vec())
-        .map_err(|_| AppError::ParseError("Invalid UTF-8 in chat log".into()))?;
-    let chat_log = parse_chat_file(&content)?;
-    
-    // 2. Save the file to disk
-    let file_path = Path::new(&CONFIG.storage.chat_dir)
-        .join(format!("{}.txt", chat_log.uuid));
-    fs::write(&file_path, &content)?;
-    log::info!("Saved chat file for task {} to {:?}", chat_log.uuid, file_path);
+// REMOVED: This type alias was causing the E0225 error and is not needed.
+// type GenericStream = Box<dyn AsyncRead + AsyncWrite + Unpin + Send>;
 
-    // 3. Create a record in the database
-    db.create_chat_log(&chat_log, &addr.ip().to_string()).await?;
-
-    // 4. Send the task to the worker queue
-    task_sender.send(AiTask { uuid: chat_log.uuid, client_ip: addr.ip().to_string() }).await
-        .map_err(|e| AppError::NetworkError(format!("Failed to queue task: {}", e)))?;
-
-    // 5. Send ACK with the UUID back to the client
-    let ack_frame = encode_frame(PacketType::Ack, chat_log.uuid.to_string().as_bytes());
-    stream.write_all(&ack_frame).await?;
-    
-    Ok(())
-}
-
-pub async fn handle_connection(
-    mut stream: TcpStream,
+pub async fn handle_connection<S>(
+    mut stream: S,
     addr: SocketAddr,
     db: Arc<Database>,
     task_sender: mpsc::Sender<AiTask>,
-) -> Result<()> {
-    // 1. Authenticate and get username
+) -> Result<()>
+where
+    S: AsyncRead + AsyncWrite + Unpin + Send + 'static,
+{
     let username = match authenticate(&mut stream, db.clone()).await {
         Ok(username) => username,
         Err(e) => {
             let error_frame = encode_frame(PacketType::Error, e.to_string().as_bytes());
-            stream.write_all(&error_frame).await.ok(); // Best effort send
+            stream.write_all(&error_frame).await.ok();
             return Err(e);
         }
     };
-    log::info!("User '{}' from {} authenticated successfully.", username, addr);
-    db.update_last_seen(&username).await?; // Update last seen time
+    info!("User '{}' from {} authenticated successfully.", username, addr);
+    db.update_last_seen(&username).await?;
 
     // 2. Command loop
     loop {
@@ -77,8 +48,8 @@ pub async fn handle_connection(
         let frame = match read_frame(&mut stream).await {
             Ok(Some(frame)) => frame,
             Ok(None) => {
-                log::info!("Client {} disconnected.", addr);
-                return Ok(()); // Connection closed cleanly
+                info!("Client {} disconnected.", addr);
+                return Ok(());
             }
             Err(e) => return Err(e),
         };
@@ -90,9 +61,10 @@ pub async fn handle_connection(
             PacketType::CmdGet => handle_get(&mut stream, &frame.payload).await,
             PacketType::CmdDelete => handle_delete(&mut stream, &db, &frame.payload).await,
             PacketType::CmdResend => handle_resend(&mut stream, &db, &task_sender, &frame.payload, &addr).await,
+            PacketType::CmdUpdate => handle_update(&mut stream, &frame.payload).await,
             _ => {
                 let err_msg = format!("Unsupported command: {:?}", frame.packet_type);
-                log::warn!("{}", err_msg);
+                warn!("{}", err_msg);
                 let err_frame = encode_frame(PacketType::Error, err_msg.as_bytes());
                 stream.write_all(&err_frame).await?;
                 Ok(())
@@ -100,74 +72,46 @@ pub async fn handle_connection(
         };
 
         if let Err(e) = result {
-            log::error!("Error processing command for {}: {}", addr, e);
+            error!("Error processing command for {}: {}", addr, e);
             let err_frame = encode_frame(PacketType::Error, e.to_string().as_bytes());
-            stream.write_all(&err_frame).await?;
+            stream.write_all(&err_frame).await.ok();
         }
     }
 }
 
-// --- NEW HANDLER FUNCTIONS ---
-
-async fn handle_list(stream: &mut TcpStream, db: &Database) -> Result<()> {
-    let tasks = db.list_all_tasks().await?;
-    let payload = serde_json::to_vec(&tasks)?;
-    let frame = encode_frame(PacketType::ResponseList, &payload);
-    stream.write_all(&frame).await?;
-    Ok(())
-}
-
-async fn handle_get(stream: &mut TcpStream, payload: &[u8]) -> Result<()> {
-    let uuid_str = String::from_utf8_lossy(payload);
-    let file_path = Path::new(&CONFIG.storage.chat_dir).join(format!("{}.txt", uuid_str));
-    let content = fs::read(file_path)?;
-    let frame = encode_frame(PacketType::ResponseChatLog, &content);
-    stream.write_all(&frame).await?;
-    Ok(())
-}
-
-async fn handle_delete(stream: &mut TcpStream, db: &Database, payload: &[u8]) -> Result<()> {
-    let uuid_str = String::from_utf8_lossy(payload);
-    let uuid = Uuid::parse_str(&uuid_str)
-        .map_err(|_| AppError::ParseError("Invalid UUID".into()))?;
-
-    // Delete from DB first
-    db.delete_task(&uuid).await?;
+// MODIFIED: All helper functions now take a generic stream
+async fn handle_exec<S: AsyncWrite + Unpin>(
+    stream: &mut S,
+    db: &Database,
+    task_sender: &mpsc::Sender<AiTask>,
+    payload: &[u8],
+    addr: &SocketAddr,
+) -> Result<()> {
+    let content = String::from_utf8(payload.to_vec())
+        .map_err(|_| AppError::ParseError("Invalid UTF-8 in chat log".into()))?;
+    let chat_log = parse_chat_file(&content)?;
     
-    // Then delete file
-    let file_path = Path::new(&CONFIG.storage.chat_dir).join(format!("{}.txt", uuid_str));
-    if file_path.exists() {
-        fs::remove_file(file_path)?;
-    }
-    
-    let frame = encode_frame(PacketType::Ack, &[]);
-    stream.write_all(&frame).await?;
-    Ok(())
-}
+    let file_path = Path::new(&CONFIG.storage.chat_dir).join(format!("{}.txt", chat_log.uuid));
+    fs::write(&file_path, &content)?;
+    debug!("Saved chat file for task {} to {:?}", chat_log.uuid, file_path);
 
-async fn handle_resend(stream: &mut TcpStream, db: &Database, task_sender: &mpsc::Sender<AiTask>, payload: &[u8], addr: &SocketAddr) -> Result<()> {
-    let uuid_str = String::from_utf8_lossy(payload);
-    let uuid = Uuid::parse_str(&uuid_str).map_err(|_| AppError::ParseError("Invalid UUID".into()))?;
+    db.create_chat_log(&chat_log, &addr.ip().to_string()).await?;
 
-    // Update status to pending and clear error message
-    db.update_status(&uuid, "pending", None).await?;
-    
-    // Add resend timestamp to the file
-    let file_path = Path::new(&CONFIG.storage.chat_dir).join(format!("{}.txt", uuid_str));
-    let mut content = fs::read_to_string(&file_path)?;
-    content.push_str(&format!("::>resend_at: {}\n", Utc::now().to_rfc3339()));
-    fs::write(&file_path, content)?;
-
-    // Send to worker queue
-    task_sender.send(AiTask { uuid, client_ip: addr.ip().to_string() }).await
+    task_sender.send(AiTask { uuid: chat_log.uuid, client_ip: addr.ip().to_string() }).await
         .map_err(|e| AppError::NetworkError(format!("Failed to queue task: {}", e)))?;
 
-    let frame = encode_frame(PacketType::Ack, &[]);
-    stream.write_all(&frame).await?;
+    let ack_frame = encode_frame(PacketType::Ack, chat_log.uuid.to_string().as_bytes());
+    stream.write_all(&ack_frame).await?;
+    
     Ok(())
 }
 
-async fn authenticate(stream: &mut TcpStream, db: Arc<Database>) -> Result<String> {
+// --- NEW HANDLER FUNCTIONS ---
+
+async fn authenticate<S: AsyncRead + AsyncWrite + Unpin>(
+    stream: &mut S,
+    db: Arc<Database>,
+) -> Result<String> {
     // 1. Read username from client
     let frame = read_frame(stream).await?
         .ok_or_else(|| AppError::AuthError("Client disconnected before auth".to_string()))?;
@@ -215,3 +159,78 @@ async fn authenticate(stream: &mut TcpStream, db: Arc<Database>) -> Result<Strin
     Ok(username)
 }
 
+async fn handle_list<S: AsyncWrite + Unpin>(stream: &mut S, db: &Database) -> Result<()> {
+    let tasks = db.list_all_tasks().await?;
+    let payload = serde_json::to_vec(&tasks)?;
+    let frame = encode_frame(PacketType::ResponseList, &payload);
+    stream.write_all(&frame).await?;
+    Ok(())
+}
+
+async fn handle_get<S: AsyncWrite + Unpin>(stream: &mut S, payload: &[u8]) -> Result<()> {
+    let uuid_str = String::from_utf8_lossy(payload);
+    let file_path = Path::new(&CONFIG.storage.chat_dir).join(format!("{}.txt", uuid_str));
+    let content = fs::read(file_path)?;
+    let frame = encode_frame(PacketType::ResponseChatLog, &content);
+    stream.write_all(&frame).await?;
+    Ok(())
+}
+
+async fn handle_delete<S: AsyncWrite + Unpin>(stream: &mut S, db: &Database, payload: &[u8]) -> Result<()> {
+    let uuid_str = String::from_utf8_lossy(payload);
+    let uuid = Uuid::parse_str(&uuid_str)
+        .map_err(|_| AppError::ParseError("Invalid UUID".into()))?;
+
+    // Delete from DB first
+    db.delete_task(&uuid).await?;
+    
+    // Then delete file
+    let file_path = Path::new(&CONFIG.storage.chat_dir).join(format!("{}.txt", uuid_str));
+    if file_path.exists() {
+        fs::remove_file(file_path)?;
+    }
+    
+    let frame = encode_frame(PacketType::Ack, &[]);
+    stream.write_all(&frame).await?;
+    Ok(())
+}
+
+async fn handle_resend<S: AsyncWrite + Unpin>(stream: &mut S, db: &Database, task_sender: &mpsc::Sender<AiTask>, payload: &[u8], addr: &SocketAddr) -> Result<()> {
+    let uuid_str = String::from_utf8_lossy(payload);
+    let uuid = Uuid::parse_str(&uuid_str).map_err(|_| AppError::ParseError("Invalid UUID".into()))?;
+
+    // Update status to pending and clear error message
+    db.update_status(&uuid, "pending", None).await?;
+    
+    // Add resend timestamp to the file
+    let file_path = Path::new(&CONFIG.storage.chat_dir).join(format!("{}.txt", uuid_str));
+    let mut content = fs::read_to_string(&file_path)?;
+    content.push_str(&format!("::>resend_at: {}\n", Utc::now().to_rfc3339()));
+    fs::write(&file_path, content)?;
+
+    // Send to worker queue
+    task_sender.send(AiTask { uuid, client_ip: addr.ip().to_string() }).await
+        .map_err(|e| AppError::NetworkError(format!("Failed to queue task: {}", e)))?;
+
+    let frame = encode_frame(PacketType::Ack, &[]);
+    stream.write_all(&frame).await?;
+    Ok(())
+}
+
+async fn handle_update<S: AsyncWrite + Unpin>(stream: &mut S, payload: &[u8]) -> Result<()> {
+    let v: Value = serde_json::from_slice(payload)?;
+    let uuid_str = v["uuid"].as_str().ok_or_else(|| AppError::ParseError("Missing UUID in update payload".into()))?;
+    let content = v["content"].as_str().ok_or_else(|| AppError::ParseError("Missing content in update payload".into()))?;
+
+    // Overwrite the file on disk
+    let file_path = Path::new(&CONFIG.storage.chat_dir).join(format!("{}.txt", uuid_str));
+    fs::write(&file_path, content)?;
+    debug!("Updated chat file for task {} at {:?}", uuid_str, file_path);
+
+    // TODO: Optionally, update a `modified_at` field in the database.
+    // For now, just overwriting the file is sufficient.
+
+    let frame = encode_frame(PacketType::Ack, &[]);
+    stream.write_all(&frame).await?;
+    Ok(())
+}

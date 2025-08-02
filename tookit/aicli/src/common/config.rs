@@ -4,7 +4,7 @@ use serde::Deserialize;
 use crate::error::{AppError, Result};
 use std::fs;
 use std::path::Path;
-use once_cell::sync::Lazy; // Using once_cell for global config
+use once_cell::sync::Lazy;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
@@ -21,6 +21,9 @@ pub struct ServerConfig {
     pub token: String,
     pub default_model: String,
     pub auth_token: String,
+    // NEW: Add optional SSL fields to match the YAML config
+    pub ssl_cert: Option<String>,
+    pub ssl_key: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -46,9 +49,7 @@ pub static CONFIG: Lazy<Config> = Lazy::new(|| {
 
 impl Config {
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
-        // ... (rest of the function is fine, as it correctly handles creating directories
-        // based on the paths *inside* the config file) ...
-        let content = fs::read_to_string(path.as_ref()) // Use as_ref() for cleaner interface
+        let content = fs::read_to_string(path.as_ref())
             .map_err(|e| AppError::ConfigError(format!("Failed to read config file '{}': {}", path.as_ref().display(), e)))?;
         
         let config: Config = serde_yaml::from_str(&content)

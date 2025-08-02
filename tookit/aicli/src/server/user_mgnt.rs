@@ -1,8 +1,10 @@
 // src/server/user_mgnt.rs (NEW)
 use crate::common::config::CONFIG;
 use crate::error::{AppError, Result};
-use crate::server::db::{Database, UserInfo}; // <-- FIX: Import UserInfo from db module
+use crate::server::db::{Database};
 use std::sync::Arc;
+use std::path::PathBuf; // 引入 PathBuf
+use std::fs; // 引入 fs
 
 // Helper to get a DB connection
 async fn get_db() -> Result<Arc<Database>> {
@@ -10,10 +12,23 @@ async fn get_db() -> Result<Arc<Database>> {
     Ok(Arc::new(db))
 }
 
-pub async fn add_user(username: String, public_key: String) -> Result<()> {
+pub async fn add_user(username: String, key_file: PathBuf) -> Result<()> {
+    // 从文件读取公钥字符串
+    let public_key = fs::read_to_string(&key_file)
+        .map_err(|e| AppError::IoWithContext { 
+            context: format!("Failed to read public key file '{}'", key_file.display()), 
+            source: e 
+        })?
+        .trim() // 去除可能的空白符和换行符
+        .to_string();
+
+    if public_key.is_empty() {
+        return Err(AppError::ConfigError(format!("Public key file '{}' is empty.", key_file.display())));
+    }
+
     let db = get_db().await?;
     db.add_user(&username, &public_key).await?;
-    println!("Successfully added user '{}'", username);
+    println!("Successfully added user '{}' using key from '{}'", username, key_file.display());
     Ok(())
 }
 
@@ -24,10 +39,23 @@ pub async fn delete_user(username: String) -> Result<()> {
     Ok(())
 }
 
-pub async fn set_user(username: String, public_key: String) -> Result<()> {
+pub async fn set_user(username: String, key_file: PathBuf) -> Result<()> {
+    // 从文件读取公钥字符串
+    let public_key = fs::read_to_string(&key_file)
+        .map_err(|e| AppError::IoWithContext { 
+            context: format!("Failed to read public key file '{}'", key_file.display()), 
+            source: e 
+        })?
+        .trim()
+        .to_string();
+    
+    if public_key.is_empty() {
+        return Err(AppError::ConfigError(format!("Public key file '{}' is empty.", key_file.display())));
+    }
+
     let db = get_db().await?;
     db.update_user_key(&username, &public_key).await?;
-    println!("Successfully updated public key for user '{}'", username);
+    println!("Successfully updated public key for user '{}' using key from '{}'", username, key_file.display());
     Ok(())
 }
 
