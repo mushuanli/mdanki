@@ -125,7 +125,47 @@ function setupAutoPersistence() {
 }
 
 /**
- * 应用主入口函数。
+ * [REFACTORED] 封装应用初始化和重载的逻辑
+ */
+async function reinitializeAndRenderApp() {
+    console.log("Re-initializing application state and UI...");
+    document.body.classList.add('is-loading');
+
+    try {
+        await dataService.initializeApp();
+        await dataService.initializeAgentData();
+
+        await Promise.all([
+            initializeAnkiApp(),
+            initializeAgentApp(),
+            initializeMistakesApp(),
+            initializeSettingsApp()
+        ]);
+
+        const viewToShow = appState.activeView || 'anki';
+        setState({ activeView: viewToShow });
+        handleViewChange();
+
+        console.log("Application re-initialization successful.");
+    } catch(error) {
+        console.error("Failed to re-initialize the application:", error);
+    } finally {
+        document.body.classList.remove('is-loading');
+    }
+}
+
+/**
+ * [NEW] 设置全局应用事件监听器
+ */
+function setupAppEventListeners() {
+    window.addEventListener('app:dataImported', async () => {
+        console.log("Event 'app:dataImported' received. Re-initializing app...");
+        await reinitializeAndRenderApp();
+    });
+}
+
+/**
+ * 应用主入口函数
  */
 async function main() {
     document.body.classList.add('is-loading'); 
@@ -150,6 +190,7 @@ async function main() {
         // 3. Setup top-level navigation and automatic persistence
         setupAppNavigation();
         setupAutoPersistence();
+        setupAppEventListeners(); // ✨ 核心改动：设置全局事件监听
 
         // 4. 设置并显示初始视图
         // 如果 appState 中没有 activeView，则默认为 'mistakes'

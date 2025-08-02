@@ -103,11 +103,17 @@ async function handleFileImport(event) {
         try {
             const data = JSON.parse(e.target.result);
             await importDatabase(data);
-            alert("数据导入成功！应用即将刷新以加载新数据。");
-            window.location.reload();
+            
+            alert("数据导入成功！应用将重新加载新数据。");
+
+            // ✨ 核心改动：发布一个全局事件，而不是调用一个导入的函数
+            window.dispatchEvent(new CustomEvent('app:dataImported'));
+
         } catch (error) {
             console.error("导入数据库失败:", error);
             alert(`导入数据失败：${error.message}\n详情请查看控制台。`);
+        } finally {
+            // 注意：因为不再刷新页面，我们需要在这里手动恢复按钮状态
             ui.setButtonLoadingState(dom.importDbBtn, false, originalText);
         }
     };

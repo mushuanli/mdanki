@@ -69,11 +69,6 @@ function createSubsessionsForFile(fileId, content) {
     setState({ fileSubsessions: newFileSubsessions });
 }
 
-// [NEW] Cloze ID 生成策略
-function generateClozeId(fileId, clozeContent) {
-    return `${fileId}_${simpleHash(clozeContent)}`;
-}
-
 // --- Public Service API ---
 
 export async function initializeApp() {
@@ -160,14 +155,7 @@ export async function persistState() {
 
 export async function addFile(name, content = INITIAL_CONTENT) {
     const id = generateId();
-    const newFile = {
-        id,
-        name: name || `新文件 ${appState.sessions.length + 1}`,
-        content,
-        type: 'file',
-        folderId: appState.currentFolderId,
-        createdAt: new Date(),
-    };
+    const newFile = { id, name: name || `新文件 ${appState.sessions.length + 1}`, content, type: 'file', folderId: appState.currentFolderId, createdAt: new Date() };
     const newSessions = [...appState.sessions, newFile];
     setState({ sessions: newSessions, currentSessionId: id, currentSubsessionId: null });
     createSubsessionsForFile(id, content);
@@ -175,13 +163,7 @@ export async function addFile(name, content = INITIAL_CONTENT) {
 }
 
 export async function addFolder(name) {
-    const newFolder = {
-        id: generateId(),
-        name: name || `新目录 ${appState.folders.length + 1}`,
-        type: 'folder',
-        folderId: appState.currentFolderId,
-        createdAt: new Date(),
-    };
+    const newFolder = { id: generateId(), name: name || `新目录 ${appState.folders.length + 1}`, type: 'folder', folderId: appState.currentFolderId, createdAt: new Date() };
     const newFolders = [...appState.folders, newFolder];
     setState({ folders: newFolders });
     await persistState();
@@ -232,9 +214,7 @@ export async function removeItems(itemsToRemove) {
         sessions = sessions.filter(s => !fileIdsToDelete.has(s.id));
 
         // 2. 清理 fileSubsessions
-        fileIdsToDelete.forEach(id => {
-            delete fileSubsessions[id];
-        });
+        fileIdsToDelete.forEach(id => { delete fileSubsessions[id]; });
 
         // 3. 清理 clozeStates
         const remainingClozeStates = {};
@@ -246,12 +226,6 @@ export async function removeItems(itemsToRemove) {
         }
         clozeStates = remainingClozeStates;
         
-        // 4. (可选但推荐) 清理 reviewStats。这需要直接操作数据库，因为 reviewStats 不在 appState 中。
-        const folderIdsOfDeletedFiles = new Set(
-            appState.sessions
-                .filter(s => fileIdsToDelete.has(s.id))
-                .map(s => s.folderId || 'root')
-        );
 
         // 注意：由于 reviewStats 的 key 是 'YYYY-MM-DD:folderId'，精确删除比较复杂。
         // 一个简化的策略是暂时不清理 reviewStats，因为它只影响历史统计，不影响核心功能。
@@ -272,16 +246,8 @@ export async function removeItems(itemsToRemove) {
 }
 
 export async function moveItems(items, targetFolderId) {
-    const newSessions = appState.sessions.map(s => 
-        items.some(item => item.id === s.id && item.type === 'file') 
-            ? { ...s, folderId: targetFolderId } 
-            : s
-    );
-    const newFolders = appState.folders.map(f => 
-        items.some(item => item.id === f.id && item.type === 'folder') 
-            ? { ...f, folderId: targetFolderId } 
-            : f
-    );
+    const newSessions = appState.sessions.map(s => items.some(item => item.id === s.id && item.type === 'file') ? { ...s, folderId: targetFolderId } : s);
+    const newFolders = appState.folders.map(f => items.some(item => item.id === f.id && item.type === 'folder') ? { ...f, folderId: targetFolderId } : f);
     setState({ sessions: newSessions, folders: newFolders });
     await persistState();
 }
@@ -300,9 +266,7 @@ export async function updateItemName(id, newName, type) {
 export async function saveCurrentSessionContent(newContent) {
     const session = getCurrentSession();
     if (session && session.content !== newContent) {
-        const newSessions = appState.sessions.map(s => 
-            s.id === appState.currentSessionId ? { ...s, content: newContent, lastActive: new Date() } : s
-        );
+        const newSessions = appState.sessions.map(s => s.id === appState.currentSessionId ? { ...s, content: newContent, lastActive: new Date() } : s);
         setState({ sessions: newSessions });
         createSubsessionsForFile(appState.currentSessionId, newContent);
         await persistState();
@@ -314,8 +278,7 @@ export async function saveCurrentSessionContent(newContent) {
 // --- Selection & Navigation (These don't need to be async) ---
 
 export function getCurrentSession() {
-    if (!appState.currentSessionId) return null;
-    return appState.sessions.find(s => s.id === appState.currentSessionId);
+    return appState.sessions.find(s => s.id === appState.currentSessionId) || null;
 }
 
 export function selectSession(sessionId) {
@@ -381,22 +344,26 @@ export function getOrCreateClozeState(fileId, clozeContent, clozeId) {
  * @param {string} clozeContent 
  * @param {number} rating 
  */
-export function updateClozeState(fileId, clozeContent, rating) {
-    const currentState = getOrCreateClozeState(fileId, clozeContent);
+export function updateClozeState(fileId, clozeContent, rating, clozeId) {
+    const currentState = getOrCreateClozeState(fileId, clozeContent, clozeId);
     const updates = calculateNextReview(currentState, rating);
     
     const allStates = appState.clozeStates;
-    allStates[currentState.id] = {
-        ...currentState,
-        ...updates,
-        lastReview: Date.now()
-    };
-    
-    setState({ clozeStates: allStates });
-    // 在实际应用中，这里应该触发数据持久化
-    // e.g., saveToDatabase({ clozeStates: allStates });
-}
 
+    // [FIX] 使用正确的 clozeId (即 currentState.id) 作为键来更新状态
+    // 如果 currentState 是通过 clozeId 正确获取的，那么 currentState.id 就是有效的
+    if(currentState.id) {
+        allStates[currentState.id] = {
+            ...currentState,
+            ...updates,
+            lastReview: Date.now()
+        };
+        setState({ clozeStates: allStates });
+        // 在实际应用中，这里应该触发数据持久化，但目前是由 persistState() 统一处理
+    } else {
+        console.error("无法更新 Cloze 状态：无法确定 clozeId。", {fileId, clozeContent, clozeId});
+    }
+}
 
 // ===================================================================
 // AI AGENT DATA SERVICE
