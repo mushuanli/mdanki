@@ -1,4 +1,5 @@
 // src/client/local_store.rs
+
 use crate::common::protocol::{format_chat_log, parse_chat_file};
 use crate::common::types::{ChatLog, Interaction};
 use crate::error::{AppError, Result};
@@ -6,15 +7,19 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use std::path::PathBuf; // REMOVED: Path (unused)
+use std::path::PathBuf;
 use uuid::Uuid;
 use super::cli::{CLIENT_DATA_DIR, CLIENT_INDEX_PATH};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum SyncStatus {
-    Local,    // Only exists locally
-    Synced,   // In sync with remote
-    Modified, // Modified locally, needs sync
+    Local,    // Only exists locally, never sent
+    Modified, // Modified locally, not yet synced
+    Pending,  // Sent to server, waiting for response
+    Processing, // Server is currently processing
+    Done,     // Server successfully completed, waiting for client to fetch result
+    Failed,   // Server failed to process, with an error message
+    Finish,   // Client has fetched the result (Done or Failed) and updated local state
     Conflict, // Remote has changed since last sync (future enhancement)
 }
 
@@ -31,7 +36,8 @@ pub struct LocalSessionInfo {
 pub struct LocalStore {
     sessions_dir: PathBuf,
     index_path: PathBuf,
-    index: HashMap<Uuid, LocalSessionInfo>,
+    // MODIFIED: Make index public so the TUI can update it directly during a light refresh
+    pub index: HashMap<Uuid, LocalSessionInfo>,
 }
 
 impl LocalStore {
@@ -46,12 +52,7 @@ impl LocalStore {
         })?;
 
         let index: HashMap<Uuid, LocalSessionInfo> = serde_json::from_str(&index_content)?;
-
-        Ok(Self {
-            sessions_dir,
-            index_path,
-            index,
-        })
+        Ok(Self { sessions_dir, index_path, index })
     }
     
     /// Saves the current in-memory index to the index.json file.
@@ -66,6 +67,7 @@ impl LocalStore {
         let mut log = ChatLog::new(title);
         log.interactions.push(Interaction::User {
             content: "Your first prompt here.".to_string(),
+            created_at: Utc::now(),
         });
         
         // This will save the .md file and update the in-memory index
@@ -92,7 +94,7 @@ impl LocalStore {
             LocalSessionInfo {
                 uuid: log.uuid,
                 title: log.title.clone(),
-                created_at: log.created_at,
+                created_at: log.get_creation_time(),
                 modified_at: now,
                 sync_status: SyncStatus::Local,
                 remote_status: None,
@@ -102,8 +104,11 @@ impl LocalStore {
         // Update fields for existing entries
         info.title = log.title.clone();
         info.modified_at = now;
-        // If it was synced, now it's modified
-        if info.sync_status == SyncStatus::Synced {
+        
+        // --- FIX HERE: Ensure any save on a completed task marks it as Modified ---
+        // If a session was previously considered done, but is now being saved,
+        // it means it has been modified by the user (e.g., via append or edit).
+        if matches!(info.sync_status, SyncStatus::Done | SyncStatus::Finish | SyncStatus::Failed) {
             info.sync_status = SyncStatus::Modified;
         }
 
@@ -113,7 +118,7 @@ impl LocalStore {
     /// Reads the content of a session's .md file.
     pub fn get_session_content(&self, uuid: Uuid) -> Result<String> {
         if !self.index.contains_key(&uuid) {
-            return Err(AppError::ParseError(format!("Session with UUID '{}' not found in local index.", uuid)));
+            return Err(AppError::ParseError(format!("Session with UUID '{}' not found.", uuid)));
         }
         let file_path = self.sessions_dir.join(format!("{}.md", uuid));
         fs::read_to_string(&file_path).map_err(|e| AppError::IoWithContext {
@@ -138,11 +143,7 @@ impl LocalStore {
 
     /// Deletes a session from the index and removes its .md file.
     pub fn delete_session(&mut self, uuid: Uuid) -> Result<()> {
-        if self.index.remove(&uuid).is_none() {
-            // If it wasn't in the index, it might not be a critical error, but we can warn.
-            println!("Warning: Session {} not found in local index, but proceeding with deletion.", uuid);
-        }
-
+        self.index.remove(&uuid);
         let file_path = self.sessions_dir.join(format!("{}.md", uuid));
         if file_path.exists() {
             fs::remove_file(&file_path)?;
@@ -164,19 +165,21 @@ impl LocalStore {
         let info = self.index.entry(log.uuid).or_insert_with(|| LocalSessionInfo {
             uuid: log.uuid,
             title: log.title.clone(),
-            created_at: log.created_at,
+            created_at: log.get_creation_time(),
             modified_at: Utc::now(),
-            sync_status: SyncStatus::Synced,
+            sync_status: SyncStatus::Finish,
             remote_status: Some(remote_task.status.clone()),
         });
 
         // Update fields for existing entries
         info.title = log.title.clone();
         info.modified_at = Utc::now();
-        info.sync_status = SyncStatus::Synced;
+        info.sync_status = SyncStatus::Finish;
         info.remote_status = Some(remote_task.status.clone());
         if let Some(err) = &remote_task.error_message {
             info.remote_status = Some(format!("failed: {}", err));
+            // Also update local status to reflect failure if downloaded
+            info.sync_status = SyncStatus::Failed;
         }
         
         self.save_index()?;
@@ -192,7 +195,7 @@ impl LocalStore {
             }
             self.save_index()?;
         } else {
-            return Err(AppError::ParseError(format!("Cannot update status for non-existent local session {}", uuid)));
+            return Err(AppError::ParseError(format!("Cannot update status for non-existent session {}", uuid)));
         }
         Ok(())
     }

@@ -7,7 +7,6 @@ use chrono::{DateTime, Utc};
 pub struct ChatLog {
     pub uuid: Uuid,
     pub title: String,
-    pub created_at: DateTime<Utc>,
     pub model: Option<String>,
     pub status: Option<String>,
     pub system_prompt: Option<String>,
@@ -19,9 +18,18 @@ pub struct ChatLog {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Interaction {
-    User { content: String },
-    Ai { content: String },
-    Attachment { filename: String, mime_type: String },
+    User {
+        content: String,
+        created_at: DateTime<Utc>,
+    },
+    Ai {
+        content: String,
+        created_at: DateTime<Utc>,
+    },
+    Attachment {
+        filename: String,
+        mime_type: String,
+    },
 }
 
 impl ChatLog {
@@ -29,7 +37,6 @@ impl ChatLog {
         Self {
             uuid: Uuid::new_v4(),
             title,
-            created_at: Utc::now(),
             model: None,
             status: Some("local".to_string()),
             system_prompt: None,
@@ -37,6 +44,17 @@ impl ChatLog {
             resend_at: None,
             fail_reason: None,
         }
+    }
+
+    /// Helper to get the creation time of the whole log, which is the time of the first interaction.
+    pub fn get_creation_time(&self) -> DateTime<Utc> {
+        self.interactions.first().map_or_else(Utc::now, |interaction| {
+            match interaction {
+                Interaction::User { created_at, .. } => *created_at,
+                Interaction::Ai { created_at, .. } => *created_at,
+                Interaction::Attachment { .. } => Utc::now(), // Attachments don't have timestamps
+            }
+        })
     }
 }
 

@@ -3,8 +3,8 @@
 use async_trait::async_trait;
 use serde::{ Serialize};
 
-use crate::common::config::Config;
-use crate::error::{ Result};
+use crate::common::config::{Config};
+use crate::error::{AppError, Result};
 use crate::server::ai_gateway::openai::OpenAiClient;
 
 // A generic message structure that all AI clients can work with.
@@ -19,17 +19,33 @@ pub trait AiClient: Send + Sync {
     async fn send_request(&self, messages: Vec<AiMessage>) -> Result<String>;
 }
 
-// Factory function to create a client based on config
-pub fn create_client(config: &Config, model: Option<&str>) -> Box<dyn AiClient> {
-    let model_to_use = model.unwrap_or(&config.server.default_model);
-    match config.server.r#type.as_str() {
-        "openai" => Box::new(OpenAiClient::new(
-            &config.server.url,
-            &config.server.token,
-            model_to_use,
-        )),
-        // "gemini" => Box::new(GeminiClient::new(...)),
-        _ => panic!("Unsupported AI server type: {}", config.server.r#type),
+// REFACTORED: Factory function now takes a composite model identifier
+pub fn create_client(config: &Config, model_identifier: &str) -> Result<Box<dyn AiClient>> {
+    // 1. Parse "server_name:model_display_name"
+    let parts: Vec<&str> = model_identifier.splitn(2, ':').collect();
+    if parts.len() != 2 {
+        return Err(AppError::ConfigError(format!("Invalid model identifier format: '{}'. Expected 'server:model'.", model_identifier)));
+    }
+    let server_name = parts[0];
+    let model_display_name = parts[1];
+
+    // 2. Find the server configuration
+    let server_details = config.server.servers.get(server_name)
+        .ok_or_else(|| AppError::ConfigError(format!("Server configuration for '{}' not found.", server_name)))?;
+
+    // 3. Find the real model name from the display name
+    let real_model_name = server_details.model_list.get(model_display_name)
+        .ok_or_else(|| AppError::ConfigError(format!("Model '{}' not found for server '{}'.", model_display_name, server_name)))?;
+
+    // 4. Create the client based on the specific server's `type`
+    match server_details.server_type.as_str() {
+        "openai" => Ok(Box::new(OpenAiClient::new(
+            &server_details.url,
+            &server_details.token,
+            real_model_name,
+        ))),
+        // "gemini" => Ok(Box::new(GeminiClient::new(...))), // Future implementation
+        _ => Err(AppError::ConfigError(format!("Unsupported AI server type: '{}' for server '{}'", server_details.server_type, server_name))),
     }
 }
 

@@ -2,6 +2,7 @@
 
 use serde::Deserialize;
 use crate::error::{AppError, Result};
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use once_cell::sync::Lazy;
@@ -14,14 +15,23 @@ pub struct Config {
     pub concurrency: ConcurrencyConfig,
 }
 
+// NEW: Represents a single AI provider's configuration
 #[derive(Debug, Deserialize, Clone)]
-pub struct ServerConfig {
-    pub r#type: String,
+pub struct AiServerDetail {
+    #[serde(rename = "type")]
+    pub server_type: String, // "openai", "gemini", etc.
     pub url: String,
     pub token: String,
-    pub default_model: String,
-    pub auth_token: String,
-    // NEW: Add optional SSL fields to match the YAML config
+    #[serde(default)]
+    pub model_list: HashMap<String, String>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct ServerConfig {
+    // MODIFIED: Top-level `type` is removed
+    pub servers: HashMap<String, AiServerDetail>,
+    pub default: String, 
+    
     pub ssl_cert: Option<String>,
     pub ssl_key: Option<String>,
 }

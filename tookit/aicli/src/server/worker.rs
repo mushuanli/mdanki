@@ -3,7 +3,7 @@
 use crate::common::config::CONFIG;
 use crate::common::protocol::{format_chat_log, parse_chat_file};
 use crate::common::types::{ChatLog, Interaction};
-use crate::error::Result;
+use crate::error::{Result, AppError};
 use crate::server::ai_gateway::{self, AiMessage};
 use crate::server::db::Database;
 use std::fs;
@@ -11,6 +11,7 @@ use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::{mpsc, Semaphore};
 use uuid::Uuid;
+use chrono::Utc;
 
 // The task that the handler sends to the worker
 #[derive(Debug)]
@@ -31,7 +32,14 @@ pub async fn run_worker_pool(
         let db_clone = db.clone();
         
         tokio::spawn(async move {
-            log::info!("Processing task {}...", task.uuid);
+            // --- FIX: Use client_ip in the log message ---
+            log::info!("Processing task {} for client {}...", task.uuid, task.client_ip);
+            // --- END FIX ---
+            
+            if let Err(e) = db_clone.update_status(&task.uuid, "pending", None).await {
+                 log::error!("Failed to update status to pending for task {}: {}", task.uuid, e);
+            }
+
             if let Err(e) = process_task(db_clone, task).await {
                 log::error!("Failed to process task: {}", e);
             }
@@ -52,7 +60,11 @@ async fn process_task(db: Arc<Database>, task: AiTask) -> Result<()> {
     let mut chat_log = parse_chat_file(&content)?;
 
     // 3. Prepare request for AI
-    let ai_client = ai_gateway::create_client(&CONFIG, chat_log.model.as_deref());
+    // The model identifier is now stored in chat_log.model
+    let model_identifier = chat_log.model.as_deref()
+        .ok_or_else(|| AppError::AiServiceError("No model specified in chat log".to_string()))?;
+        
+    let ai_client = ai_gateway::create_client(&CONFIG, model_identifier)?;
     let messages = convert_chat_log_to_ai_messages(&chat_log);
 
     // 4. Send request to AI and handle response
@@ -60,8 +72,13 @@ async fn process_task(db: Arc<Database>, task: AiTask) -> Result<()> {
         Ok(ai_response_content) => {
             log::info!("Received AI response for task {}", task.uuid);
             // Append AI response to the log
-            chat_log.interactions.push(Interaction::Ai { content: ai_response_content });
+            chat_log.interactions.push(Interaction::Ai {
+                content: ai_response_content,
+                created_at: Utc::now(), // <-- FIX: Add created_at
+            });
+            // MODIFIED: Server status is 'completed' when AI response is successful
             chat_log.status = Some("completed".to_string());
+            chat_log.fail_reason = None;
             
             // Write updated log back to file
             let updated_content = format_chat_log(&chat_log);
@@ -87,10 +104,10 @@ fn convert_chat_log_to_ai_messages(log: &ChatLog) -> Vec<AiMessage> {
     }
     for interaction in &log.interactions {
         match interaction {
-            Interaction::User { content } => {
+            Interaction::User { content, .. } => {
                 messages.push(AiMessage { role: "user".to_string(), content: content.clone() });
             }
-            Interaction::Ai { content } => {
+            Interaction::Ai { content, .. } => {
                 messages.push(AiMessage { role: "assistant".to_string(), content: content.clone() });
             }
             // Note: Attachments with images might need a more complex format for multimodal models

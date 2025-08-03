@@ -13,3 +13,5 @@ venv
 a.txt
 tmp/
 build/
+tookit/aicli/data/client/
+tookit/aicli/data/chats/

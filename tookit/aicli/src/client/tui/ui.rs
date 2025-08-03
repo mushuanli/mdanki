@@ -1,178 +1,257 @@
 // src/client/tui/ui.rs
-use super::app::{App, AppMode};
-use ratatui::{prelude::*, style::Stylize, widgets::*};
-use crate::client::local_store::SyncStatus; 
 
-pub fn draw(f: &mut Frame, app: &mut App) {
-    if let AppMode::EditingTask = app.mode {
-        draw_editor_ui(f, app);
-        return;
-    }
+use ratatui::{
+    layout::{Constraint, Direction, Layout, Rect, Alignment},
+    style::{Color, Modifier, Style},
+    text::{Line, Span, Text},
+    widgets::{Block, Borders, List, ListItem,ListState, Paragraph, Clear},
+    Frame,
+};
 
-    let main_chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Min(0), Constraint::Length(3)])
-        .split(f.size());
+use super::app::{App, AppMode, InputMode}; // Import InputMode
+use crate::client::local_store::SyncStatus;
 
-    let top_chunks = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
-        .split(main_chunks[0]);
+pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
+    // We draw the main task list in the background regardless
+    draw_task_list(f, app, area);
     
-    draw_task_list(f, app, top_chunks[0]);
-    draw_task_detail(f, app, top_chunks[1]);
-    draw_status_and_help(f, app, main_chunks[1]);
-
-    if let AppMode::NewChatPopup = app.mode {
-        draw_new_chat_popup(f, app);
+    // Then, if in a popup mode, draw it on top
+    match app.mode.clone() { // Clone to avoid borrow issues
+        AppMode::NewChatPopup => draw_new_chat_popup(f, app),
+        AppMode::EditingTask => draw_editor(f, app, area),
+        AppMode::ViewingTask => draw_viewer(f, app, area),
+        AppMode::AppendPromptPopup => draw_append_popup(f, app),
+        AppMode::TaskList => {}
     }
 }
 
-fn draw_task_list(f: &mut Frame, app: &mut App, area: Rect) {
-    // MODIFIED: Iterate over app.sessions
-    let items: Vec<ListItem> = app.sessions.iter().map(|session| { 
-        let sync_style = match session.sync_status {
-            SyncStatus::Synced => Style::default().fg(Color::Green),
-            SyncStatus::Modified => Style::default().fg(Color::Yellow),
-            SyncStatus::Local => Style::default().fg(Color::Cyan),
-            _ => Style::default(),
-        };
-        let remote_status = session.remote_status.as_deref().unwrap_or("-");
-        
-        let line = Line::from(vec![
-            Span::styled(format!("{:<10}", format!("{:?}", session.sync_status)), sync_style),
-            Span::raw(format!("{:<12}", remote_status)),
-            Span::raw(session.title.clone()),
-        ]);
-        ListItem::new(line)
-    }).collect();
-
-    let title = format!("Sessions on {} (as {})", app.server_addr, app.username);
-
-    let list = List::new(items)
-        .block(Block::default().borders(Borders::ALL).title(title))
-        .highlight_style(Style::default().add_modifier(Modifier::BOLD).bg(Color::DarkGray))
-        .highlight_symbol("> ");
-    f.render_stateful_widget(list, area, &mut app.task_list_state);
-}
-
-fn draw_task_detail(f: &mut Frame, app: &mut App, area: Rect) {
-    // MODIFIED: Use app.get_selected_session()
-    let text = if let Some(session) = app.get_selected_session() {
-        vec![
-            Line::from(vec![Span::raw("UUID: ").bold(), Span::raw(session.uuid.to_string())]),
-            Line::from(vec![Span::raw("Title: ").bold(), Span::raw(session.title.clone())]),
-            Line::from(vec![Span::raw("Created: ").bold(), Span::raw(session.created_at.to_rfc3339())]),
-            Line::from(vec![Span::raw("Modified: ").bold(), Span::raw(session.modified_at.to_rfc3339())]),
-            Line::from(vec![Span::raw("Sync Status: ").bold(), Span::raw(format!("{:?}", session.sync_status))]),
-            Line::from(vec![Span::raw("Remote Status: ").bold(), Span::raw(session.remote_status.as_deref().unwrap_or("N/A"))]),
-        ]
-    } else {
-        vec![Line::from("Select a session to see details.")]
-    };
+fn draw_viewer(f: &mut Frame, app: &mut App, area: Rect) {
+    let viewer_block = Block::default()
+        .title(" 📜 View Session (Read-Only) ")
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(Color::Yellow))
+        .border_type(ratatui::widgets::BorderType::Rounded);
     
-    let para = Paragraph::new(text)
-        .wrap(Wrap { trim: true })
-        .block(Block::default().borders(Borders::ALL).title("Details"));
-    f.render_widget(para, area);
+    // We'll use a Paragraph for simplicity as TextArea is for editing
+    let paragraph = Paragraph::new(app.viewer_content.clone())
+        .block(viewer_block)
+        .wrap( ratatui::widgets::Wrap { trim: false } );
+
+    f.render_widget(paragraph, area);
 }
 
-fn draw_status_and_help(f: &mut Frame, app: &mut App, area: Rect) {
-    let help_text = get_help_text(app);
-    let status_text = app.status_message.as_deref().unwrap_or("");
-
-    let chunks = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-        .split(area);
-        
-    let status = Paragraph::new(status_text)
-        .block(Block::default().borders(Borders::ALL).title("Status"));
-    f.render_widget(status, chunks[0]);
+fn draw_append_popup(f: &mut Frame, app: &mut App) {
+    let block = Block::default()
+        .title(" 💬 Append Prompt ")
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(Color::Cyan))
+        .border_type(ratatui::widgets::BorderType::Rounded);
     
-    let help = Paragraph::new(help_text)
-        .block(Block::default().borders(Borders::ALL).title("Help"));
-    f.render_widget(help, chunks[1]);
-}
+    // A smaller popup for just one input
+    let area = centered_rect(50, 25, f.size());
+    f.render_widget(Clear, area);
+    f.render_widget(block.clone(), area);
 
-fn get_help_text(app: &App) -> String {
-    let mut base = "j/k: Nav | r: Sync | n: New | q: Quit".to_string(); // "Refresh" is now "Sync"
-    if let Some(session) = app.get_selected_session() {
-        base.push_str(" | d: Delete | e: Edit");
-        // MODIFIED: 's' is now for send/resend. Remote status can be checked for more context.
-        if session.sync_status != SyncStatus::Synced || session.remote_status.as_deref() == Some("failed") {
-            base.push_str(" | s: Send/Retry");
-        }
-    }
-    base
+    // Set style for the input
+    app.append_prompt_input.set_style(Style::default().fg(Color::Cyan));
+    
+    // Render the text area inside the block
+    f.render_widget(app.append_prompt_input.widget(), block.inner(area));
 }
 
 fn draw_new_chat_popup(f: &mut Frame, app: &mut App) {
-    // This function remains largely the same logic as before
-    let area = centered_rect(60, 50, f.size());
+    let popup_title = " 📝 New Chat Session ";
+    let block = Block::default().title(popup_title).borders(Borders::ALL)
+        .border_style(Style::default().fg(Color::Cyan))
+        .border_type(ratatui::widgets::BorderType::Rounded);
+    
+    // Create a centered area for the popup
+    let area = centered_rect(60, 80, f.size());
     f.render_widget(Clear, area);
-    let block = Block::default().title("Create New Chat").borders(Borders::ALL);
     f.render_widget(block, area);
 
-    let popup_chunks = Layout::default()
+    // Create layout for inputs inside the popup
+    let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(2)
         .constraints([
-            Constraint::Length(3), // Title
-            Constraint::Min(5),    // System Prompt
-            Constraint::Min(5),    // User Prompt
-            Constraint::Length(1), // Buttons
+            Constraint::Length(3),       // Title
+            Constraint::Min(5),          // User Prompt (takes most of the space)
+            Constraint::Length(5),       // Model Selector
+            Constraint::Length(3),       // System Prompt (fixed small height)
+            Constraint::Length(1),       // Help text
         ].as_ref())
         .split(area);
         
-    app.title_input.set_block(Block::default().borders(Borders::ALL).title("Title"));
-    app.system_prompt_input.set_block(Block::default().borders(Borders::ALL).title("System Prompt (Optional)"));
-    app.user_prompt_input.set_block(Block::default().borders(Borders::ALL).title("User Prompt"));
-
-    f.render_widget(app.title_input.widget(), popup_chunks[0]);
-    f.render_widget(app.system_prompt_input.widget(), popup_chunks[1]);
-    f.render_widget(app.user_prompt_input.widget(), popup_chunks[2]);
-
-    let buttons = Paragraph::new(" [Enter] Send | [Esc] Cancel ").alignment(Alignment::Center);
-    f.render_widget(buttons, popup_chunks[3]);
-}
-
-fn draw_editor_ui(f: &mut Frame, app: &mut App) {
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Min(0), Constraint::Length(1)])
-        .split(f.size());
-
-    // Set the block title
-    let title = if let Some(uuid) = app.editor_task_uuid {
-        format!("Editing Task: {} (Ctrl+S to Save, Esc to Cancel)", uuid)
-    } else {
-        "Editing Task (Ctrl+S to Save, Esc to Cancel)".to_string()
+    // --- MODIFIED: Adjust style handling to match the new order ---
+    let (title_style, user_style, model_style, system_style) = match app.new_chat_popup_active_input {
+        InputMode::Title       => (Style::default().fg(Color::Cyan), Style::default(), Style::default(), Style::default()),
+        InputMode::UserPrompt  => (Style::default(), Style::default().fg(Color::Cyan), Style::default(), Style::default()),
+        InputMode::Model       => (Style::default(), Style::default(), Style::default().fg(Color::Cyan), Style::default()),
+        InputMode::SystemPrompt=>(Style::default(), Style::default(), Style::default(), Style::default().fg(Color::Cyan)),
     };
     
-    app.editor_textarea.set_block(
-        Block::default()
-            .borders(Borders::ALL)
-            .title(title)
-            .title_alignment(Alignment::Center)
-    );
+    app.title_input.set_style(title_style);
+    app.user_prompt_input.set_style(user_style);
+    app.system_prompt_input.set_style(system_style);
 
-    f.render_widget(app.editor_textarea.widget(), chunks[0]);
+    // --- MODIFIED: Render in the new order ---
+    f.render_widget(app.title_input.widget(), chunks[0]);
+    f.render_widget(app.user_prompt_input.widget(), chunks[1]);
+    
+    // Render Model List (logic is the same, just new position)
+    let model_items: Vec<ListItem> = app.models.iter()
+        .map(|model_identifier| ListItem::new(model_identifier.as_str()))
+        .collect();
 
-    let help_text = Span::raw(" | Undo: Ctrl+Z | Redo: Ctrl+Y | ");
-    let status_line = Line::from(vec![
-        " EDIT MODE ".into(),
-        help_text,
-    ]).alignment(Alignment::Center);
+    let mut model_list_state = ListState::default();
+    model_list_state.select(Some(app.selected_model_index));
 
-    f.render_widget(Paragraph::new(status_line).style(Style::default().reversed()), chunks[1]);
+    let model_list = List::new(model_items)
+        .block(Block::default().borders(Borders::ALL).title(" Model ").border_style(model_style))
+        .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
+        .highlight_symbol(">> ");
+        
+    f.render_stateful_widget(model_list, chunks[2], &mut model_list_state);
+    
+    f.render_widget(app.system_prompt_input.widget(), chunks[3]);
+
+    let help_text = Text::from("Press <Tab> to cycle inputs, <Enter> to send, <Esc> to cancel");
+    let help_paragraph = Paragraph::new(help_text)
+        .style(Style::default().fg(Color::Gray))
+        .alignment(Alignment::Center);
+    f.render_widget(help_paragraph, chunks[4]);
 }
 
+// Helper function to create a centered rect for popups
 fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
-    let popup_layout = Layout::default().direction(Direction::Vertical)
-        .constraints([Constraint::Percentage((100 - percent_y) / 2), Constraint::Percentage(percent_y), Constraint::Percentage((100 - percent_y) / 2),])
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage((100 - percent_y) / 2),
+            Constraint::Percentage(percent_y),
+            Constraint::Percentage((100 - percent_y) / 2),
+        ])
         .split(r);
-    Layout::default().direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage((100 - percent_x) / 2), Constraint::Percentage(percent_x), Constraint::Percentage((100 - percent_x) / 2),])
+
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage((100 - percent_x) / 2),
+            Constraint::Percentage(percent_x),
+            Constraint::Percentage((100 - percent_x) / 2),
+        ])
         .split(popup_layout[1])[1]
+}
+
+
+fn draw_task_list(f: &mut Frame, app: &mut App, area: Rect) {
+    let title = format!(
+        " 💬 AI-CLI Sessions (User: {} @ {}) ",
+        app.username, app.server_addr
+    );
+    let task_list_block = Block::default()
+        .title(title)
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(Color::Cyan))
+        .border_type(ratatui::widgets::BorderType::Rounded);
+
+    // 在块内渲染任务列表
+    let inner_area = task_list_block.inner(area);
+    f.render_widget(task_list_block, area);
+
+    // 添加任务列表标题行
+    let header = Line::from(vec![
+        Span::styled("Status", Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)),
+        Span::raw(" | "),
+        Span::styled("Date", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+        Span::raw(" | "),
+        Span::styled("Title", Style::default().fg(Color::Blue).add_modifier(Modifier::BOLD)),
+    ]);
+
+    let header_paragraph = Paragraph::new(header)
+        .style(Style::default().bg(Color::DarkGray))
+        .alignment(Alignment::Left);
+    
+    // 分割内部区域，留出标题行空间
+    let task_area = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(1), // 标题行
+            Constraint::Min(1),    // 任务列表
+        ])
+        .split(inner_area);
+
+    // 渲染标题行
+    f.render_widget(header_paragraph, task_area[0]);
+
+    // 创建任务列表项
+    let tasks: Vec<ListItem> = app.sessions.iter().map(|session| {
+        // 根据同步状态设置颜色
+        let status_color = match session.sync_status {
+            SyncStatus::Local => Color::Yellow,
+            SyncStatus::Modified => Color::Cyan,
+            SyncStatus::Pending => Color::Gray,
+            SyncStatus::Processing => Color::Blue,
+            SyncStatus::Done => Color::Green,
+            SyncStatus::Failed => Color::Red,
+            SyncStatus::Finish => Color::Gray,
+            SyncStatus::Conflict => Color::Magenta,
+        };
+        let status_text = format!("{:?}", session.sync_status);
+
+        let line = Line::from(vec![
+            Span::styled(format!("{:<10}", status_text), Style::default().fg(status_color)),
+            Span::raw(" | "),
+            Span::styled(
+                format!("{:<10}", session.created_at.format("%Y-%m-%d")),
+                Style::default().fg(Color::Yellow),
+            ),
+            Span::raw(" | "),
+            Span::raw(&session.title),
+        ]);
+
+        ListItem::new(line)
+    }).collect();
+
+    // 创建任务列表
+    let list = List::new(tasks)
+        .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
+        .highlight_symbol(">> ");
+    f.render_stateful_widget(list, task_area[1], &mut app.task_list_state);
+}
+
+fn draw_editor(f: &mut Frame, app: &mut App, area: Rect) {
+    // 创建编辑区域块
+    let editor_block = Block::default()
+        .title(" Editing Session ")
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(Color::Cyan))
+        .border_type(ratatui::widgets::BorderType::Rounded);
+    
+    let inner_area = editor_block.inner(area);
+    f.render_widget(editor_block, area);
+
+    // 分割内部区域
+    let editor_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Min(1),    // 文本编辑区
+            Constraint::Length(1), // 帮助提示
+        ])
+        .split(inner_area);
+    
+    // 渲染文本编辑区
+    app.editor_textarea.set_block(
+        Block::default()
+            .borders(Borders::NONE)
+    );
+    f.render_widget(app.editor_textarea.widget(), editor_layout[0]);
+    
+    // 渲染编辑模式帮助信息
+    let help_text = "CTRL+S: Save and Sync | Esc: Cancel";
+    let help_paragraph = Paragraph::new(help_text)
+        .style(Style::default().fg(Color::Gray))
+        .alignment(Alignment::Center);
+    f.render_widget(help_paragraph, editor_layout[1]);
 }

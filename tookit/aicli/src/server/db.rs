@@ -49,15 +49,26 @@ impl Database {
         Ok(Database { pool })
     }
 
+
+    // NEW HELPER FUNCTION
+    pub async fn log_exists(&self, uuid: &Uuid) -> Result<bool> {
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM chat_logs WHERE uuid = ?")
+            .bind(uuid)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| AppError::DbError(e.to_string()))?;
+        Ok(count > 0)
+    }
+
     pub async fn create_chat_log(&self, log: &ChatLog, client_ip: &str) -> Result<()> {
         let model_used = log.model.as_deref().unwrap_or_default();
         sqlx::query("INSERT INTO chat_logs (uuid, title, client_ip, status, model_used, created_at) VALUES (?, ?, ?, ?, ?, ?)")
             .bind(log.uuid)
             .bind(&log.title)
             .bind(client_ip)
-            .bind("pending")
+            .bind("pending") // A task being created is immediately pending
             .bind(model_used)
-            .bind(log.created_at) // Use creation time from log
+            .bind(log.get_creation_time()) // Use the creation time of the first interaction
             .execute(&self.pool)
             .await.map_err(|e| AppError::DbError(e.to_string()))?;
         Ok(())
@@ -66,10 +77,27 @@ impl Database {
     pub async fn update_status(&self, uuid: &Uuid, status: &str, error_msg: Option<&str>) -> Result<()> {
         let mut query_builder = sqlx::query_builder::QueryBuilder::new("UPDATE chat_logs SET status = ");
         query_builder.push_bind(status);
-        if status == "processing" { query_builder.push(", processing_at = ").push_bind(Utc::now()); }
-        else if status == "completed" || status == "failed" { query_builder.push(", finished_at = ").push_bind(Utc::now()); }
-        if let Some(msg) = error_msg { query_builder.push(", error_message = ").push_bind(msg); }
-        else { query_builder.push(", error_message = NULL"); } // Clear error on resend
+
+        // Set timestamps based on status
+        if status == "processing" {
+            query_builder.push(", processing_at = ").push_bind(Utc::now());
+            query_builder.push(", finished_at = NULL"); // Clear finished time if it becomes processing
+        } else if status == "completed" || status == "failed" {
+            query_builder.push(", finished_at = ").push_bind(Utc::now());
+            query_builder.push(", processing_at = NULL"); // Clear processing time if finished
+        } else {
+            // For 'pending', 'local', 'modified', 'synced', etc., clear both timestamps
+            query_builder.push(", processing_at = NULL");
+            query_builder.push(", finished_at = NULL");
+        }
+        
+        // Update error message
+        if let Some(msg) = error_msg {
+            query_builder.push(", error_message = ").push_bind(msg);
+        } else {
+            query_builder.push(", error_message = NULL"); // Clear error if not provided
+        }
+        
         query_builder.push(" WHERE uuid = ").push_bind(uuid);
         query_builder.build().execute(&self.pool).await.map_err(|e| AppError::DbError(e.to_string()))?;
         Ok(())

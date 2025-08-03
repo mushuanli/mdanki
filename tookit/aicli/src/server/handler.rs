@@ -87,15 +87,25 @@ async fn handle_exec<S: AsyncWrite + Unpin>(
     payload: &[u8],
     addr: &SocketAddr,
 ) -> Result<()> {
-    let content = String::from_utf8(payload.to_vec())
-        .map_err(|_| AppError::ParseError("Invalid UTF-8 in chat log".into()))?;
+    // 1. Parse content and save file (same as before)
+    let content = String::from_utf8(payload.to_vec())?;
     let chat_log = parse_chat_file(&content)?;
     
     let file_path = Path::new(&CONFIG.storage.chat_dir).join(format!("{}.txt", chat_log.uuid));
     fs::write(&file_path, &content)?;
-    debug!("Saved chat file for task {} to {:?}", chat_log.uuid, file_path);
+    debug!("Upserting chat log {} from {}", chat_log.uuid, addr.ip());
 
-    db.create_chat_log(&chat_log, &addr.ip().to_string()).await?;
+    // --- 2. CORE FIX: Check if log exists and decide whether to CREATE or UPDATE ---
+    if db.log_exists(&chat_log.uuid).await? {
+        // It's an UPDATE (append/edit)
+        info!("Updating existing task {}", chat_log.uuid);
+        // Just update status to pending so worker can re-process it.
+        db.update_status(&chat_log.uuid, "pending", None).await?;
+    } else {
+        // It's a CREATE (new task)
+        info!("Creating new task {}", chat_log.uuid);
+        db.create_chat_log(&chat_log, &addr.ip().to_string()).await?;
+    }
 
     task_sender.send(AiTask { uuid: chat_log.uuid, client_ip: addr.ip().to_string() }).await
         .map_err(|e| AppError::NetworkError(format!("Failed to queue task: {}", e)))?;
@@ -152,8 +162,27 @@ async fn authenticate<S: AsyncRead + AsyncWrite + Unpin>(
     
     verify_signature(&pub_key, &challenge, &signature)?;
 
-    // 4. Success! Send final ACK
-    let ack_frame = encode_frame(PacketType::Ack, &[]);
+    // 4. Success! Send final ACK with the new flattened model list
+    let mut model_list = Vec::new();
+    for (server_name, details) in &CONFIG.server.servers {
+        for display_name in details.model_list.keys() {
+            model_list.push(format!("{}:{}", server_name, display_name));
+        }
+    }
+    model_list.sort(); // Sort for consistent order
+
+    // Ensure the default model is the first in the list for client convenience
+    if let Some(pos) = model_list.iter().position(|m| m == &CONFIG.server.default) {
+        let default_model = model_list.remove(pos);
+        model_list.insert(0, default_model);
+    }
+    
+    let ack_payload = json!({
+        "models": model_list,
+        "default_model": &CONFIG.server.default, // The default is now the full identifier
+    }).to_string();
+    
+    let ack_frame = encode_frame(PacketType::Ack, ack_payload.as_bytes());
     stream.write_all(&ack_frame).await?;
 
     Ok(username)

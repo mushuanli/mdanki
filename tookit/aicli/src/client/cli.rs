@@ -6,12 +6,19 @@ use crate::error::{AppError, Result};
 use crate::common::crypto::KeyPair;
 
 use crate::ClientCommands;
-use crate::client::local_store::{LocalStore, SyncStatus}; // REMOVED: LocalSessionInfo (unused)
+use crate::client::local_store::{LocalStore, SyncStatus};
+use crate::common::protocol::parse_chat_file;
+use crate::client::tui::app::App;
+use crate::client::tui::action::Action;
+use crate::client::actions::handle_network_action;
 
 use std::fs;
 use std::pin::Pin;
 use std::future::Future;
 use std::path::Path;
+use std::sync::Arc;
+use tokio::sync::{mpsc, Mutex};
+
 use uuid::Uuid;
 use once_cell::sync::Lazy;
 
@@ -29,14 +36,6 @@ pub const USER_PUBLIC_KEY_PATH: &str = "data/user.pub";
 pub const CLIENT_DATA_DIR: &str = "data/client";
 pub const CLIENT_INDEX_PATH: &str = "data/client/index.json";
 
-// Helper to sanitize a title into a valid filename
-fn sanitize_filename(title: &str) -> String {
-    title.chars()
-        .filter(|c| c.is_alphanumeric() || *c == ' ' || *c == '-')
-        .collect::<String>()
-        .replace(' ', "_")
-        + ".txt"
-}
 
 // Add BoxFuture type alias
 type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
@@ -94,22 +93,34 @@ pub async fn handle_client_command(command: ClientCommands) -> Result<()> {
             return crate::client::tui::run().await;
         }
         // MODIFIED: Send command now takes a UUID
+        // MODIFIED: Unified handling for sending/syncing/resending based on local status
         ClientCommands::Send { uuid } => {
             let uuid = Uuid::parse_str(&uuid).map_err(|_| AppError::ParseError("Invalid UUID format".into()))?;
-            let mut store = LocalStore::load()?;
+            let store = LocalStore::load()?;
+            let session = store.index.get(&uuid).ok_or_else(|| AppError::ParseError(format!("Session '{}' not found.", uuid)))?.clone();
             
-            let content = store.get_session_content(uuid)?;
-            println!("Sending session '{}'...", uuid);
+            let action_to_perform = match session.sync_status {
+                SyncStatus::Local | SyncStatus::Modified => {
+                    let content = store.get_session_content(uuid)?;
+                    Action::SendNewTask(parse_chat_file(&content)?)
+                },
+                _ => Action::SyncSelected {
+                    uuid,
+                    remote_status: session.remote_status,
+                    local_status: session.sync_status,
+                },
+            };
+            
+            let app_arc = Arc::new(Mutex::new(App::new()?));
+            let (tx, _) = mpsc::unbounded_channel();
+            handle_network_action(action_to_perform, app_arc, tx).await?;
 
-            connect_and_run(|client| {
-                Box::pin(async move {
-                    client.execute_chat(&content).await
-                })
-            }).await?;
-            
-            // Update local status after successful send
-            store.update_session_status(uuid, SyncStatus::Synced, None)?;
-            println!("Successfully sent session to server. Status updated to 'Synced'.");
+            // After the action is complete, try to update the local status
+            // Note: This relies on the network handler updating the store and reloading.
+            // For CLI, we might want to fetch the status again if the action was just a send/resend.
+            // For now, we'll rely on the optimistic update in handle_network_action.
+
+            println!("Command executed for session {}. Check status via 'client list' or 'client tui'.", uuid);
         }
         // MODIFIED: List now shows local sessions
         ClientCommands::List => {
@@ -173,13 +184,23 @@ pub async fn handle_client_command(command: ClientCommands) -> Result<()> {
         }
         ClientCommands::Resend { uuid } => {
             let uuid = Uuid::parse_str(&uuid).map_err(|_| AppError::ParseError("Invalid UUID format".into()))?;
-            connect_and_run(|client| {
-                Box::pin(async move {
-                    client.resend_task(uuid).await
-                })
-            }).await?;
-            println!("Successfully requested resend of task {}", uuid);
-        }
+            let store = LocalStore::load()?;
+            let session = store.index.get(&uuid).ok_or_else(|| AppError::ParseError(format!("Session '{}' not found.", uuid)))?.clone();
+
+            if matches!(session.sync_status, SyncStatus::Failed) || session.remote_status.as_deref().unwrap_or("").starts_with("failed") {
+                let action = Action::SyncSelected {
+                    uuid,
+                    remote_status: session.remote_status,
+                    local_status: session.sync_status,
+                };
+                let app_arc = Arc::new(Mutex::new(App::new()?));
+                let (tx, _) = mpsc::unbounded_channel();
+                handle_network_action(action, app_arc, tx).await?;
+                println!("Resend command for session {} executed.", uuid);
+            } else {
+                println!("Session {} is not in a failed state. No action taken.", uuid);
+            }
+        },
     }
     Ok(())
 }

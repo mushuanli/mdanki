@@ -1,54 +1,142 @@
 // src/client/tui/mod.rs
 
 use crate::error::Result;
-use crate::common::protocol::parse_chat_file; // <-- FIXED: Added this import
+//use crate::common::protocol::{parse_chat_file, format_chat_log}; // <-- 修改这里，添加 format_chat_log
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use ratatui::prelude::*;
+use ratatui::{
+    prelude::*,
+    widgets::{Block, Borders, Paragraph, Wrap},
+    text::Text,
+};
 use std::{io, sync::Arc, time::Duration};
 use tokio::sync::{mpsc, Mutex};
-use ratatui_textarea::TextArea;
+//use ratatui_textarea::TextArea;
 
 // MODIFIED: Use shared constants from the cli module
-use super::cli::{SERVER_ADDR, CLIENT_USERNAME, USER_PRIVATE_KEY_PATH};
-use crate::client::network::NetworkClient;
+//use super::cli::{SERVER_ADDR, CLIENT_USERNAME, USER_PRIVATE_KEY_PATH};
+use super::actions::{handle_network_action, handle_local_action}; // <-- ADD THIS LINE
+
+//use crate::client::network::NetworkClient;
+//use crate::client::local_store::SyncStatus; // Add this
+//use crate::client::network::RemoteTask; // Add this import
 
 use self::{
-    app::{App, AppMode}, // <-- FIXED: Corrected AppMode path
+    app::{App, AppMode},
     ui::draw,
     action::Action,
+//    log_widget::{LogEntry, LogView},
 };
 
-mod app;
-mod ui;
-mod action;
+pub mod app;
+pub mod ui;
+pub mod action;
+mod log_widget; // 新增: 导入日志控件模块
 
 pub async fn run() -> Result<()> {
-    // FIX (E0716): Create the Tui struct and give it a long-lived binding `tui`.
+    // 初始化TUI日志系统 - 确保全局通道已设置
+    log_widget::init_global_log_channel();
+    
+    // 创建TUI日志处理器并安装
+    let tui_logger = log_widget::TuiLogger::new(log::Level::Info);
+    if let Err(e) = tui_logger.install() {
+        eprintln!("Failed to install TUI logger: {}", e);
+        // 继续执行，即使日志重定向失败
+    }
+    
+    // 创建日志视图和管理器
+    let log_manager = log_widget::TuiLogManager::new();
+    let mut log_view = log_widget::LogView::new(100);
+    
+    // 记录TUI启动日志
+    log::info!("TUI mode started"); 
+    
+    // 创建Tui实例
     let mut tui = Tui::new()?;
     // Then, call methods on the now-owned struct.
     tui.enter()?;
     
-    // Create a channel for actions
+    // 创建一个用于 action 的通道
     let (tx, mut rx) = mpsc::unbounded_channel::<Action>();
 
     // Create App state
     let app = Arc::new(Mutex::new(App::new()?));
 
-    // Initial refresh
-    // FIX: Channel send can fail if the receiver is dropped.
-    // In this loop, it won't, but it's good practice to handle it. .ok() is fine here.
+    // 初始刷新
     tx.send(Action::Refresh).ok();
 
     // Main loop
     loop {
+        // 处理日志
+        log_manager.process_logs_to(&mut log_view);
+        
         let mut app_lock = app.lock().await;
-        // FIX: The Tui struct holds the terminal, so we need to access it via `tui.terminal`.
-        tui.terminal.draw(|f| draw(f, &mut app_lock))?;
-
+        
+        // 绘制界面，包括应用和日志视图
+        tui.terminal.draw(|f| {
+            let screen_size = f.size();
+                
+            // 创建一个三段式布局：主应用区域、状态/帮助区域、日志区域
+            let main_layout = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([
+                    // --- 修改这里 ---
+                    // 将 Min(10) 改为 Min(0)，使其能够灵活适应屏幕大小
+                    Constraint::Min(0),          // 应用主界面区域 (填充所有剩余空间)
+                    // --- 修改结束 ---
+                    Constraint::Length(3),       // 状态和帮助区域
+                    Constraint::Length(8),       // 日志区域，固定高度
+                ])
+                .split(screen_size);
+            
+            // 主应用区域，传递给draw函数
+            draw(f, &mut app_lock, main_layout[0]);
+            
+            // 状态和帮助信息区域 - 这部分需要从原来draw函数中分离出来
+            // 可能需要修改app模块中的draw函数，让它不再负责绘制状态栏
+            if app_lock.mode == AppMode::TaskList {
+                let status_help_layout = Layout::default()
+                    .direction(Direction::Horizontal)
+                    .constraints([
+                        Constraint::Percentage(50),  // 状态区域
+                        Constraint::Percentage(50),  // 帮助区域
+                    ])
+                    .split(main_layout[1]);
+                
+                // 绘制状态信息
+                if let Some(msg) = &app_lock.status_message {
+                    let status_block = Block::default()
+                        .title(" Status ")
+                        .borders(Borders::ALL)
+                        .border_type(ratatui::widgets::BorderType::Rounded); // 添加圆角让UI更美观
+                    let status_text = Paragraph::new(Text::from(msg.clone()))
+                        .block(status_block)
+                        .wrap(Wrap { trim: true });
+                    f.render_widget(status_text, status_help_layout[0]);
+                }
+                
+                // 绘制帮助信息
+                // 可以为帮助信息提供更详细的上下文
+                let help_text = match app_lock.get_selected_session() {
+                    Some(_) => "[q]uit | [j/k]nav | [n]ew | [r]efresh | [a]ppend | [e]dit | [d]elete | [s]ync",
+                    None => "[q]uit | [n]ew | [r]efresh",
+                };
+                let help_block = Block::default()
+                    .title(" Help ")
+                    .borders(Borders::ALL)
+                    .border_type(ratatui::widgets::BorderType::Rounded);
+                let help_widget = Paragraph::new(Text::from(help_text))
+                    .block(help_block)
+                    .wrap(Wrap { trim: true });
+                f.render_widget(help_widget, status_help_layout[1]);
+            }
+            
+            // 日志区域 - 清晰分隔的独立区域
+            f.render_widget(log_view.widget(), main_layout[2]);
+        })?;
         if app_lock.should_quit {
             break;
         }
@@ -70,126 +158,53 @@ pub async fn run() -> Result<()> {
             // Drop the lock before spawning a task to avoid deadlocks
             drop(app_lock);
             
-        // MODIFIED: StartEdit no longer triggers network I/O.
-        // It reads from the local store first.
-        let should_trigger_network = matches!(action, 
-            Action::Refresh |      // Sync with remote
-            Action::DeleteTask(_) |  // Tell remote to delete
-            Action::ResendTask(_) |  // Send to remote
-            Action::SaveEdit         // Send update to remote
-        );
+            // --- FIX HERE: Correctly identify all network and local actions ---
+            
+            let is_network_action = matches!(action,
+                Action::Refresh |
+                Action::DeleteTask(_) |
+                Action::SaveEdit |
+                Action::SendNewTask(_) |
+                Action::SendAppendedPrompt { .. } | // <-- ADD THIS LINE
+                Action::SyncSelected { .. }
+            );
 
-            if should_trigger_network {
+            let is_local_action = matches!(action,
+                Action::StartEdit(_) |
+                Action::ViewTask(_) |             // <-- ADD THIS LINE
+                Action::EnterAppendPrompt(_)      // <-- ADD THIS LINE
+            );
+
+            if is_network_action {
                 let app_clone = app.clone();
                 let tx_clone = tx.clone();
                 tokio::spawn(async move {
-                if let Err(e) = handle_network_action(action, app_clone.clone(), tx_clone).await {
-                    let mut app = app_clone.lock().await;
-                    app.status_message = Some(format!("Error: {}", e));
-                }
+                    if let Err(e) = handle_network_action(action, app_clone.clone(), tx_clone).await {
+                        let mut app = app_clone.lock().await;
+                        app.status_message = Some(format!("Network Error: {}", e));
+                        log::error!("Network action failed: {}", e);
+                    }
+                });
+            } else if is_local_action {
+                let app_clone = app.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = handle_local_action(action, app_clone.clone()).await {
+                        let mut app = app_clone.lock().await;
+                        app.status_message = Some(format!("Local Error: {}", e));
+                        log::error!("Local action failed: {}", e);
+                    }
                 });
             }
-        // Handle actions that only affect local state
-        else if matches!(action, Action::StartEdit(_)) {
-            let app_clone = app.clone();
-            tokio::spawn(async move {
-                if let Err(e) = handle_local_action(action, app_clone.clone()).await {
-                     let mut app = app_clone.lock().await;
-                    app.status_message = Some(format!("Error: {}", e));
-                }
-            });
         }
-        }
+        
+        // 再次处理日志，确保循环中新产生的日志被捕获
+        log_manager.process_logs_to(&mut log_view);
     }
 
     tui.exit()?;
     Ok(())
 }
 
-// FIX: This function performs operations that can fail, so it should return a Result.
-// This allows us to use the `?` operator inside it.
-async fn handle_network_action(action: Action, app: Arc<Mutex<App<'static>>>, _tx: mpsc::UnboundedSender<Action>) -> Result<()> {
-    // This function now only handles actions that require a network client
-    let mut client = NetworkClient::connect(&SERVER_ADDR, &CLIENT_USERNAME, USER_PRIVATE_KEY_PATH).await?;
-    
-    match action {
-        Action::Refresh => {
-            let remote_tasks = client.list_tasks().await?;
-            let mut app_lock = app.lock().await;
-            app_lock.status_message = Some(format!("Found {} remote tasks. Syncing...", remote_tasks.len()));
-            drop(app_lock);
-
-            // Create a new client for concurrent downloads
-            // This is an optimization to speed up sync
-            for task in remote_tasks {
-                 let mut download_client = NetworkClient::connect(&SERVER_ADDR, &CLIENT_USERNAME, USER_PRIVATE_KEY_PATH).await?;
-                 let content = download_client.download_task(task.uuid).await?;
-                 let mut app_lock = app.lock().await;
-                 app_lock.store.update_from_remote(&content, &task)?;
-            }
-
-            let mut app_lock = app.lock().await;
-            app_lock.reload_sessions();
-            app_lock.status_message = Some("Sync with server complete.".into());
-        },
-
-        Action::DeleteTask(uuid) => {
-            client.delete_task(uuid).await?;
-            // A local deletion is also needed
-            let mut app = app.lock().await;
-            app.store.delete_session(uuid)?; 
-            app.reload_sessions();
-            app.status_message = Some(format!("Task {} deleted.", uuid));
-        },
-        Action::ResendTask(uuid) => { // Send/Resend logic
-            let content = app.lock().await.store.get_session_content(uuid)?;
-            client.execute_chat(&content).await?;
-            let mut app = app.lock().await;
-            app.store.update_session_status(uuid, crate::client::local_store::SyncStatus::Synced, None)?;
-            app.reload_sessions();
-            app.status_message = Some(format!("Session {} sent to server.", uuid));
-        },
-        // NEW: Handle edit flow
-        Action::SaveEdit => {
-            let mut app_lock = app.lock().await;
-            if let Some(uuid) = app_lock.editor_task_uuid {
-                let content = app_lock.editor_textarea.lines().join("\n");
-                
-                // First, save it locally
-                let log_to_save = parse_chat_file(&content)?; // <-- This now compiles
-                app_lock.store.save_session(&log_to_save)?;
-                app_lock.store.save_index()?;
-                
-                // Then, send update to server
-                client.update_task(uuid, &content).await?;
-
-                app_lock.status_message = Some(format!("Session {} saved and synced.", uuid));
-                app_lock.mode = AppMode::TaskList;
-                app_lock.reload_sessions();
-            }
-        },
-        // All other actions are handled in App::update or handle_local_action
-        _ => {},
-    };
-
-    Ok(())
-}
-
-// NEW: A handler for actions that are purely local
-async fn handle_local_action(action: Action, app: Arc<Mutex<App<'static>>>) -> Result<()> {
-    match action {
-        Action::StartEdit(uuid) => {
-            let mut app_lock = app.lock().await;
-            let content = app_lock.store.get_session_content(uuid)?;
-            app_lock.editor_textarea = TextArea::new(content.lines().map(String::from).collect());
-            app_lock.editor_task_uuid = Some(uuid);
-            app_lock.mode = AppMode::EditingTask;
-            app_lock.status_message = Some("Session loaded from local file into editor.".into());
-        }
-        _ => {}
-    }
-    Ok(())
-}
 
 // --- TUI Boilerplate Helper ---
 struct Tui {

@@ -1,1 +1,10 @@
-{}
+{
+  "c0b29cb3-5998-4822-aa84-4b213ccbd85a": {
+    "uuid": "c0b29cb3-5998-4822-aa84-4b213ccbd85a",
+    "title": "write a rust hello world",
+    "created_at": "2025-08-03T04:29:35.099428Z",
+    "modified_at": "2025-08-03T06:59:21.758100Z",
+    "sync_status": "Synced",
+    "remote_status": "failed: AI service error: API request failed with status 400 Bad Request: {\"error\":{\"message\":\"Model Not Exist\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+  }
+}

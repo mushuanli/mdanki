@@ -10,6 +10,7 @@ use serde_json::{json, from_slice};
 use std::fs;
 use std::io::ErrorKind;
 use std::str::FromStr;
+//use std::collections::HashMap; // <-- ADD THIS
 use uuid::Uuid;
 // TLS support
 use tokio_rustls::rustls;
@@ -28,13 +29,21 @@ pub struct RemoteTask {
 
 // The struct holds the communication stream.
 pub struct NetworkClient<S: AsyncRead + AsyncWrite + Unpin> {
-    stream: S,
+    pub stream: S,
+    // MODIFIED: The list is now a Vec of strings
+    pub models: Vec<String>, 
+    pub default_model: String,
 }
 
 // We implement methods on a generic stream so we can test with mock streams.
 impl<S: AsyncRead + AsyncWrite + Unpin> NetworkClient<S> {
+    #[cfg(test)]
     pub fn new(stream: S) -> Self {
-        Self { stream }
+        Self {
+            stream,
+            models: Vec::new(),
+            default_model: String::new(),
+        }
     }
 
     async fn send_and_receive(&mut self, req_type: PacketType, req_payload: &[u8], expected_resp_type: PacketType) -> Result<Vec<u8>> {
@@ -157,7 +166,7 @@ impl NetworkClient<TlsClientStream> {
         let tcp_stream = tokio::net::TcpStream::connect(server_addr).await?;
         let mut stream = connector.connect(domain, tcp_stream).await?;
         
-        log::info!("TLS connection established to server at {}", server_addr);
+        //log::info!("TLS connection established to server at {}", server_addr);
         
         // 4. Send username
         let auth_req_payload = json!({ "username": username }).to_string();
@@ -178,12 +187,25 @@ impl NetworkClient<TlsClientStream> {
         let auth_resp_frame = encode_frame(PacketType::CmdAuthResponse, auth_resp_payload.as_bytes());
         stream.write_all(&auth_resp_frame).await?;
 
-        // 6. Wait for final ACK
+        // 6. Wait for final ACK and parse model info
         if let Some(frame) = read_frame(&mut stream).await? {
             if frame.packet_type == PacketType::Ack {
-                log::info!("Authentication successful for user '{}'.", username);
-                Ok(Self { stream })
-            } else { // Handle Error packet
+                log::info!("Authentication successful...");
+                
+                let ack_data: serde_json::Value = from_slice(&frame.payload)?;
+                let models: Vec<String> = serde_json::from_value(
+                    ack_data["models"].clone()
+                ).unwrap_or_default();
+                let default_model = ack_data["default_model"].as_str().unwrap_or("").to_string();
+
+                Ok(Self {
+                    stream,
+                    models,
+                    default_model,
+                })
+                // --- END NEW ---
+
+            } else {
                 let error_msg = String::from_utf8_lossy(&frame.payload);
                 Err(AppError::AuthError(format!("Server rejected auth: {}", error_msg)))
             }

@@ -7,7 +7,7 @@ mod error;
 mod server;
 mod client;
 
-use std::path::PathBuf; // 引入 PathBuf
+use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 
 use crate::client::cli;
@@ -22,8 +22,7 @@ ENVIRONMENT VARIABLES:
 
 #[derive(Parser, Debug)]
 #[command(author, version, about = "A Rust-based AI Chat CLI and Server", long_about = None)]
-// REMOVED: No longer need after_help on the top-level command.
-struct Args {
+struct CliArgs {
     #[command(subcommand)]
     command: Commands,
 }
@@ -36,7 +35,7 @@ enum Commands {
         server_cmd: ServerCommands,
     },
     /// Client-related commands
-    #[command(after_help = AFTER_HELP)] // MOVED HERE
+    #[command(after_help = AFTER_HELP)]
     Client {
         #[command(subcommand)]
         client_cmd: ClientCommands,
@@ -73,10 +72,10 @@ pub enum ServerCommands {
     ListUsers,
 }
 
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand, Debug, Clone)] // <-- 添加 Clone
 pub enum ClientCommands {
     /// Initialize client, creating keys and data directories
-    Init, // MODIFIED
+    Init,
 
     /// Create a new chat template file
     New {
@@ -87,13 +86,12 @@ pub enum ClientCommands {
     /// Send a chat file to the server for processing
     Send {
         /// UUID of the local session to send
-        uuid: String, 
-        // Later we can add: #[arg(short, long)] attachments: Vec<String>
+        uuid: String,
     },
     /// Run the interactive Terminal UI
     Tui,
     /// List tasks on the server
-    List, // TODO: Add time range options
+    List,
     /// Get (download) a completed chat file
     Get {
         /// The UUID of the chat to retrieve
@@ -113,35 +111,44 @@ pub enum ClientCommands {
 
 #[tokio::main]
 async fn main() {
-    // Initialize logger
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+
 
     // Parse command line arguments
-    let args = Args::parse();
+    let args = CliArgs::parse();
     let result = match args.command {
         Commands::Server { server_cmd } => {
+            // --- 添加日志初始化 ---
+            // 服务器模式，使用 env_logger
+            env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+            // --- 添加结束 ---
+
             // Server mode, run server logic directly
             match server_cmd {
                 ServerCommands::Run => server::run().await,
                 ServerCommands::Init => server::init::run(),
-                // 更新这里的调用
                 ServerCommands::AddUser { username, key_file } => server::user_mgnt::add_user(username, key_file).await,
                 ServerCommands::DelUser { username } => server::user_mgnt::delete_user(username).await,
                 ServerCommands::SetUser { username, key_file } => server::user_mgnt::set_user(username, key_file).await,
                 ServerCommands::ListUsers => server::user_mgnt::list_users().await,
             }
         },
-        Commands::Client { client_cmd } => {
-            // Client mode, print client config and then run client logic
-            println!("--- AI-CLI-RS Client Info ---");
-            // MODIFIED: Improved print statements
-	    println!(" -> Set with environment variable: AICLI_SERVER_ADDR， AICLI_USERNAME");
-            println!("Server Address : {} (set via AICLI_SERVER_ADDR)", *SERVER_ADDR);
-            println!("Username       : {} (set via AICLI_USERNAME)", *CLIENT_USERNAME);
-            println!("Client Data Dir: {}", CLIENT_DATA_DIR);
-            println!("-----------------------------");
+        Commands::Client { ref client_cmd } => { // 使用 ref client_cmd 避免所有权转移
+            // --- 添加条件日志初始化 ---
+            // 只有在非 TUI 模式下才初始化 env_logger
+            if !matches!(client_cmd, ClientCommands::Tui) {
+                env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
-            cli::handle_client_command(client_cmd).await
+                println!("--- AI-CLI-RS Client Info ---");
+                println!(" -> Set with environment variable: AICLI_SERVER_ADDR, AICLI_USERNAME");
+                println!("Server Address : {} (set via AICLI_SERVER_ADDR)", *SERVER_ADDR);
+                println!("Username       : {} (set via AICLI_USERNAME)", *CLIENT_USERNAME);
+                println!("Client Data Dir: {}", CLIENT_DATA_DIR);
+                println!("-----------------------------");
+            }
+            // --- 添加结束 ---
+            
+            // client_cmd 的所有权已经在上面被借用，所以这里需要 clone 一下
+            cli::handle_client_command(client_cmd.clone()).await
         },
     };
 

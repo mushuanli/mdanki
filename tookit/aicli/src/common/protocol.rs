@@ -1,13 +1,12 @@
 // src/common/protocol.rs
 use crate::common::types::{ChatLog, Interaction};
-use crate::error::{AppError, Result};
+use crate::error::Result; // AppError is not directly used, so remove it from import
 use chrono::{DateTime, Utc};
 use std::str::FromStr;
 use uuid::Uuid;
 
 const PREFIX_UUID: &str = "::>uuid:";
 const PREFIX_TITLE: &str = "::>title:";
-const PREFIX_CREATED_AT: &str = "::>created_at:";
 const PREFIX_MODEL: &str = "::>model:";
 const PREFIX_STATUS: &str = "::>status:";
 const PREFIX_SYSTEM: &str = "::>system:";
@@ -18,6 +17,17 @@ const PREFIX_ATTACH: &str = "::>attach:";
 const PREFIX_RESEND_AT: &str = "::>resend_at:";
 const PREFIX_FAIL_REASON: &str = "::>failreason:";
 
+// --- REFACTORED: New format for parsing lines with timestamps ---
+fn parse_line_with_timestamp<'a>(prefix: &str, line: &'a str) -> Option<(DateTime<Utc>, &'a str)> {
+    line.strip_prefix(prefix)
+        .and_then(|stripped| stripped.trim().strip_prefix('['))
+        .and_then(|s| s.split_once("] "))
+        .and_then(|(ts_str, content)| {
+            DateTime::parse_from_rfc3339(ts_str).ok()
+                .map(|dt| (dt.with_timezone(&Utc), content))
+        })
+}
+
 /// Parses a string in the AI chat txt format into a ChatLog struct.
 pub fn parse_chat_file(content: &str) -> Result<ChatLog> {
     let mut log = ChatLog::new("Untitled".to_string());
@@ -27,20 +37,17 @@ pub fn parse_chat_file(content: &str) -> Result<ChatLog> {
 
     for line in content.lines() {
         if line.starts_with("::>") {
-            last_field = LastField::None; // Reset on any new tag
+            last_field = LastField::None;
             if let Some(val) = line.strip_prefix(PREFIX_UUID) {
-                log.uuid = Uuid::from_str(val.trim())
-                    .map_err(|e| AppError::ParseError(format!("Invalid UUID: {}", e)))?;
+                log.uuid = Uuid::from_str(val.trim())?;
             } else if let Some(val) = line.strip_prefix(PREFIX_TITLE) {
                 log.title = val.trim().to_string();
-            } else if let Some(val) = line.strip_prefix(PREFIX_CREATED_AT) {
-                log.created_at = DateTime::parse_from_rfc3339(val.trim())
-                    .map_err(|e| AppError::ParseError(format!("Invalid timestamp: {}", e)))?
-                    .with_timezone(&Utc);
-            } else if let Some(val) = line.strip_prefix(PREFIX_RESEND_AT) { // NEW
-                log.resend_at = Some(DateTime::parse_from_rfc3339(val.trim())
-                    .map_err(|e| AppError::ParseError(format!("Invalid resend_at timestamp: {}", e)))?
-                    .with_timezone(&Utc));
+            } else if let Some((created_at, content)) = parse_line_with_timestamp(PREFIX_USER, line) {
+                log.interactions.push(Interaction::User { content: content.to_string(), created_at });
+                last_field = LastField::User;
+            } else if let Some((created_at, content)) = parse_line_with_timestamp(PREFIX_RESPONSE, line) {
+                log.interactions.push(Interaction::Ai { content: content.to_string(), created_at });
+                last_field = LastField::Ai;
             } else if let Some(val) = line.strip_prefix(PREFIX_MODEL) {
                 log.model = Some(val.trim().to_string());
             } else if let Some(val) = line.strip_prefix(PREFIX_STATUS) {
@@ -48,15 +55,11 @@ pub fn parse_chat_file(content: &str) -> Result<ChatLog> {
             } else if let Some(val) = line.strip_prefix(PREFIX_SYSTEM) {
                 log.system_prompt = Some(val.trim().to_string());
                 last_field = LastField::System;
-            } else if let Some(val) = line.strip_prefix(PREFIX_FAIL_REASON) { // NEW
+            } else if let Some(val) = line.strip_prefix(PREFIX_FAIL_REASON) {
                 log.fail_reason = Some(val.trim().to_string());
                 last_field = LastField::FailReason;
-            } else if let Some(val) = line.strip_prefix(PREFIX_USER) {
-                log.interactions.push(Interaction::User { content: val.trim().to_string() });
-                last_field = LastField::User;
-            } else if let Some(val) = line.strip_prefix(PREFIX_RESPONSE) {
-                log.interactions.push(Interaction::Ai { content: val.trim().to_string() });
-                last_field = LastField::Ai;
+            } else if let Some(val) = line.strip_prefix(PREFIX_RESEND_AT) {
+                log.resend_at = Some(DateTime::parse_from_rfc3339(val.trim())?.with_timezone(&Utc));
             } else if let Some(val) = line.strip_prefix(PREFIX_ATTACH) {
                 let parts: Vec<&str> = val.split(':').map(str::trim).collect();
                 if parts.len() == 2 {
@@ -76,13 +79,13 @@ pub fn parse_chat_file(content: &str) -> Result<ChatLog> {
                     }
                 }
                 LastField::User => {
-                    if let Some(Interaction::User { content }) = log.interactions.last_mut() {
+                    if let Some(Interaction::User { content, .. }) = log.interactions.last_mut() {
                         content.push('\n');
                         content.push_str(line);
                     }
                 }
                 LastField::Ai => {
-                    if let Some(Interaction::Ai { content }) = log.interactions.last_mut() {
+                    if let Some(Interaction::Ai { content, .. }) = log.interactions.last_mut() {
                         content.push('\n');
                         content.push_str(line);
                     }
@@ -110,19 +113,18 @@ pub fn format_chat_log(log: &ChatLog) -> String {
 
     builder.push_str(&format!("{} {}\n", PREFIX_UUID, log.uuid));
     builder.push_str(&format!("{} {}\n", PREFIX_TITLE, log.title));
-    builder.push_str(&format!("{} {}\n", PREFIX_CREATED_AT, log.created_at.to_rfc3339()));
     
-    if let Some(ts) = &log.resend_at { // NEW
-        builder.push_str(&format!("{} {}\n", PREFIX_RESEND_AT, ts.to_rfc3339()));
-    }
     if let Some(model) = &log.model {
         builder.push_str(&format!("{} {}\n", PREFIX_MODEL, model));
     }
     if let Some(status) = &log.status {
         builder.push_str(&format!("{} {}\n", PREFIX_STATUS, status));
     }
-    if let Some(reason) = &log.fail_reason { // NEW
+    if let Some(reason) = &log.fail_reason {
         builder.push_str(&format!("{} {}\n", PREFIX_FAIL_REASON, reason));
+    }
+    if let Some(ts) = &log.resend_at {
+        builder.push_str(&format!("{} {}\n", PREFIX_RESEND_AT, ts.to_rfc3339()));
     }
     if let Some(prompt) = &log.system_prompt {
         builder.push_str(&format!("{} {}\n", PREFIX_SYSTEM, prompt));
@@ -130,9 +132,15 @@ pub fn format_chat_log(log: &ChatLog) -> String {
 
     for interaction in &log.interactions {
         match interaction {
-            Interaction::User { content } => builder.push_str(&format!("{} {}\n", PREFIX_USER, content)),
-            Interaction::Ai { content } => builder.push_str(&format!("{} {}\n", PREFIX_RESPONSE, content)),
-            Interaction::Attachment { filename, mime_type } => builder.push_str(&format!("{} {} : {}\n", PREFIX_ATTACH, filename, mime_type)),
+            Interaction::User { content, created_at } => {
+                builder.push_str(&format!("{} [{}] {}\n", PREFIX_USER, created_at.to_rfc3339(), content));
+            }
+            Interaction::Ai { content, created_at } => {
+                builder.push_str(&format!("{} [{}] {}\n", PREFIX_RESPONSE, created_at.to_rfc3339(), content));
+            }
+            Interaction::Attachment { filename, mime_type } => {
+                builder.push_str(&format!("{} {} : {}\n", PREFIX_ATTACH, filename, mime_type));
+            }
         }
     }
     builder
