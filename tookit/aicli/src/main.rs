@@ -72,41 +72,54 @@ pub enum ServerCommands {
     ListUsers,
 }
 
-#[derive(Subcommand, Debug, Clone)] // <-- 添加 Clone
+#[derive(Subcommand, Debug, Clone)]
 pub enum ClientCommands {
-    /// Initialize client, creating keys and data directories
+    /// Initialize client, creating keys and data directories.
     Init,
 
-    /// Create a new chat template file
+    /// Create a new chat session template and register it locally.
     New {
-        /// The title of the new chat
+        /// The title of the new chat session.
+        #[arg(short, long)]
         title: String,
     },
 
-    /// Send a chat file to the server for processing
-    Send {
-        /// UUID of the local session to send
+    /// Appends a new user prompt to an existing session file.
+    Append {
+        /// The UUID of the session to append to.
+        #[arg(short, long)]
+        uuid: String,
+        /// The prompt text to append.
+        prompt: String,
+    },
+
+    /// Prepares and sends a session to the server for processing.
+    /// Clears any responses after the last user prompt before sending.
+    Run {
+        /// The UUID of the local session to run.
         uuid: String,
     },
-    /// Run the interactive Terminal UI
-    Tui,
-    /// List tasks on the server
+
+    /// List all locally tracked sessions and their status.
     List,
-    /// Get (download) a completed chat file
-    Get {
-        /// The UUID of the chat to retrieve
-        uuid: String,
-    },
-    /// Delete a task and its files from the server
+
+    /// Sync task list and status from the server (metadata only).
+    SyncList,
+
+    /// Delete a session locally and from the server.
     Delete {
-        /// The UUID of the chat to delete
+        /// The UUID of the session to delete.
         uuid: String,
     },
-    /// Resend a task for processing
-    Resend {
-        /// The UUID of the chat to resend
+
+    /// Download the full content of a session from the server.
+    Sync {
+        /// The UUID of the session to download.
         uuid: String,
     },
+
+    /// Run the interactive Terminal UI.
+    Tui,
 }
 
 #[tokio::main]

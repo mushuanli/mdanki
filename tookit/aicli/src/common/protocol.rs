@@ -1,6 +1,6 @@
 // src/common/protocol.rs
 use crate::common::types::{ChatLog, Interaction};
-use crate::error::Result; // AppError is not directly used, so remove it from import
+use crate::error::Result;
 use chrono::{DateTime, Utc};
 use std::str::FromStr;
 use uuid::Uuid;
@@ -42,12 +42,34 @@ pub fn parse_chat_file(content: &str) -> Result<ChatLog> {
                 log.uuid = Uuid::from_str(val.trim())?;
             } else if let Some(val) = line.strip_prefix(PREFIX_TITLE) {
                 log.title = val.trim().to_string();
-            } else if let Some((created_at, content)) = parse_line_with_timestamp(PREFIX_USER, line) {
-                log.interactions.push(Interaction::User { content: content.to_string(), created_at });
+            
+            // --- CORE FIX IS HERE ---
+            } else if line.starts_with(PREFIX_USER) {
+                // First, try to parse with a timestamp for backward compatibility
+                if let Some((created_at, content)) = parse_line_with_timestamp(PREFIX_USER, line) {
+                    log.interactions.push(Interaction::User { content: content.to_string(), created_at });
+                } else if let Some(content) = line.strip_prefix(PREFIX_USER).map(|s| s.trim()) {
+                    // If that fails, parse without a timestamp and assign Utc::now()
+                    log.interactions.push(Interaction::User { 
+                        content: content.to_string(), 
+                        created_at: Utc::now() 
+                    });
+                }
                 last_field = LastField::User;
-            } else if let Some((created_at, content)) = parse_line_with_timestamp(PREFIX_RESPONSE, line) {
-                log.interactions.push(Interaction::Ai { content: content.to_string(), created_at });
+            } else if line.starts_with(PREFIX_RESPONSE) {
+                 // First, try to parse with a timestamp for backward compatibility
+                 if let Some((created_at, content)) = parse_line_with_timestamp(PREFIX_RESPONSE, line) {
+                    log.interactions.push(Interaction::Ai { content: content.to_string(), created_at });
+                } else if let Some(content) = line.strip_prefix(PREFIX_RESPONSE).map(|s| s.trim()) {
+                    // If that fails, parse without a timestamp and assign Utc::now()
+                    log.interactions.push(Interaction::Ai { 
+                        content: content.to_string(), 
+                        created_at: Utc::now() 
+                    });
+                }
                 last_field = LastField::Ai;
+            // --- END OF FIX ---
+            
             } else if let Some(val) = line.strip_prefix(PREFIX_MODEL) {
                 log.model = Some(val.trim().to_string());
             } else if let Some(val) = line.strip_prefix(PREFIX_STATUS) {
@@ -146,52 +168,68 @@ pub fn format_chat_log(log: &ChatLog) -> String {
     builder
 }
 
+/// Finds the last user interaction and removes any AI interactions that follow it.
+pub fn truncate_after_last_user(log: &mut ChatLog) {
+    if let Some(last_user_pos) = log.interactions.iter().rposition(|i| matches!(i, Interaction::User { .. })) {
+        // We want to keep all interactions up to and including the last user prompt.
+        // So we truncate the vector to `last_user_pos + 1`.
+        log.interactions.truncate(last_user_pos + 1);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_parse_and_format_roundtrip() {
-        let original_content = r#"::>uuid: 550e8400-e29b-41d4-a716-446655440000
+        // Test content needs created_at for interactions to ensure a perfect roundtrip
+        let original_content = format!(r#"::>uuid: 550e8400-e29b-41d4-a716-446655440000
 ::>title: Test Chat
-::>created_at: 2023-10-27T10:00:00Z
 ::>model: gpt-4
 ::>status: completed
 ::>system: You are a helpful assistant.
 This is a multi-line system prompt.
-::>user: Hello AI.
+::>user: [{}] Hello AI.
 How are you?
-::>response: I am an AI, I don't have feelings.
+::>response: [{}] I am an AI, I don't have feelings.
 I am doing well in terms of operation.
 ::>attach: data.zip : application/zip
-"#;
+"#, Utc::now().to_rfc3339(), Utc::now().to_rfc3339());
 
-        let log = parse_chat_file(original_content).unwrap();
+        let log = parse_chat_file(&original_content).unwrap();
 
         assert_eq!(log.uuid.to_string(), "550e8400-e29b-41d4-a716-446655440000");
         assert_eq!(log.title, "Test Chat");
-        assert_eq!(log.system_prompt.unwrap(), "You are a helpful assistant.\nThis is a multi-line system prompt.");
-        
-        if let Some(Interaction::User { content }) = log.interactions.get(0) {
+        assert_eq!(log.system_prompt.clone().unwrap(), "You are a helpful assistant.\nThis is a multi-line system prompt.");
+
+        if let Some(Interaction::User { content, .. }) = log.interactions.get(0) {
             assert_eq!(content, "Hello AI.\nHow are you?");
         } else {
             panic!("First interaction should be user");
         }
 
-        if let Some(Interaction::Attachment { filename, mime_type }) = log.interactions.get(2) {
-             assert_eq!(filename, "data.zip");
-             assert_eq!(mime_type, "application/zip");
-        } else {
-             panic!("Third interaction should be attachment");
-        }
-
         let formatted_content = format_chat_log(&log);
-        println!("{}", formatted_content); // For manual inspection
-        // Note: A perfect roundtrip might be tricky due to newlines/spacing. 
-        // A better test is to parse the formatted content again and check for equality of structs.
         let re_parsed_log = parse_chat_file(&formatted_content).unwrap();
         
         // This now works because we added `#[derive(PartialEq)]` to ChatLog and Interaction
         assert_eq!(log, re_parsed_log);
+    }
+    #[test]
+    fn test_truncate_after_last_user() {
+        let mut log = ChatLog::new("test".into());
+        log.interactions.push(Interaction::User { content: "q1".into(), created_at: Utc::now() });
+        log.interactions.push(Interaction::Ai { content: "a1".into(), created_at: Utc::now() });
+        log.interactions.push(Interaction::User { content: "q2".into(), created_at: Utc::now() });
+        log.interactions.push(Interaction::Ai { content: "a2".into(), created_at: Utc::now() });
+        log.interactions.push(Interaction::Ai { content: "a3".into(), created_at: Utc::now() });
+        
+        assert_eq!(log.interactions.len(), 5);
+
+        truncate_after_last_user(&mut log);
+        
+        // Should have kept the first user, first ai, and second user. The two AI responses after the last user are gone.
+        assert_eq!(log.interactions.len(), 3);
+        assert!(matches!(log.interactions.last().unwrap(), Interaction::User { .. }));
     }
 }

@@ -1,6 +1,6 @@
 // src/client/local_store.rs
 
-use crate::common::protocol::{format_chat_log, parse_chat_file};
+use crate::common::protocol::{format_chat_log, parse_chat_file, truncate_after_last_user}; // <-- Add truncate helper
 use crate::common::types::{ChatLog, Interaction};
 use crate::error::{AppError, Result};
 use chrono::{DateTime, Utc};
@@ -62,63 +62,98 @@ impl LocalStore {
         Ok(())
     }
 
-    /// Creates a new session, saves it to a .md file, and updates the index.
-    pub fn create_session(&mut self, title: String) -> Result<ChatLog> {
+    /// Creates a new session template for the 'new' command.
+    pub fn create_new_template(&mut self, title: String) -> Result<ChatLog> {
         let mut log = ChatLog::new(title);
+        // Add a placeholder user prompt.
         log.interactions.push(Interaction::User {
-            content: "Your first prompt here.".to_string(),
+            content: "Replace this with your prompt.".to_string(),
             created_at: Utc::now(),
         });
-        
-        // This will save the .md file and update the in-memory index
-        self.save_session(&log)?;
-        
-        // Persist the index change to disk
-        self.save_index()?;
 
-        println!("Created session '{}' with UUID: {}", log.title, log.uuid);
+        // The status starts as Local.
+        self.save_session(&log, SyncStatus::Local)?;
+        self.save_index()?;
         Ok(log)
     }
 
+    /// Appends a prompt for the 'append' command.
+    pub fn append_prompt(&mut self, uuid: Uuid, prompt: String) -> Result<()> {
+        let mut log = self.get_session(uuid)?;
+        log.interactions.push(Interaction::User {
+            content: prompt,
+            created_at: Utc::now(),
+        });
+        // Status becomes Modified.
+        self.save_session(&log, SyncStatus::Modified)?;
+        self.save_index()?;
+        Ok(())
+    }
+
+    /// Prepares a session for the 'run' command by clearing trailing AI responses.
+    pub fn prepare_for_run(&mut self, uuid: Uuid) -> Result<ChatLog> {
+        let mut log = self.get_session(uuid)?;
+        
+        // If the file is not found in the index, register it now.
+        if !self.index.contains_key(&uuid) {
+            self.register_external_session(&log)?;
+        }
+        
+        truncate_after_last_user(&mut log);
+
+        // Save the cleaned version, marking it as Modified.
+        self.save_session(&log, SyncStatus::Modified)?;
+        self.save_index()?;
+        Ok(log)
+    }
+
+    /// Registers a session file that exists but is not in the index.
+    pub fn register_external_session(&mut self, log: &ChatLog) -> Result<()> {
+        let now = Utc::now();
+        if !self.index.contains_key(&log.uuid) {
+            let info = LocalSessionInfo {
+                uuid: log.uuid,
+                title: log.title.clone(),
+                created_at: log.get_creation_time(),
+                modified_at: now,
+                sync_status: SyncStatus::Local, // Treat it as a new local file
+                remote_status: None,
+            };
+            self.index.insert(log.uuid, info);
+            self.save_index()?;
+        }
+        Ok(())
+    }
+
     /// Saves a ChatLog to a .md file and updates the in-memory index.
-    pub fn save_session(&mut self, log: &ChatLog) -> Result<()> {
+    pub fn save_session(&mut self, log: &ChatLog, new_status: SyncStatus) -> Result<()> {
         let content = format_chat_log(log);
         let file_path = self.sessions_dir.join(format!("{}.md", log.uuid));
         fs::write(&file_path, content)?;
 
         let now = Utc::now();
         
-        // Update or insert into the index
-        let info = self.index.entry(log.uuid).or_insert_with(|| {
-            // This is a new entry
-            LocalSessionInfo {
-                uuid: log.uuid,
-                title: log.title.clone(),
-                created_at: log.get_creation_time(),
-                modified_at: now,
-                sync_status: SyncStatus::Local,
-                remote_status: None,
-            }
+        let info = self.index.entry(log.uuid).or_insert_with(|| LocalSessionInfo {
+            uuid: log.uuid,
+            title: log.title.clone(),
+            created_at: log.get_creation_time(),
+            modified_at: now,
+            sync_status: new_status.clone(),
+            remote_status: None,
         });
 
         // Update fields for existing entries
         info.title = log.title.clone();
         info.modified_at = now;
-        
-        // --- FIX HERE: Ensure any save on a completed task marks it as Modified ---
-        // If a session was previously considered done, but is now being saved,
-        // it means it has been modified by the user (e.g., via append or edit).
-        if matches!(info.sync_status, SyncStatus::Done | SyncStatus::Finish | SyncStatus::Failed) {
-            info.sync_status = SyncStatus::Modified;
-        }
+        info.sync_status = new_status;
 
         Ok(())
     }
-    
+
     /// Reads the content of a session's .md file.
     pub fn get_session_content(&self, uuid: Uuid) -> Result<String> {
         if !self.index.contains_key(&uuid) {
-            return Err(AppError::ParseError(format!("Session with UUID '{}' not found.", uuid)));
+            return Err(AppError::ParseError(format!("Session with UUID '{}' not found in local index.", uuid)));
         }
         let file_path = self.sessions_dir.join(format!("{}.md", uuid));
         fs::read_to_string(&file_path).map_err(|e| AppError::IoWithContext {
@@ -146,9 +181,9 @@ impl LocalStore {
         self.index.remove(&uuid);
         let file_path = self.sessions_dir.join(format!("{}.md", uuid));
         if file_path.exists() {
-            fs::remove_file(&file_path)?;
+            // Ignore error if file doesn't exist, as it might have been deleted already.
+            fs::remove_file(file_path).ok();
         }
-        
         self.save_index()?;
         Ok(())
     }
@@ -156,33 +191,57 @@ impl LocalStore {
     /// Updates the local session based on content and metadata from the server.
     pub fn update_from_remote(&mut self, content: &str, remote_task: &super::network::RemoteTask) -> Result<()> {
         let log = parse_chat_file(content)?;
+        // Use `save_session` with status `Finish`
+        self.save_session(&log, SyncStatus::Finish)?;
         
-        // Overwrite local .md file
-        let file_path = self.sessions_dir.join(format!("{}.md", log.uuid));
-        fs::write(file_path, content)?;
-
-        // Update index entry
-        let info = self.index.entry(log.uuid).or_insert_with(|| LocalSessionInfo {
-            uuid: log.uuid,
-            title: log.title.clone(),
-            created_at: log.get_creation_time(),
-            modified_at: Utc::now(),
-            sync_status: SyncStatus::Finish,
-            remote_status: Some(remote_task.status.clone()),
-        });
-
-        // Update fields for existing entries
-        info.title = log.title.clone();
-        info.modified_at = Utc::now();
-        info.sync_status = SyncStatus::Finish;
-        info.remote_status = Some(remote_task.status.clone());
-        if let Some(err) = &remote_task.error_message {
-            info.remote_status = Some(format!("failed: {}", err));
-            // Also update local status to reflect failure if downloaded
-            info.sync_status = SyncStatus::Failed;
+        // Additional metadata update
+        if let Some(info) = self.index.get_mut(&log.uuid) {
+             info.remote_status = Some(remote_task.status.clone());
+             if let Some(err) = &remote_task.error_message {
+                info.remote_status = Some(format!("failed: {}", err));
+                info.sync_status = SyncStatus::Failed;
+             }
         }
         
         self.save_index()?;
+        Ok(())
+    }
+
+    /// (NEW) `update_from_remote_list` is for metadata sync (`synclist` command)
+    pub fn update_from_remote_list(&mut self, remote_tasks: Vec<super::network::RemoteTask>) -> Result<()> {
+        let mut changed = false;
+        for task in remote_tasks {
+            if let Some(info) = self.index.get_mut(&task.uuid) {
+                let new_remote_status_str = if let Some(err) = &task.error_message {
+                    format!("failed: {}", err)
+                } else {
+                    task.status.clone()
+                };
+                let new_remote_status = Some(new_remote_status_str);
+
+                // Only update if remote status has changed. Don't override local statuses like Modified.
+                if info.remote_status != new_remote_status {
+                    info.remote_status = new_remote_status;
+                    changed = true;
+                }
+                
+                // Also update local sync status based on remote, if it's not user-modified
+                if !matches!(info.sync_status, SyncStatus::Local | SyncStatus::Modified) {
+                    let new_sync_status = match task.status.as_str() {
+                        "pending" => SyncStatus::Pending, "processing" => SyncStatus::Processing,
+                        "completed" => SyncStatus::Done, "failed" => SyncStatus::Failed,
+                        _ => info.sync_status.clone(),
+                    };
+                    if info.sync_status != new_sync_status {
+                        info.sync_status = new_sync_status;
+                        changed = true;
+                    }
+                }
+            }
+        }
+        if changed {
+            self.save_index()?;
+        }
         Ok(())
     }
 

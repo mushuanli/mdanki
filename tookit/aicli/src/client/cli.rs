@@ -1,23 +1,15 @@
 // src/client/cli.rs
 
 // We need the new TlsClientStream type in this file's scope
-use crate::client::network::{NetworkClient, TlsClientStream};
+use crate::client::network::{NetworkClient};
 use crate::error::{AppError, Result};
-use crate::common::crypto::KeyPair;
 
 use crate::ClientCommands;
 use crate::client::local_store::{LocalStore, SyncStatus};
-use crate::common::protocol::parse_chat_file;
-use crate::client::tui::app::App;
-use crate::client::tui::action::Action;
-use crate::client::actions::handle_network_action;
+use crate::common::protocol::{format_chat_log};
 
 use std::fs;
-use std::pin::Pin;
-use std::future::Future;
 use std::path::Path;
-use std::sync::Arc;
-use tokio::sync::{mpsc, Mutex};
 
 use uuid::Uuid;
 use once_cell::sync::Lazy;
@@ -36,14 +28,19 @@ pub const USER_PUBLIC_KEY_PATH: &str = "data/user.pub";
 pub const CLIENT_DATA_DIR: &str = "data/client";
 pub const CLIENT_INDEX_PATH: &str = "data/client/index.json";
 
-
-// Add BoxFuture type alias
-type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
-
-// Modify connect_and_run to use the correct TlsClientStream type
-async fn connect_and_run<T>(cmd: impl for<'a> FnOnce(&'a mut NetworkClient<TlsClientStream>) -> BoxFuture<'a, Result<T>>) -> Result<T> {
-    let mut client = NetworkClient::connect(&SERVER_ADDR, &CLIENT_USERNAME, USER_PRIVATE_KEY_PATH).await?;
-    cmd(&mut client).await
+// Helper for CLI output
+fn print_session_list(store: &LocalStore) {
+    let sessions = store.list_sessions();
+    if sessions.is_empty() {
+        println!("No local sessions found. Use 'client new --title \"My Chat\"' to create one.");
+    } else {
+        println!("{:<38} {:<10} {:<18} {}", "UUID", "Status", "Remote Status", "Title");
+        println!("{}", "-".repeat(85));
+        for s in sessions {
+            let remote_status = s.remote_status.as_deref().unwrap_or("-");
+            println!("{:<38} {:<10} {:<18} {}", s.uuid, format!("{:?}", s.sync_status), remote_status, s.title);
+        }
+    }
 }
 
 // Main dispatcher function for all client commands
@@ -54,6 +51,8 @@ pub async fn handle_client_command(command: ClientCommands) -> Result<()> {
     match command {
         // MODIFIED: Init command logic
         ClientCommands::Init => {
+            use crate::common::crypto::KeyPair;
+
             println!("Initializing client...");
 
             // 1. Create directories
@@ -83,124 +82,99 @@ pub async fn handle_client_command(command: ClientCommands) -> Result<()> {
 
             println!("\nInitialization complete.");
         }
+
         ClientCommands::New { title } => {
             let mut store = LocalStore::load()?;
-            let new_log = store.create_session(title)?;
-            println!("Successfully created new local session.");
-            println!("UUID: {}", new_log.uuid);
+            let new_log = store.create_new_template(title)?;
+            println!("Successfully created new local session template.");
+            println!("  UUID: {}", new_log.uuid);
+            println!("  File: data/client/{}.md", new_log.uuid);
+            println!("You can now edit the file and send it with 'client run --uuid {}'", new_log.uuid);
         }
-        ClientCommands::Tui => {
-            return crate::client::tui::run().await;
+
+        ClientCommands::Append { uuid, prompt } => {
+            let uuid = Uuid::parse_str(&uuid)?;
+            let mut store = LocalStore::load()?;
+            store.append_prompt(uuid, prompt)?;
+            println!("Appended prompt to session {}. Status set to 'Modified'.", uuid);
+            println!("Run with 'client run --uuid {}'", uuid);
         }
-        // MODIFIED: Send command now takes a UUID
-        // MODIFIED: Unified handling for sending/syncing/resending based on local status
-        ClientCommands::Send { uuid } => {
-            let uuid = Uuid::parse_str(&uuid).map_err(|_| AppError::ParseError("Invalid UUID format".into()))?;
-            let store = LocalStore::load()?;
-            let session = store.index.get(&uuid).ok_or_else(|| AppError::ParseError(format!("Session '{}' not found.", uuid)))?.clone();
-            
-            let action_to_perform = match session.sync_status {
-                SyncStatus::Local | SyncStatus::Modified => {
-                    let content = store.get_session_content(uuid)?;
-                    Action::SendNewTask(parse_chat_file(&content)?)
-                },
-                _ => Action::SyncSelected {
-                    uuid,
-                    remote_status: session.remote_status,
-                    local_status: session.sync_status,
-                },
-            };
-            
-            let app_arc = Arc::new(Mutex::new(App::new()?));
-            let (tx, _) = mpsc::unbounded_channel();
-            handle_network_action(action_to_perform, app_arc, tx).await?;
 
-            // After the action is complete, try to update the local status
-            // Note: This relies on the network handler updating the store and reloading.
-            // For CLI, we might want to fetch the status again if the action was just a send/resend.
-            // For now, we'll rely on the optimistic update in handle_network_action.
+        ClientCommands::Run { uuid } => {
+            let uuid = Uuid::parse_str(&uuid)?;
+            let mut store = LocalStore::load()?;
+            
+            println!("Preparing session {} for run...", uuid);
+            let log_to_run = store.prepare_for_run(uuid)?;
+            let content = format_chat_log(&log_to_run);
 
-            println!("Command executed for session {}. Check status via 'client list' or 'client tui'.", uuid);
+            println!("Connecting to server and sending...");
+            let mut client = NetworkClient::connect(&SERVER_ADDR, &CLIENT_USERNAME, USER_PRIVATE_KEY_PATH).await?;
+            client.execute_chat(&content).await?;
+            
+            store.update_session_status(uuid, SyncStatus::Pending, None)?;
+            println!("Session {} sent successfully. Status set to 'Pending'.", uuid);
+            println!("Check progress with 'client list' or 'client tui'.");
         }
         // MODIFIED: List now shows local sessions
         ClientCommands::List => {
             let store = LocalStore::load()?;
-            let sessions = store.list_sessions();
-            
-            if sessions.is_empty() {
-                println!("No local sessions found. Use 'client new <title>' to create one.");
-            } else {
-                println!("{:<38} {:<10} {:<10} {}", "UUID", "Status", "Remote", "Title");
-                println!("{}", "-".repeat(80));
-                for s in sessions {
-                    let remote_status = s.remote_status.as_deref().unwrap_or("-");
-                    println!("{:<38} {:<10} {:<10} {}", s.uuid, format!("{:?}", s.sync_status), remote_status, s.title);
-                }
-            }
+            print_session_list(&store);
         }
-        // MODIFIED: Get is now a "pull/sync" operation
-        ClientCommands::Get { uuid } => {
-            let uuid = Uuid::parse_str(&uuid).map_err(|_| AppError::ParseError("Invalid UUID format".into()))?;
-            
-            println!("Fetching remote session '{}'...", uuid);
-            let remote_content = connect_and_run(|client| {
-                Box::pin(async move {
-                    client.download_task(uuid).await
-                })
-            }).await?;
-            
-            // This is a simplified pull. A real one would fetch remote metadata first.
-            let remote_task_info_for_update = crate::client::network::RemoteTask {
-                uuid,
-                // We parse the file to get the real title, etc.
-                title: "Updated from remote".to_string(), // Placeholder
-                status: "Synced".to_string(), // Placeholder
-                created_at: chrono::Utc::now(), // Placeholder
-                error_message: None,
-            };
 
+        ClientCommands::SyncList => {
+            println!("Connecting to server to sync remote task list...");
+            let mut client = NetworkClient::connect(&SERVER_ADDR, &CLIENT_USERNAME, USER_PRIVATE_KEY_PATH).await?;
+            let remote_tasks = client.list_tasks().await?;
+            println!("Found {} tasks on server. Merging with local index...", remote_tasks.len());
+            
             let mut store = LocalStore::load()?;
-            store.update_from_remote(&remote_content, &remote_task_info_for_update)?;
-
-            println!("Successfully synced session {} from server to local storage.", uuid);
+            store.update_from_remote_list(remote_tasks)?;
+            println!("Metadata sync complete.");
+            print_session_list(&store);
         }
         // MODIFIED: Delete acts locally and remotely
         ClientCommands::Delete { uuid } => {
-            let uuid = Uuid::parse_str(&uuid).map_err(|_| AppError::ParseError("Invalid UUID format".into()))?;
-            
-            // 1. Request remote deletion
+            let uuid = Uuid::parse_str(&uuid)?;
             println!("Requesting deletion of remote task {}...", uuid);
-            connect_and_run(|client| {
-                Box::pin(async move {
-                    client.delete_task(uuid).await
-                })
-            }).await?;
-            println!("Remote task deleted.");
+            match NetworkClient::connect(&SERVER_ADDR, &CLIENT_USERNAME, USER_PRIVATE_KEY_PATH).await {
+                Ok(mut client) => {
+                    if let Err(e) = client.delete_task(uuid).await {
+                        println!("Warning: Failed to delete remote task (it may not exist): {}", e);
+                    } else {
+                        println!("Remote task deleted or confirmed not present.");
+                    }
+                },
+                Err(e) => println!("Warning: Could not connect to server to delete remote task: {}", e),
+            };
 
-            // 2. Delete locally
+            println!("Deleting local session files for {}...", uuid);
             let mut store = LocalStore::load()?;
             store.delete_session(uuid)?;
-            println!("Local session files for {} deleted.", uuid);
+            println!("Local session deleted.");
         }
-        ClientCommands::Resend { uuid } => {
-            let uuid = Uuid::parse_str(&uuid).map_err(|_| AppError::ParseError("Invalid UUID format".into()))?;
-            let store = LocalStore::load()?;
-            let session = store.index.get(&uuid).ok_or_else(|| AppError::ParseError(format!("Session '{}' not found.", uuid)))?.clone();
 
-            if matches!(session.sync_status, SyncStatus::Failed) || session.remote_status.as_deref().unwrap_or("").starts_with("failed") {
-                let action = Action::SyncSelected {
-                    uuid,
-                    remote_status: session.remote_status,
-                    local_status: session.sync_status,
-                };
-                let app_arc = Arc::new(Mutex::new(App::new()?));
-                let (tx, _) = mpsc::unbounded_channel();
-                handle_network_action(action, app_arc, tx).await?;
-                println!("Resend command for session {} executed.", uuid);
-            } else {
-                println!("Session {} is not in a failed state. No action taken.", uuid);
-            }
-        },
+        ClientCommands::Sync { uuid } => {
+            let uuid = Uuid::parse_str(&uuid)?;
+            println!("Connecting to server to download session {}...", uuid);
+            let mut client = NetworkClient::connect(&SERVER_ADDR, &CLIENT_USERNAME, USER_PRIVATE_KEY_PATH).await?;
+            
+            // We need metadata to pass to the store update function. Let's get it.
+            let remote_tasks = client.list_tasks().await?;
+            let remote_task_info = remote_tasks.into_iter().find(|t| t.uuid == uuid)
+                .ok_or_else(|| AppError::NetworkError(format!("Session {} not found on server.", uuid)))?;
+
+            let content = client.download_task(uuid).await?;
+            println!("Download complete. Updating local store...");
+
+            let mut store = LocalStore::load()?;
+            store.update_from_remote(&content, &remote_task_info)?;
+            println!("Session {} synced successfully. Status set to 'Finish'.", uuid);
+        }
+        
+        ClientCommands::Tui => {
+            crate::client::tui::run().await?;
+        }
     }
     Ok(())
 }

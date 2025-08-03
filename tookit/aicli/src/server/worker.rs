@@ -32,16 +32,20 @@ pub async fn run_worker_pool(
         let db_clone = db.clone();
         
         tokio::spawn(async move {
-            // --- FIX: Use client_ip in the log message ---
             log::info!("Processing task {} for client {}...", task.uuid, task.client_ip);
-            // --- END FIX ---
             
             if let Err(e) = db_clone.update_status(&task.uuid, "pending", None).await {
                  log::error!("Failed to update status to pending for task {}: {}", task.uuid, e);
             }
 
-            if let Err(e) = process_task(db_clone, task).await {
-                log::error!("Failed to process task: {}", e);
+            // --- FIX #2: Capture error and update DB status to 'failed' ---
+            let task_uuid = task.uuid; // Capture uuid before task is moved
+            if let Err(e) = process_task(db_clone.clone(), task).await {
+                log::error!("Failed to process task {}: {}", task_uuid, e);
+                // On failure, update the status in the database to 'failed'
+                if let Err(db_err) = db_clone.update_status(&task_uuid, "failed", Some(&e.to_string())).await {
+                    log::error!("CRITICAL: Failed to update DB status to 'failed' for task {}: {}", task_uuid, db_err);
+                }
             }
             // The permit is automatically released when `permit` goes out of scope.
             drop(permit);
@@ -60,10 +64,21 @@ async fn process_task(db: Arc<Database>, task: AiTask) -> Result<()> {
     let mut chat_log = parse_chat_file(&content)?;
 
     // 3. Prepare request for AI
-    // The model identifier is now stored in chat_log.model
-    let model_identifier = chat_log.model.as_deref()
-        .ok_or_else(|| AppError::AiServiceError("No model specified in chat log".to_string()))?;
-        
+    // First, ensure chat_log.model has a value, using the default if necessary.
+    if chat_log.model.is_none() {
+        let default_model = &CONFIG.server.default;
+        if default_model.is_empty() {
+             return Err(AppError::AiServiceError(
+                "No model specified in chat log and no default model configured on server.".to_string()
+            ));
+        }
+        chat_log.model = Some(default_model.clone());
+    }
+
+    // Now, we can safely borrow the model identifier from the updated chat_log.
+    // The unwrap is safe because we just ensured it's Some.
+    let model_identifier = chat_log.model.as_ref().unwrap();
+
     let ai_client = ai_gateway::create_client(&CONFIG, model_identifier)?;
     let messages = convert_chat_log_to_ai_messages(&chat_log);
 
@@ -90,8 +105,9 @@ async fn process_task(db: Arc<Database>, task: AiTask) -> Result<()> {
         }
         Err(e) => {
             log::error!("AI processing for task {} failed: {}", task.uuid, e);
-            // Update DB status to 'failed' with error message
-            db.update_status(&task.uuid, "failed", Some(&e.to_string())).await?;
+            // This error will be caught by the calling function `run_worker_pool`
+            // which will then update the DB status to 'failed'.
+            return Err(e);
         }
     }
     Ok(())
