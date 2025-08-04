@@ -29,8 +29,8 @@ pub enum Action {
     
     // Network/Sync Actions
     DeleteTask(Uuid),
-    // MODIFIED: SyncSelected now includes the remote status for better decision making
-    SyncSelected { uuid: Uuid, remote_status: Option<String>, local_status: SyncStatus },
+    // MODIFIED: SyncSelected now only needs the local status to make a decision.
+    SyncSelected { uuid: Uuid, local_status: SyncStatus }, // <-- remote_status REMOVED
     SaveEdit,
     CancelEdit,
 }

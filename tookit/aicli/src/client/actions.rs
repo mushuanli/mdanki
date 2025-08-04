@@ -5,7 +5,7 @@ use tokio::sync::{mpsc, Mutex};
 use ratatui_textarea::TextArea;
 
 use crate::error::{Result, AppError};
-use crate::common::protocol::{format_chat_log, parse_chat_file,truncate_after_last_user};
+use crate::common::protocol::{format_chat_log, parse_chat_file};
 use super::network::NetworkClient;
 use super::tui::app::{App, AppMode};
 use super::tui::action::Action;
@@ -80,67 +80,58 @@ pub async fn handle_network_action(
             log::info!("Successfully sent appended session {}", uuid);
         }
 
-        Action::SyncSelected { uuid, remote_status, local_status } => {
+        Action::SyncSelected { uuid, local_status } => {
             let mut client = NetworkClient::connect(&SERVER_ADDR, &CLIENT_USERNAME, USER_PRIVATE_KEY_PATH).await?;
             
-            let (new_local_status, status_message) = match (&local_status, remote_status.as_deref()) {
-                
-                // --- CORE FIX IS HERE ---
-                // 如果文件是本地创建或修改过的，我们就上传它
-                (SyncStatus::Local | SyncStatus::Modified, _) => {
-                    log::info!("Session {} is local/modified. Preparing and uploading...", uuid);
+            let (new_local_status, status_message) = match local_status {
+                // --- UPLOAD FLOW ---
+                // The client has the authoritative version. This applies to new, modified, or failed-and-retried sessions.
+                SyncStatus::Local | SyncStatus::Modified | SyncStatus::Failed => {
+                    log::info!("Client has authority for session {}. Uploading...", uuid);
                     
-                    // 1. 从 store 获取会话对象，这会从磁盘读取文件内容。
-                    //    我们克隆它，这样就不需要长时间持有锁。
-                    let mut log_to_run = app.lock().await.store.get_session(uuid)?;
+                    let content = {
+                        let mut app_lock = app.lock().await;
+                        // prepare_for_run cleans any previous AI/Error responses, making it perfect for retries.
+                        let log_to_run = app_lock.store.prepare_for_run(uuid)?;
+                        format_chat_log(&log_to_run)
+                    };
 
-                    // 2. 在内存中(in-memory)准备要发送的内容。
-                    //    这个函数会移除最后一个 `::>user:` 之后的所有AI回复，以确保是续写或重试。
-                    //    这步操作不会修改磁盘上的原始文件。
-                    truncate_after_last_user(&mut log_to_run);
-
-                    // 3. 将内存中的、准备好的版本格式化为字符串。
-                    let content_to_send = format_chat_log(&log_to_run);
-                    
-                    // 4. 发送准备好的内容到服务器。
-                    client.execute_chat(&content_to_send).await?;
-                    
-                    // 5. 因为上传成功，我们将本地状态更新为 Pending。
-                    //    这里我们只更新状态，不改变文件内容。
+                    client.execute_chat(&content).await?;
                     (SyncStatus::Pending, format!("Session {} sent to server.", uuid))
                 },
-                // --- END OF FIX ---
 
-                // 如果服务器端执行失败，我们可以选择重发
-                (_, Some(rs)) if rs.starts_with("failed:") => {
-                    log::info!("Session {} failed on server. Resending...", uuid);
-                    client.resend_task(uuid).await?;
-                    (SyncStatus::Pending, format!("Resend request for {} sent.", uuid))
-                },
-
-                // 其他情况（如 Pending, Done），默认操作是下载服务器的最新版本
-                _ => {
-                    log::info!("Session {} is on server. Downloading result...", uuid);
+                // --- DOWNLOAD FLOW ---
+                // The server has the authoritative version, and we need to get it.
+                // This applies when the server is Done, Processing, or we are just checking on a Pending task.
+                SyncStatus::Pending | SyncStatus::Processing | SyncStatus::Done => {
+                    log::info!("Server has authority for session {}. Downloading result...", uuid);
+                    
+                    // We need the remote metadata to properly update the local store
                     let remote_tasks = client.list_tasks().await?;
                     let remote_task_info = remote_tasks.into_iter().find(|t| t.uuid == uuid)
-                        .ok_or_else(|| AppError::NetworkError(format!("Session {} not found on server.", uuid)))?;
+                        .ok_or_else(|| AppError::NetworkError(format!("Session {} not found on server during sync.", uuid)))?;
                     
                     let content = client.download_task(uuid).await?;
                     
-                    // 这个函数会用服务器内容覆盖本地文件，这是预期的下载行为。
                     app.lock().await.store.update_from_remote(&content, &remote_task_info)?;
-                    
-                    // 根据服务器状态决定最终本地状态
-                    let final_status = if remote_task_info.status == "completed" {
-                        SyncStatus::Finish 
-                    } else { 
-                        SyncStatus::Failed 
-                    };
-                    (final_status, format!("Session {} synced from server.", uuid))
+                    (SyncStatus::Finish, format!("Session {} synced from server.", uuid))
+                }
+
+                // --- NO-OP FLOW ---
+                // The session is already fully synced. Nothing to do.
+                SyncStatus::Finish => {
+                    log::info!("Session {} is already synced. No action taken.", uuid);
+                    (SyncStatus::Finish, format!("Session {} is already up to date.", uuid))
+                }
+                
+                // --- CONFLICT/UNHANDLED FLOW ---
+                SyncStatus::Conflict => {
+                    log::warn!("Session {} is in a conflict state. Manual resolution required.", uuid);
+                    (SyncStatus::Conflict, "Conflict detected. Action not yet implemented.".to_string())
                 }
             };
             
-            // 统一在最后更新本地数据库和UI
+            // Update the local store and UI with the outcome.
             let mut app_lock = app.lock().await;
             // 注意：这里我们只更新状态，而不传递 remote_status，因为上面的逻辑已经处理了它
             app_lock.store.update_session_status(uuid, new_local_status, None)?;

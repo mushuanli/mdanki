@@ -8,12 +8,12 @@ pub struct ChatLog {
     pub uuid: Uuid,
     pub title: String,
     pub model: Option<String>,
-    pub status: Option<String>,
+    pub status: Option<String>, // Global status for the entire session
     pub system_prompt: Option<String>,
     pub interactions: Vec<Interaction>,
-    // REFACTOR: Add new metadata fields
-    pub resend_at: Option<DateTime<Utc>>,
-    pub fail_reason: Option<String>,
+    // REMOVED: These fields are now obsolete.
+    // pub resend_at: Option<DateTime<Utc>>,
+    // pub fail_reason: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -24,6 +24,10 @@ pub enum Interaction {
     },
     Ai {
         content: String,
+        created_at: DateTime<Utc>,
+    },
+    Error { // This variant now handles all interaction-level failures
+        reason: String,
         created_at: DateTime<Utc>,
     },
     Attachment {
@@ -41,23 +45,24 @@ impl ChatLog {
             status: Some("local".to_string()),
             system_prompt: None,
             interactions: Vec::new(),
-            resend_at: None,
-            fail_reason: None,
         }
     }
 
-    /// Helper to get the creation time of the whole log, which is the time of the first interaction.
+    /// Helper to get the creation time of the whole log.
     pub fn get_creation_time(&self) -> DateTime<Utc> {
         self.interactions.first().map_or_else(Utc::now, |interaction| {
             match interaction {
                 Interaction::User { created_at, .. } => *created_at,
                 Interaction::Ai { created_at, .. } => *created_at,
-                Interaction::Attachment { .. } => Utc::now(), // Attachments don't have timestamps
+                Interaction::Error { created_at, .. } => *created_at,
+                Interaction::Attachment { .. } => Utc::now(),
             }
         })
     }
 }
 
+
+// PacketType enum remains the same...
 #[derive(PartialEq, Debug, Clone, Copy)]
 #[repr(u8)]
 pub enum PacketType {
@@ -69,8 +74,7 @@ pub enum PacketType {
     CmdList = 0x02,
     CmdGet = 0x03,         
     CmdDelete = 0x04,      
-    CmdResend = 0x05,      
-    CmdUpdate = 0x06, // NEW: Command to update a task
+    CmdUpdate = 0x06,
     AttachmentChunk = 0x10,
     Ack = 0x80,            
     ResponseList = 0x81,   
@@ -88,9 +92,7 @@ impl PacketType {
             0x02 => Some(PacketType::CmdList),
             0x03 => Some(PacketType::CmdGet),
             0x04 => Some(PacketType::CmdDelete),
-            0x05 => Some(PacketType::CmdResend),
-            0x06 => Some(PacketType::CmdUpdate), // NEW
-
+            0x06 => Some(PacketType::CmdUpdate),
             0x10 => Some(PacketType::AttachmentChunk),
             0x80 => Some(PacketType::Ack),
             0x81 => Some(PacketType::ResponseList),

@@ -85,10 +85,6 @@ impl<S: AsyncRead + AsyncWrite + Unpin> NetworkClient<S> {
         Ok(())
     }
 
-    pub async fn resend_task(&mut self, uuid: Uuid) -> Result<()> {
-        self.send_and_receive(PacketType::CmdResend, uuid.to_string().as_bytes(), PacketType::Ack).await?;
-        Ok(())
-    }
 
     /// Sends a chat file to the server for execution.
     pub async fn execute_chat(&mut self, chat_file_content: &str) -> Result<Uuid> {

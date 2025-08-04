@@ -228,7 +228,7 @@ impl<'a> App<'a> {
                 if let Some(session) = self.get_selected_session() {
                     Some(Action::SyncSelected {
                         uuid: session.uuid,
-                        remote_status: session.remote_status.clone(),
+                        // remote_status: session.remote_status.clone(), // <-- LINE REMOVED
                         local_status: session.sync_status.clone(),
                     })
                 } else {
@@ -398,22 +398,21 @@ impl<'a> App<'a> {
         
         let mut log = ChatLog::new(title);
         
-        // --- MODIFIED: Store the full model identifier ---
         if let Some(model_identifier) = self.models.get(self.selected_model_index) {
             log.model = Some(model_identifier.clone());
         }
-        // --- END MODIFIED ---
         
-        // --- FIX: Use the system_prompt variable ---
         if !system_prompt.trim().is_empty() {
             log.system_prompt = Some(system_prompt);
         }
-        // --- END FIX ---
 
-    log.interactions.push(Interaction::User {
-        content: user_content,
-        created_at: Utc::now(), // <-- FIX: Add created_at
-    });
+        // This is correct. It creates an Interaction object.
+        // `format_chat_log` will handle turning it into a block.
+        log.interactions.push(Interaction::User {
+            content: user_content,
+            created_at: Utc::now(),
+        });
+        
         log
     }
 }

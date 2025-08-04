@@ -2,13 +2,12 @@
 
 use crate::common::config::CONFIG;
 use crate::common::frame::{encode_frame, read_frame};
-use crate::common::protocol::parse_chat_file;
+use crate::common::protocol::{parse_chat_file}; // Add imports
 use crate::common::types::PacketType;
 use crate::common::crypto::verify_signature;
 use crate::error::{AppError, Result};
 use crate::server::db::Database;
 use crate::server::worker::AiTask;
-use chrono::Utc;
 use rand::RngCore;
 use serde_json::{from_slice, json, Value};
 use std::fs;
@@ -60,7 +59,6 @@ where
             PacketType::CmdList => handle_list(&mut stream, &db).await,
             PacketType::CmdGet => handle_get(&mut stream, &frame.payload).await,
             PacketType::CmdDelete => handle_delete(&mut stream, &db, &frame.payload).await,
-            PacketType::CmdResend => handle_resend(&mut stream, &db, &task_sender, &frame.payload, &addr).await,
             PacketType::CmdUpdate => handle_update(&mut stream, &frame.payload).await,
             _ => {
                 let err_msg = format!("Unsupported command: {:?}", frame.packet_type);
@@ -224,27 +222,6 @@ async fn handle_delete<S: AsyncWrite + Unpin>(stream: &mut S, db: &Database, pay
     Ok(())
 }
 
-async fn handle_resend<S: AsyncWrite + Unpin>(stream: &mut S, db: &Database, task_sender: &mpsc::Sender<AiTask>, payload: &[u8], addr: &SocketAddr) -> Result<()> {
-    let uuid_str = String::from_utf8_lossy(payload);
-    let uuid = Uuid::parse_str(&uuid_str).map_err(|_| AppError::ParseError("Invalid UUID".into()))?;
-
-    // Update status to pending and clear error message
-    db.update_status(&uuid, "pending", None).await?;
-    
-    // Add resend timestamp to the file
-    let file_path = Path::new(&CONFIG.storage.chat_dir).join(format!("{}.txt", uuid_str));
-    let mut content = fs::read_to_string(&file_path)?;
-    content.push_str(&format!("::>resend_at: {}\n", Utc::now().to_rfc3339()));
-    fs::write(&file_path, content)?;
-
-    // Send to worker queue
-    task_sender.send(AiTask { uuid, client_ip: addr.ip().to_string() }).await
-        .map_err(|e| AppError::NetworkError(format!("Failed to queue task: {}", e)))?;
-
-    let frame = encode_frame(PacketType::Ack, &[]);
-    stream.write_all(&frame).await?;
-    Ok(())
-}
 
 async fn handle_update<S: AsyncWrite + Unpin>(stream: &mut S, payload: &[u8]) -> Result<()> {
     let v: Value = serde_json::from_slice(payload)?;
