@@ -14,23 +14,28 @@ pub enum Action {
     // Task List Actions
     EnterNewChat,
     StartEdit(Uuid),
-    // --- NEW ACTIONS ---
     ViewTask(Uuid),
     EnterAppendPrompt(Uuid),
-    // --- END NEW ---
     
+    // Viewer Actions <-- NEW
+    ViewerScroll(i16), // A single action with a delta: +1, -1, +10, -10 etc.
+    ViewerScrollToTop,
+    ViewerScrollToBottom,
+
+    // Editor Actions <-- NEW
+    EditorJumpToNextBlock,
+    EditorJumpToPrevBlock,
+
     // Popup/Modal Actions
-    ExitPopup, // A generic exit action for any modal view
+    ExitPopup, 
+    ToggleHelp, // <-- NEW: Show/hide help popup
     CyclePopupInput,
     SendNewTask(ChatLog),
-    // --- NEW ACTION ---
     SendAppendedPrompt { uuid: Uuid, prompt: String },
-    // --- END NEW ---
     
     // Network/Sync Actions
     DeleteTask(Uuid),
-    // MODIFIED: SyncSelected now only needs the local status to make a decision.
-    SyncSelected { uuid: Uuid, local_status: SyncStatus }, // <-- remote_status REMOVED
+    SyncSelected { uuid: Uuid, local_status: SyncStatus },
     SaveEdit,
     CancelEdit,
 }

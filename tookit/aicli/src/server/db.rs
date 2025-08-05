@@ -7,7 +7,7 @@ use sqlx::{Row, FromRow};
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
 
-#[derive(Clone)] // So it can be easily shared across async tasks
+#[derive(Clone)]
 pub struct Database {
     // This field is private, so all database access must go through methods on this struct.
     pool: SqlitePool,
@@ -29,6 +29,7 @@ pub struct RemoteTaskInfo {
     pub title: String,
     pub status: String,
     pub created_at: DateTime<Utc>,
+    pub updated_at: Option<DateTime<Utc>>, // Make it optional for backward compatibility
     pub error_message: Option<String>,
 }
 
@@ -62,40 +63,34 @@ impl Database {
 
     pub async fn create_chat_log(&self, log: &ChatLog, client_ip: &str) -> Result<()> {
         let model_used = log.model.as_deref().unwrap_or_default();
-        sqlx::query("INSERT INTO chat_logs (uuid, title, client_ip, status, model_used, created_at) VALUES (?, ?, ?, ?, ?, ?)")
+        sqlx::query("INSERT INTO chat_logs (uuid, title, client_ip, status, model_used, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
             .bind(log.uuid)
             .bind(&log.title)
             .bind(client_ip)
-            .bind("pending") // A task being created is immediately pending
+            .bind("pending")
             .bind(model_used)
-            .bind(log.get_creation_time()) // Use the creation time of the first interaction
+            .bind(log.get_creation_time())
+            .bind(log.updated_at) // Bind the new timestamp
             .execute(&self.pool)
             .await.map_err(|e| AppError::DbError(e.to_string()))?;
         Ok(())
     }
 
-    pub async fn update_status(&self, uuid: &Uuid, status: &str, error_msg: Option<&str>) -> Result<()> {
+    pub async fn update_status(&self, uuid: &Uuid, status: &str, error_msg: Option<&str>, updated_at: DateTime<Utc>) -> Result<()> {
         let mut query_builder = sqlx::query_builder::QueryBuilder::new("UPDATE chat_logs SET status = ");
         query_builder.push_bind(status);
+        query_builder.push(", updated_at = ").push_bind(updated_at); // Always update timestamp
 
-        // Set timestamps based on status
         if status == "processing" {
             query_builder.push(", processing_at = ").push_bind(Utc::now());
-            query_builder.push(", finished_at = NULL"); // Clear finished time if it becomes processing
         } else if status == "completed" || status == "failed" {
             query_builder.push(", finished_at = ").push_bind(Utc::now());
-            query_builder.push(", processing_at = NULL"); // Clear processing time if finished
-        } else {
-            // For 'pending', 'local', 'modified', 'synced', etc., clear both timestamps
-            query_builder.push(", processing_at = NULL");
-            query_builder.push(", finished_at = NULL");
         }
         
-        // Update error message
         if let Some(msg) = error_msg {
             query_builder.push(", error_message = ").push_bind(msg);
         } else {
-            query_builder.push(", error_message = NULL"); // Clear error if not provided
+            query_builder.push(", error_message = NULL");
         }
         
         query_builder.push(" WHERE uuid = ").push_bind(uuid);
@@ -106,7 +101,7 @@ impl Database {
     // --- NEW DB METHODS FOR TUI ---
     
     pub async fn list_all_tasks(&self) -> Result<Vec<RemoteTaskInfo>> {
-        sqlx::query_as::<_, RemoteTaskInfo>("SELECT uuid, title, status, created_at, error_message FROM chat_logs ORDER BY created_at DESC")
+        sqlx::query_as::<_, RemoteTaskInfo>("SELECT uuid, title, status, created_at, updated_at, error_message FROM chat_logs ORDER BY created_at DESC")
             .fetch_all(&self.pool)
             .await
             .map_err(|e| AppError::DbError(e.to_string()))

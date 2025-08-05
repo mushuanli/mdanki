@@ -3,9 +3,11 @@
 use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
 use ratatui_textarea::TextArea;
+use std::cmp::Ordering;
 
 use crate::error::{Result, AppError};
 use crate::common::protocol::{format_chat_log, parse_chat_file};
+use crate::common::types::ChatLog;
 use super::network::NetworkClient;
 use super::tui::app::{App, AppMode};
 use super::tui::action::Action;
@@ -80,63 +82,59 @@ pub async fn handle_network_action(
             log::info!("Successfully sent appended session {}", uuid);
         }
 
-        Action::SyncSelected { uuid, local_status } => {
+        Action::SyncSelected { uuid, .. } => {
+            log::info!("Starting timestamp-based sync for session {}", uuid);
             let mut client = NetworkClient::connect(&SERVER_ADDR, &CLIENT_USERNAME, USER_PRIVATE_KEY_PATH).await?;
             
-            let (new_local_status, status_message) = match local_status {
-                // --- UPLOAD FLOW ---
-                // The client has the authoritative version. This applies to new, modified, or failed-and-retried sessions.
-                SyncStatus::Local | SyncStatus::Modified | SyncStatus::Failed => {
-                    log::info!("Client has authority for session {}. Uploading...", uuid);
-                    
+            // 1. Get local and remote timestamps
+            let local_updated_at = app.lock().await.store.index.get(&uuid).map(|info| info.updated_at);
+
+            let remote_tasks = client.list_tasks().await?;
+            let remote_info = remote_tasks.into_iter().find(|t| t.uuid == uuid);
+            let remote_updated_at = remote_info.as_ref().and_then(|info| info.updated_at);
+
+            // 2. Compare timestamps and decide action
+            let ordering = match (local_updated_at, remote_updated_at) {
+                (Some(local), Some(remote)) => local.cmp(&remote),
+                (Some(_), None) => Ordering::Greater, // Local exists, remote doesn't -> Upload
+                (None, Some(_)) => Ordering::Less,    // Remote exists, local doesn't -> Download
+                (None, None) => return Err(AppError::NetworkError(format!("Session {} not found locally or on server.", uuid))),
+            };
+
+            match ordering {
+                Ordering::Greater => {
+                    // --- UPLOAD FLOW ---
+                    log::info!("Client is newer for {}. Uploading...", uuid);
                     let content = {
                         let mut app_lock = app.lock().await;
-                        // prepare_for_run cleans any previous AI/Error responses, making it perfect for retries.
+                        // prepare_for_run cleans the log and updates its timestamp before saving
                         let log_to_run = app_lock.store.prepare_for_run(uuid)?;
                         format_chat_log(&log_to_run)
                     };
-
                     client.execute_chat(&content).await?;
-                    (SyncStatus::Pending, format!("Session {} sent to server.", uuid))
-                },
-
-                // --- DOWNLOAD FLOW ---
-                // The server has the authoritative version, and we need to get it.
-                // This applies when the server is Done, Processing, or we are just checking on a Pending task.
-                SyncStatus::Pending | SyncStatus::Processing | SyncStatus::Done => {
-                    log::info!("Server has authority for session {}. Downloading result...", uuid);
                     
-                    // We need the remote metadata to properly update the local store
-                    let remote_tasks = client.list_tasks().await?;
-                    let remote_task_info = remote_tasks.into_iter().find(|t| t.uuid == uuid)
-                        .ok_or_else(|| AppError::NetworkError(format!("Session {} not found on server during sync.", uuid)))?;
-                    
+                    let mut app_lock = app.lock().await;
+                    app_lock.store.update_session_status(uuid, SyncStatus::Pending, None)?;
+                    app_lock.reload_sessions();
+                    app_lock.status_message = Some(format!("Session {} sent to server.", uuid));
+                }
+                Ordering::Less => {
+                    // --- DOWNLOAD FLOW ---
+                    log::info!("Server is newer for {}. Downloading...", uuid);
+                    let remote_task_info = remote_info.unwrap(); // We know it exists from the comparison logic
                     let content = client.download_task(uuid).await?;
-                    
-                    app.lock().await.store.update_from_remote(&content, &remote_task_info)?;
-                    (SyncStatus::Finish, format!("Session {} synced from server.", uuid))
-                }
 
-                // --- NO-OP FLOW ---
-                // The session is already fully synced. Nothing to do.
-                SyncStatus::Finish => {
-                    log::info!("Session {} is already synced. No action taken.", uuid);
-                    (SyncStatus::Finish, format!("Session {} is already up to date.", uuid))
+                    let mut app_lock = app.lock().await;
+                    app_lock.store.update_from_remote(&content, &remote_task_info)?;
+                    app_lock.reload_sessions();
+                    app_lock.status_message = Some(format!("Session {} downloaded from server.", uuid));
                 }
-                
-                // --- CONFLICT/UNHANDLED FLOW ---
-                SyncStatus::Conflict => {
-                    log::warn!("Session {} is in a conflict state. Manual resolution required.", uuid);
-                    (SyncStatus::Conflict, "Conflict detected. Action not yet implemented.".to_string())
+                Ordering::Equal => {
+                    // --- NO-OP FLOW ---
+                    log::info!("Timestamps match for {}. Already in sync.", uuid);
+                    app.lock().await.status_message = Some(format!("Session {} is already in sync.", uuid));
                 }
-            };
-            
-            // Update the local store and UI with the outcome.
-            let mut app_lock = app.lock().await;
-            // 注意：这里我们只更新状态，而不传递 remote_status，因为上面的逻辑已经处理了它
-            app_lock.store.update_session_status(uuid, new_local_status, None)?;
-            app_lock.reload_sessions();
-            app_lock.status_message = Some(status_message);
+            }
         }
 
         Action::DeleteTask(uuid) => {
@@ -182,35 +180,39 @@ pub async fn handle_network_action(
 /// Handles actions that only modify local state and do not require network access.
 pub async fn handle_local_action(action: Action, app: Arc<Mutex<App<'static>>>) -> Result<()> {
     log::debug!("Handling local action: {:?}", action);
-    let mut app_lock = app.lock().await;
-
+    
     match action {
         Action::StartEdit(uuid) => {
+            // Lock once and perform all state updates
+            let mut app_lock = app.lock().await; 
             let content = app_lock.store.get_session_content(uuid)?;
+            
+            // --- NEW: Calculate block positions ---
+            app_lock.editor_block_positions = content
+                .lines()
+                .enumerate()
+                .filter_map(|(i, line)| {
+                    if line.starts_with("::>user:") || line.starts_with("::>response:") || line.starts_with("::>error:") {
+                        Some(i) // Store the line number
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            // --- END NEW ---
+
             app_lock.editor_textarea = TextArea::new(content.lines().map(String::from).collect());
             app_lock.editor_task_uuid = Some(uuid);
             app_lock.mode = AppMode::EditingTask;
-            app_lock.status_message = Some("Editor loaded. CTRL+S to save, Esc to cancel.".into());
+            app_lock.status_message = Some("Editor. Save: Ctrl+S, Cancel: Esc, Jump: Ctrl+N/P, Help: Ctrl+H".into());
         },
-        // --- ADD: ViewTask is a local action ---
-        Action::ViewTask(uuid) => {
-            let content = app_lock.store.get_session_content(uuid)?;
-            app_lock.viewer_content = content;
-            app_lock.mode = AppMode::ViewingTask;
-            app_lock.status_message = Some("Viewing session. Press Esc or 'q' to return.".into());
-        },
-        Action::EnterAppendPrompt(uuid) => {
-            app_lock.active_append_uuid = Some(uuid);
-            app_lock.append_prompt_input = TextArea::default();
-            app_lock.append_prompt_input.set_block(
-                ratatui::widgets::Block::default()
-                    .borders(ratatui::widgets::Borders::ALL)
-                    .title(" Add to Conversation ")
-            );
-            app_lock.mode = AppMode::AppendPromptPopup;
-            app_lock.status_message = Some("Enter prompt. Press Enter to send, Esc to cancel.".into());
-        },
-        // Other actions are either UI-only (handled in App::update) or network actions.
+        Action::ViewTask(_) | Action::EnterAppendPrompt(_) => {
+            // These actions are simple enough to be handled directly in app.update()
+            // We can just pass through here, or move the logic here for consistency.
+            // For now, let app.update handle it as it's purely state change.
+            app.lock().await.update(action);
+        }
+        // Other local actions are UI-only and handled by App::update
         _ => {}
     }
     Ok(())

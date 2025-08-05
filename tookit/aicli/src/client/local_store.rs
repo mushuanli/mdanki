@@ -28,7 +28,7 @@ pub struct LocalSessionInfo {
     pub uuid: Uuid,
     pub title: String,
     pub created_at: DateTime<Utc>,
-    pub modified_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>, // Important new field
     pub sync_status: SyncStatus,
     pub remote_status: Option<String>,
 }
@@ -78,12 +78,10 @@ impl LocalStore {
     }
 
     /// Appends a prompt for the 'append' command.
-    pub fn append_prompt(&mut self, uuid: Uuid, prompt: String) -> Result<()> {
+    pub fn append_prompt(&mut self, uuid: Uuid, prompt: String) -> Result<ChatLog> {
         let mut log = self.get_session(uuid)?;
-        log.interactions.push(Interaction::User {
-            content: prompt,
-            created_at: Utc::now(),
-        });
+        log.interactions.push(Interaction::User { content: prompt, created_at: Utc::now() });
+        log.updated_at = Utc::now(); // Explicitly update timestamp
         // Status becomes Modified.
         self.save_session(&log, SyncStatus::Modified)?;
         self.save_index()?;
@@ -93,17 +91,11 @@ impl LocalStore {
     /// Prepares a session for the 'run' command by clearing trailing AI responses.
     pub fn prepare_for_run(&mut self, uuid: Uuid) -> Result<ChatLog> {
         let mut log = self.get_session(uuid)?;
-        
-        // If the file is not found in the index, register it now.
-        if !self.index.contains_key(&uuid) {
-            self.register_external_session(&log)?;
-        }
-        
         truncate_after_last_user(&mut log);
+        log.updated_at = Utc::now(); // Truncating is a change, update timestamp
 
         // Save the cleaned version, marking it as Modified.
         self.save_session(&log, SyncStatus::Modified)?;
-        self.save_index()?;
         Ok(log)
     }
 
@@ -131,22 +123,21 @@ impl LocalStore {
         let file_path = self.sessions_dir.join(format!("{}.md", log.uuid));
         fs::write(&file_path, content)?;
 
-        let now = Utc::now();
-        
         let info = self.index.entry(log.uuid).or_insert_with(|| LocalSessionInfo {
             uuid: log.uuid,
             title: log.title.clone(),
             created_at: log.get_creation_time(),
-            modified_at: now,
+            updated_at: log.updated_at,
             sync_status: new_status.clone(),
             remote_status: None,
         });
 
         // Update fields for existing entries
         info.title = log.title.clone();
-        info.modified_at = now;
+        info.updated_at = log.updated_at; // CRITICAL: Update the index timestamp
         info.sync_status = new_status;
 
+        self.save_index()?;
         Ok(())
     }
 
@@ -190,20 +181,18 @@ impl LocalStore {
     
     /// Updates the local session based on content and metadata from the server.
     pub fn update_from_remote(&mut self, content: &str, remote_task: &super::network::RemoteTask) -> Result<()> {
-        let log = parse_chat_file(content)?;
-        // Use `save_session` with status `Finish`
-        self.save_session(&log, SyncStatus::Finish)?;
+        let mut log = parse_chat_file(content)?;
+        log.updated_at = remote_task.updated_at.unwrap_or_else(Utc::now);
+
+        // --- REFACTORED LOGIC ---
+        // Determine the new local status based on the AUTHORITATIVE remote status.
+        let new_local_status = match remote_task.status.as_str() {
+            "completed" => SyncStatus::Finish,
+            "failed" => SyncStatus::Failed,
+            _ => SyncStatus::Pending,
+        };
         
-        // Additional metadata update
-        if let Some(info) = self.index.get_mut(&log.uuid) {
-             info.remote_status = Some(remote_task.status.clone());
-             if let Some(err) = &remote_task.error_message {
-                info.remote_status = Some(format!("failed: {}", err));
-                info.sync_status = SyncStatus::Failed;
-             }
-        }
-        
-        self.save_index()?;
+        self.save_session(&log, new_local_status)?;
         Ok(())
     }
 
@@ -212,36 +201,35 @@ impl LocalStore {
         let mut changed = false;
         for task in remote_tasks {
             if let Some(info) = self.index.get_mut(&task.uuid) {
+                // If local is newer, don't let metadata sync overwrite our `Modified` status
+                if info.updated_at > task.updated_at.unwrap_or_default() {
+                    continue;
+                }
+                
+                // Update remote status string for display
                 let new_remote_status_str = if let Some(err) = &task.error_message {
                     format!("failed: {}", err)
                 } else {
                     task.status.clone()
                 };
-                let new_remote_status = Some(new_remote_status_str);
-
-                // Only update if remote status has changed. Don't override local statuses like Modified.
-                if info.remote_status != new_remote_status {
-                    info.remote_status = new_remote_status;
+                if info.remote_status.as_deref() != Some(&new_remote_status_str) {
+                    info.remote_status = Some(new_remote_status_str);
                     changed = true;
                 }
-                
-                // Also update local sync status based on remote, if it's not user-modified
-                if !matches!(info.sync_status, SyncStatus::Local | SyncStatus::Modified) {
-                    let new_sync_status = match task.status.as_str() {
-                        "pending" => SyncStatus::Pending, "processing" => SyncStatus::Processing,
-                        "completed" => SyncStatus::Done, "failed" => SyncStatus::Failed,
-                        _ => info.sync_status.clone(),
-                    };
-                    if info.sync_status != new_sync_status {
-                        info.sync_status = new_sync_status;
-                        changed = true;
-                    }
+
+                // Update local sync status enum
+                let new_sync_status = match task.status.as_str() {
+                    "pending" => SyncStatus::Pending, "processing" => SyncStatus::Processing,
+                    "completed" => SyncStatus::Done, "failed" => SyncStatus::Failed,
+                    _ => info.sync_status.clone(),
+                };
+                if info.sync_status != new_sync_status {
+                    info.sync_status = new_sync_status;
+                    changed = true;
                 }
             }
         }
-        if changed {
-            self.save_index()?;
-        }
+        if changed { self.save_index()?; }
         Ok(())
     }
 

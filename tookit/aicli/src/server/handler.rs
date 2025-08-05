@@ -2,7 +2,7 @@
 
 use crate::common::config::CONFIG;
 use crate::common::frame::{encode_frame, read_frame};
-use crate::common::protocol::{parse_chat_file}; // Add imports
+use crate::common::protocol::{parse_chat_file, format_chat_log, truncate_after_last_user}; // Ensure all are imported
 use crate::common::types::PacketType;
 use crate::common::crypto::verify_signature;
 use crate::error::{AppError, Result};
@@ -47,15 +47,15 @@ where
         let frame = match read_frame(&mut stream).await {
             Ok(Some(frame)) => frame,
             Ok(None) => {
-                info!("Client {} disconnected.", addr);
+                info!("Client {} ({}) disconnected.", addr, username);
                 return Ok(());
             }
             Err(e) => return Err(e),
         };
 
-        // REFACTOR: Handle all new TUI commands
+        // Pass username to the relevant handlers
         let result = match frame.packet_type {
-            PacketType::CmdExec => handle_exec(&mut stream, &db, &task_sender, &frame.payload, &addr).await,
+            PacketType::CmdExec => handle_exec(&mut stream, &db, &task_sender, &frame.payload, &addr, &username).await,
             PacketType::CmdList => handle_list(&mut stream, &db).await,
             PacketType::CmdGet => handle_get(&mut stream, &frame.payload).await,
             PacketType::CmdDelete => handle_delete(&mut stream, &db, &frame.payload).await,
@@ -70,43 +70,53 @@ where
         };
 
         if let Err(e) = result {
-            error!("Error processing command for {}: {}", addr, e);
+            error!("Error processing command for {} ({}): {}", addr, username, e);
             let err_frame = encode_frame(PacketType::Error, e.to_string().as_bytes());
             stream.write_all(&err_frame).await.ok();
         }
     }
 }
 
-// MODIFIED: All helper functions now take a generic stream
+// --- MODIFIED: handle_exec now accepts the username ---
 async fn handle_exec<S: AsyncWrite + Unpin>(
     stream: &mut S,
     db: &Database,
     task_sender: &mpsc::Sender<AiTask>,
     payload: &[u8],
     addr: &SocketAddr,
+    username: &str,
 ) -> Result<()> {
     // 1. Parse content and save file (same as before)
     let content = String::from_utf8(payload.to_vec())?;
-    let chat_log = parse_chat_file(&content)?;
+    let mut chat_log = parse_chat_file(&content)?;
     
+    // --- SERVER-SIDE ROBUSTNESS ---
+    // ALWAYS truncate any trailing AI/Error responses from the client payload
+    // before saving and processing. This ensures every run starts from a clean user prompt.
+    truncate_after_last_user(&mut chat_log);
+    
+    // Save the cleaned content.
+    let cleaned_content = format_chat_log(&chat_log);
     let file_path = Path::new(&CONFIG.storage.chat_dir).join(format!("{}.txt", chat_log.uuid));
-    fs::write(&file_path, &content)?;
-    debug!("Upserting chat log {} from {}", chat_log.uuid, addr.ip());
+    fs::write(&file_path, &cleaned_content)?;
+    debug!("Upserting cleaned chat log {} for user '{}'", chat_log.uuid, username);
 
-    // --- 2. CORE FIX: Check if log exists and decide whether to CREATE or UPDATE ---
+    // This logic remains correct: create or update DB record.
     if db.log_exists(&chat_log.uuid).await? {
-        // It's an UPDATE (append/edit)
-        info!("Updating existing task {}", chat_log.uuid);
-        // Just update status to pending so worker can re-process it.
-        db.update_status(&chat_log.uuid, "pending", None).await?;
+        info!("Queueing existing task {} for re-processing", chat_log.uuid);
+        // The timestamp in the DB will be updated by the worker.
+        db.update_status(&chat_log.uuid, "pending", None, chat_log.updated_at).await?;
     } else {
-        // It's a CREATE (new task)
-        info!("Creating new task {}", chat_log.uuid);
+        info!("Creating and queueing new task {}", chat_log.uuid);
         db.create_chat_log(&chat_log, &addr.ip().to_string()).await?;
     }
 
-    task_sender.send(AiTask { uuid: chat_log.uuid, client_ip: addr.ip().to_string() }).await
-        .map_err(|e| AppError::NetworkError(format!("Failed to queue task: {}", e)))?;
+    // --- MODIFIED: Create AiTask with the username ---
+    task_sender.send(AiTask { 
+        uuid: chat_log.uuid, 
+        client_ip: addr.ip().to_string(),
+        username: username.to_string(),
+    }).await.map_err(|e| AppError::NetworkError(format!("Failed to queue task: {}", e)))?;
 
     let ack_frame = encode_frame(PacketType::Ack, chat_log.uuid.to_string().as_bytes());
     stream.write_all(&ack_frame).await?;
@@ -223,18 +233,20 @@ async fn handle_delete<S: AsyncWrite + Unpin>(stream: &mut S, db: &Database, pay
 }
 
 
-async fn handle_update<S: AsyncWrite + Unpin>(stream: &mut S, payload: &[u8]) -> Result<()> {
+async fn handle_update<S: AsyncWrite + Unpin>(stream: &mut S, db: &Database, payload: &[u8]) -> Result<()> {
     let v: Value = serde_json::from_slice(payload)?;
-    let uuid_str = v["uuid"].as_str().ok_or_else(|| AppError::ParseError("Missing UUID in update payload".into()))?;
-    let content = v["content"].as_str().ok_or_else(|| AppError::ParseError("Missing content in update payload".into()))?;
+    let uuid_str = v["uuid"].as_str().ok_or_else(|| AppError::ParseError("Missing UUID".into()))?;
+    let uuid = Uuid::parse_str(uuid_str)?;
+    let content = v["content"].as_str().ok_or_else(|| AppError::ParseError("Missing content".into()))?;
 
     // Overwrite the file on disk
     let file_path = Path::new(&CONFIG.storage.chat_dir).join(format!("{}.txt", uuid_str));
     fs::write(&file_path, content)?;
     debug!("Updated chat file for task {} at {:?}", uuid_str, file_path);
 
-    // TODO: Optionally, update a `modified_at` field in the database.
-    // For now, just overwriting the file is sufficient.
+    // Also update the database timestamp to reflect this manual edit from the client.
+    let log = parse_chat_file(content)?;
+    db.update_status(&uuid, "modified", None, log.updated_at).await?;
 
     let frame = encode_frame(PacketType::Ack, &[]);
     stream.write_all(&frame).await?;

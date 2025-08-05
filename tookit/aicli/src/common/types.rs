@@ -8,12 +8,10 @@ pub struct ChatLog {
     pub uuid: Uuid,
     pub title: String,
     pub model: Option<String>,
-    pub status: Option<String>, // Global status for the entire session
+    pub status: Option<String>, // Still useful for display purposes
+    pub updated_at: DateTime<Utc>, // The new source of truth for sync
     pub system_prompt: Option<String>,
     pub interactions: Vec<Interaction>,
-    // REMOVED: These fields are now obsolete.
-    // pub resend_at: Option<DateTime<Utc>>,
-    // pub fail_reason: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -43,6 +41,7 @@ impl ChatLog {
             title,
             model: None,
             status: Some("local".to_string()),
+            updated_at: Utc::now(), // Set on creation
             system_prompt: None,
             interactions: Vec::new(),
         }
@@ -58,6 +57,16 @@ impl ChatLog {
                 Interaction::Attachment { .. } => Utc::now(),
             }
         })
+    }
+
+    /// Checks if the log content represents a successfully completed interaction.
+    /// A correctly finished log must end with an AI response.
+    pub fn is_finished_correctly(&self) -> bool {
+        if let Some(last_interaction) = self.interactions.last() {
+            matches!(last_interaction, Interaction::Ai { .. })
+        } else {
+            false // A log with no interactions is not finished.
+        }
     }
 }
 

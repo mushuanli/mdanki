@@ -1,9 +1,9 @@
 // src/server/worker.rs
 
 use crate::common::config::CONFIG;
-use crate::common::protocol::{format_chat_log, parse_chat_file, truncate_after_last_user}; 
+use crate::common::protocol::{format_chat_log, parse_chat_file};
 use crate::common::types::{ChatLog, Interaction};
-use crate::error::{Result, AppError};
+use crate::error::{Result};
 use crate::server::ai_gateway::{self, AiMessage};
 use crate::server::db::Database;
 use std::fs;
@@ -18,6 +18,7 @@ use chrono::Utc;
 pub struct AiTask {
     pub uuid: Uuid,
     pub client_ip: String,
+    pub username: String, // <-- NEW: Add username field
 }
 
 /// The main loop for the worker pool.
@@ -33,16 +34,14 @@ pub async fn run_worker_pool(
         let db_clone = db.clone();
         
         tokio::spawn(async move {
-            log::info!("Processing task {} for client {}...", task.uuid, task.client_ip);
-            
-            // This error handling logic is now more robust.
-            // process_task handles its own DB status updates for success/failure.
-            // This top-level error catch is for I/O errors or other unexpected panics.
             let task_uuid = task.uuid;
+            info!("Processing task {} for user '{}' from client {}...", task_uuid, task.username, task.client_ip);
+            
+            // This top-level error catch is for unexpected I/O or other unhandled errors within process_task.
             if let Err(e) = process_task(db_clone.clone(), task).await {
-                log::error!("Unhandled error in process_task for {}: {}. Updating status to failed.", task_uuid, e);
+                error!("Unhandled error during processing for task {}: {}. Updating status to failed.", task_uuid, e);
                 if let Err(db_err) = db_clone.update_status(&task_uuid, "failed", Some(&e.to_string())).await {
-                    log::error!("CRITICAL: Failed to update DB to 'failed' for task {}: {}", task_uuid, db_err);
+                    error!("CRITICAL: Failed to update DB status for task {}: {}", task_uuid, db_err);
                 }
             }
             // The permit is automatically released when `permit` goes out of scope.
@@ -54,21 +53,14 @@ pub async fn run_worker_pool(
 /// The logic for processing a single AI task.
 async fn process_task(db: Arc<Database>, task: AiTask) -> Result<()> {
     // 1. Update status to 'processing'
-    db.update_status(&task.uuid, "processing", None).await?;
+    db.update_status(&task.uuid, "processing", None, Utc::now()).await?;
 
     // 2. Read and parse the chat file from disk
     let chat_file_path = Path::new(&CONFIG.storage.chat_dir).join(format!("{}.txt", task.uuid));
     let content = fs::read_to_string(&chat_file_path)?;
     let mut chat_log = parse_chat_file(&content)?;
-
-    // --- START OF THE FIX ---
-    // 3. **CRITICAL STEP**: Before sending a new request, remove any previous
-    //    AI responses or errors. This ensures we always start from a clean slate
-    //    after the last user prompt, preventing duplicate responses/errors.
-    truncate_after_last_user(&mut chat_log);
-    // --- END OF THE FIX ---
-
-    // 4. Prepare request for AI (was step 3)
+    
+    // 3. Prepare request for AI
     if chat_log.model.is_none() {
         chat_log.model = Some(CONFIG.server.default.clone());
     }
@@ -77,42 +69,57 @@ async fn process_task(db: Arc<Database>, task: AiTask) -> Result<()> {
     let ai_client = ai_gateway::create_client(&CONFIG, model_identifier)?;
     let messages = convert_chat_log_to_ai_messages(&chat_log);
 
-    // Defensive check: If after truncation there are no messages, it's an error.
-    if messages.is_empty() {
-        return Err(AppError::AiServiceError(
-            "Cannot process task: No valid user prompts found to send to AI.".to_string()
-        ));
-    }
-
-    // 5. Send request to AI and handle response (was step 4)
+    // --- 4. REFACTORED: Send request to AI, log the result, and handle the outcome robustly ---
     let ai_response_result = ai_client.send_request(messages).await;
+
+    // We are about to modify the log, so capture the new timestamp now.
+    let new_updated_at = Utc::now();
+    chat_log.updated_at = new_updated_at; // Update the in-memory log object
 
     match ai_response_result {
         Ok(ai_response_content) => {
-            log::info!("Received AI response for task {}", task.uuid);
-            // Append the NEW AI response
+            // NEW: Log the successful result immediately
+            info!(
+                "AI_RESULT_SUCCESS | User: {} | UUID: {} | Result: \"{}...\"",
+                task.username,
+                task.uuid,
+                ai_response_content.chars().take(100).collect::<String>() 
+            );
+
+            // Update the ChatLog with the successful response
             chat_log.interactions.push(Interaction::Ai {
                 content: ai_response_content,
                 created_at: Utc::now(),
             });
             chat_log.status = Some("completed".to_string());
-            db.update_status(&task.uuid, "completed", None).await?;
-            log::info!("Task {} completed successfully.", task.uuid);
+            
+            // Update database status
+            db.update_status(&task.uuid, "completed", None, new_updated_at).await?;
+            info!("Task {} completed successfully.", task.uuid);
         }
         Err(e) => {
-            log::error!("AI processing for task {} failed: {}", task.uuid, e);
-            // Append the NEW error details
+            // NEW: Log the failure result immediately
+            error!(
+                "AI_RESULT_FAILURE | User: {} | UUID: {} | Error: {}",
+                task.username,
+                task.uuid,
+                e
+            );
+
+            // Update the ChatLog with a structured error block
             chat_log.interactions.push(Interaction::Error {
                 reason: e.to_string(),
                 created_at: Utc::now(),
             });
             chat_log.status = Some("failed".to_string());
-            db.update_status(&task.uuid, "failed", Some(&e.to_string())).await?;
-            log::warn!("Task {} marked as failed. Wrote error details to session file.", task.uuid);
+
+            // Update database status with the error message
+            db.update_status(&task.uuid, "failed", Some(&e.to_string()), new_updated_at).await?;
+            warn!("Task {} marked as failed. Wrote error details to session file.", task.uuid);
         }
     }
-    
-    // 6. Write the final, clean state back to the file
+
+    // Write the final state (with the new updated_at header) back to the file
     let updated_content = format_chat_log(&chat_log);
     fs::write(&chat_file_path, updated_content)?;
 
@@ -125,6 +132,7 @@ fn convert_chat_log_to_ai_messages(log: &ChatLog) -> Vec<AiMessage> {
     if let Some(prompt) = &log.system_prompt {
         messages.push(AiMessage { role: "system".to_string(), content: prompt.clone() });
     }
+    // We only process up to the last user interaction.
     for interaction in &log.interactions {
         match interaction {
             Interaction::User { content, .. } => {
@@ -133,7 +141,7 @@ fn convert_chat_log_to_ai_messages(log: &ChatLog) -> Vec<AiMessage> {
             Interaction::Ai { content, .. } => {
                 messages.push(AiMessage { role: "assistant".to_string(), content: content.clone() });
             }
-            // Attachments and Errors are not sent to the AI in this implementation.
+            // Errors and Attachments are not sent to the AI.
             _ => {}
         }
     }

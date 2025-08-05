@@ -11,6 +11,7 @@ const PREFIX_UUID: &str = "::>uuid:";
 const PREFIX_TITLE: &str = "::>title:";
 const PREFIX_MODEL: &str = "::>model:";
 const PREFIX_STATUS: &str = "::>status:";
+const PREFIX_UPDATED_AT: &str = "::>updated_at:"; // New
 const PREFIX_SYSTEM: &str = "::>system:";
 
 // Interaction block prefixes (Per-interaction metadata and content)
@@ -24,31 +25,31 @@ const PREFIX_ERROR: &str = "::>error:";
 pub fn parse_chat_file(content: &str) -> Result<ChatLog> {
     let mut log = ChatLog::new("Untitled".to_string());
     
-    // Find the end of the header. The body starts with the first interaction block.
-    // An interaction block is identified by a blank line followed by a tag.
     let (header_str, body_str) = if let Some(pos) = content.find("\n\n::>") {
-        // Safe split: pos is the start of "\n\n", so header is before it.
-        // Body starts after the first `\n`.
-        let (h, b_with_leading_newline) = content.split_at(pos);
-        (h, b_with_leading_newline.trim_start())
+        let (h, b) = content.split_at(pos);
+        (h, b.trim_start())
     } else {
-        // No body, the whole file is the header.
         (content.trim(), "")
     };
 
     // --- 1. Parse Header ---
     let mut system_prompt_lines: Vec<&str> = Vec::new();
     let mut in_system_prompt = false;
+    let mut updated_at_found = false;
 
     for line in header_str.lines() {
         if line.is_empty() { continue; }
         
         if line.starts_with("::>") {
-            in_system_prompt = false; // Any new tag resets multiline context
+            in_system_prompt = false; 
             if let Some(val) = line.strip_prefix(PREFIX_UUID) { log.uuid = Uuid::from_str(val.trim())?; }
             else if let Some(val) = line.strip_prefix(PREFIX_TITLE) { log.title = val.trim().to_string(); }
             else if let Some(val) = line.strip_prefix(PREFIX_MODEL) { log.model = Some(val.trim().to_string()); }
             else if let Some(val) = line.strip_prefix(PREFIX_STATUS) { log.status = Some(val.trim().to_string()); }
+            else if let Some(val) = line.strip_prefix(PREFIX_UPDATED_AT) {
+                log.updated_at = DateTime::parse_from_rfc3339(val.trim())?.with_timezone(&Utc);
+                updated_at_found = true;
+            }
             else if let Some(val) = line.strip_prefix(PREFIX_SYSTEM) {
                 system_prompt_lines.push(val.trim_start());
                 in_system_prompt = true;
@@ -57,6 +58,12 @@ pub fn parse_chat_file(content: &str) -> Result<ChatLog> {
             system_prompt_lines.push(line);
         }
     }
+    
+    // If no timestamp was found in the file, use the file's modification time or now.
+    if !updated_at_found {
+        log.updated_at = Utc::now();
+    }
+
     if !system_prompt_lines.is_empty() {
         log.system_prompt = Some(system_prompt_lines.join("\n"));
     }
@@ -76,20 +83,12 @@ pub fn parse_chat_file(content: &str) -> Result<ChatLog> {
 
         for line in block_str.lines() {
             if !matches!(block_type, BlockType::None) {
-                content_lines.push(line); // It's a continuation of content
+                content_lines.push(line);
                 continue;
             }
             
-            // --- START OF THE FIX ---
             if let Some(val) = line.strip_prefix(PREFIX_CREATED_AT) {
-                // Try to parse the timestamp. If it's empty or invalid, default to Utc::now().
-                created_at = Some(
-                    DateTime::parse_from_rfc3339(val.trim())
-                        .map(|dt| dt.with_timezone(&Utc))
-                        .unwrap_or_else(|_| Utc::now())
-                );
-            // --- END OF THE FIX ---
-
+                created_at = Some(DateTime::parse_from_rfc3339(val.trim())?.with_timezone(&Utc));
             } else if let Some(val) = line.strip_prefix(PREFIX_ATTACH) {
                 let parts: Vec<&str> = val.split(':').map(str::trim).collect();
                 if parts.len() == 2 {
@@ -135,6 +134,7 @@ pub fn format_chat_log(log: &ChatLog) -> String {
     // --- 1. Format Header ---
     builder.push_str(&format!("{} {}\n", PREFIX_UUID, log.uuid));
     builder.push_str(&format!("{} {}\n", PREFIX_TITLE, log.title));
+    builder.push_str(&format!("{} {}\n", PREFIX_UPDATED_AT, log.updated_at.to_rfc3339()));
     if let Some(status) = &log.status { builder.push_str(&format!("{} {}\n", PREFIX_STATUS, status)); }
     if let Some(model) = &log.model { builder.push_str(&format!("{} {}\n", PREFIX_MODEL, model)); }
     if let Some(prompt) = &log.system_prompt {

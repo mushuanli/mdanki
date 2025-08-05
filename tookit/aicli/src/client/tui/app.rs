@@ -1,15 +1,15 @@
 // src/client/tui/app.rs
 
 use super::action::Action;
-use super::super::local_store::{LocalStore, LocalSessionInfo,};
+use super::super::local_store::{LocalStore, LocalSessionInfo};
 use crate::common::types::{ChatLog, Interaction};
 use crate::error::Result;
 use crate::client::cli::{SERVER_ADDR, CLIENT_USERNAME};
 
-use ratatui::widgets::ListState;
-use ratatui_textarea::{Input, TextArea};
+use ratatui::widgets::{Block, Borders, ListState};
+use ratatui_textarea::{Input, TextArea, CursorMove};
 use uuid::Uuid;
-use chrono::Utc; // <-- Add this
+use chrono::Utc;
 
 
 pub enum InputMode {
@@ -19,23 +19,21 @@ pub enum InputMode {
     SystemPrompt,
 }
 
-
-// --- ADD NEW MODES ---
-#[derive(PartialEq, Clone)] // Add Clone
+#[derive(PartialEq, Clone, Copy)]
 pub enum AppMode {
     TaskList,
     NewChatPopup,
     EditingTask,
-    ViewingTask, // Read-only view
-    AppendPromptPopup, // Popup for continuing a conversation
+    ViewingTask,
+    AppendPromptPopup,
+    HelpPopup,
 }
-// --- END NEW ---
 
 // TUI 核心状态
 pub struct App<'a> {
     pub should_quit: bool,
     pub mode: AppMode,
-    // MODIFIED: tasks is now a Vec of local session info
+    pub previous_mode: AppMode,
     pub sessions: Vec<LocalSessionInfo>, 
     pub task_list_state: ListState,
     pub status_message: Option<String>,
@@ -47,36 +45,36 @@ pub struct App<'a> {
     // The store is now part of the app state
     pub store: LocalStore,
 
-    // --- NEW FIELDS FOR MODEL SELECTION ---
-    pub models: Vec<String>, // e.g., ["deepseek:chat", "openr:gpt4"]
+    pub models: Vec<String>,
     pub selected_model_index: usize,
-    // --- END NEW FIELDS ---
 
-    // --- NEW STATE FIELDS ---
+    // State for Viewer <-- MODIFIED
     pub viewer_content: String,
+    pub viewer_scroll: u16,
+
     pub append_prompt_input: TextArea<'a>,
     pub active_append_uuid: Option<Uuid>,
-    // --- END NEW ---
 
-    // State for the "New Chat" popup
     pub new_chat_popup_active_input: InputMode,
     pub title_input: TextArea<'a>,
     pub system_prompt_input: TextArea<'a>,
     pub user_prompt_input: TextArea<'a>,
-    // NEW fields for the editor
+    
+    // State for Editor <-- MODIFIED
     pub editor_task_uuid: Option<Uuid>,
     pub editor_textarea: TextArea<'a>,
+    pub editor_block_positions: Vec<usize>,
 }
 
 impl<'a> App<'a> {
     pub fn new() -> Result<Self> {
         // ... initialization of text areas ...
         let mut title_input = TextArea::new(vec!["".to_string()]);
-        title_input.set_block(ratatui::widgets::Block::default().borders(ratatui::widgets::Borders::ALL).title(" Title (Required) "));
+        title_input.set_block(Block::default().borders(Borders::ALL).title(" Title (Required) "));
         let mut system_prompt_input = TextArea::default();
-        system_prompt_input.set_block(ratatui::widgets::Block::default().borders(ratatui::widgets::Borders::ALL).title(" System Prompt (Optional) "));
+        system_prompt_input.set_block(Block::default().borders(Borders::ALL).title(" System Prompt (Optional) "));
         let mut user_prompt_input = TextArea::default();
-        user_prompt_input.set_block(ratatui::widgets::Block::default().borders(ratatui::widgets::Borders::ALL).title(" Initial User Prompt (Required) "));
+        user_prompt_input.set_block(Block::default().borders(Borders::ALL).title(" Initial User Prompt (Required) "));
 
         let store = LocalStore::load()?;
         let sessions = store.list_sessions().into_iter().cloned().collect();
@@ -84,9 +82,10 @@ impl<'a> App<'a> {
         Ok(Self {
             should_quit: false,
             mode: AppMode::TaskList,
+            previous_mode: AppMode::TaskList,
             sessions,
             task_list_state: ListState::default(),
-            status_message: Some("Welcome! Press 'r' to sync with server.".into()),
+            status_message: Some("Welcome! Press 'r' to sync, Ctrl+H for help.".into()),
             
             server_addr: SERVER_ADDR.clone(),
             username: CLIENT_USERNAME.clone(),
@@ -96,6 +95,7 @@ impl<'a> App<'a> {
             selected_model_index: 0,
 
             viewer_content: String::new(),
+            viewer_scroll: 0,
             append_prompt_input: TextArea::default(),
             active_append_uuid: None,
 
@@ -106,15 +106,13 @@ impl<'a> App<'a> {
             
             editor_task_uuid: None,
             editor_textarea: TextArea::default(),
+            editor_block_positions: Vec::new(),
         })
     }
 
-    // NEW HELPER IS NOW SIMPLER
     pub fn set_models(&mut self, models: Vec<String>, default_model: &str) {
         self.models = models;
-        self.selected_model_index = self.models.iter()
-            .position(|m| m == default_model)
-            .unwrap_or(0);
+        self.selected_model_index = self.models.iter().position(|m| m == default_model).unwrap_or(0);
     }
 
     // A helper to reload sessions from the store
@@ -131,118 +129,126 @@ impl<'a> App<'a> {
     pub fn update(&mut self, action: Action) {
         match action {
             Action::Quit => self.should_quit = true,
-            Action::Refresh => self.status_message = Some("Syncing with server...".into()),
             Action::NextTask => self.next_task(),
             Action::PrevTask => self.prev_task(),
             Action::EnterNewChat => self.enter_new_chat_mode(),
-	    
+            Action::ExitPopup => self.exit_popup_mode(),
+            Action::ToggleHelp => self.toggle_help(),
+            Action::CyclePopupInput => self.cycle_popup_input(), // <-- Was unused, now called
+
+            // --- FIX: Add handler for EnterAppendPrompt ---
+            Action::EnterAppendPrompt(uuid) => {
+                self.active_append_uuid = Some(uuid); // <-- Now using the uuid, fixing the warning
+                self.append_prompt_input = TextArea::default();
+                self.append_prompt_input.set_block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .title(" Add to Conversation ")
+                );
+                self.mode = AppMode::AppendPromptPopup; // <-- Now constructing this variant
+                self.status_message = Some("Enter new prompt. Press Enter to send, Esc to cancel.".into());
+            },
+
             Action::ViewTask(uuid) => {
                 if let Ok(content) = self.store.get_session_content(uuid) {
                     self.viewer_content = content;
+                    self.viewer_scroll = 0;
                     self.mode = AppMode::ViewingTask;
-                    self.status_message = Some("Viewing session (read-only). Press Esc to return.".into());
+                    self.status_message = Some("Viewing. Scroll: j/k, PgUp/Down, g/G. Exit: Esc. Help: Ctrl+H".into());
                 }
             },
-            Action::EnterAppendPrompt(uuid) => {
-                self.active_append_uuid = Some(uuid);
-                self.append_prompt_input = TextArea::default();
-                self.append_prompt_input.set_block(
-                    ratatui::widgets::Block::default()
-                        .borders(ratatui::widgets::Borders::ALL)
-                        .title(" Add to Conversation ")
-                );
-                self.mode = AppMode::AppendPromptPopup;
-                self.status_message = Some("Enter new prompt. Press Enter to send, Esc to cancel.".into());
+            
+            Action::ViewerScroll(delta) => {
+                let current = self.viewer_scroll as i32;
+                let next = (current + delta as i32).max(0);
+                self.viewer_scroll = next as u16;
+            },
+            Action::ViewerScrollToTop => self.viewer_scroll = 0,
+            Action::ViewerScrollToBottom => self.viewer_scroll = u16::MAX,
+
+            Action::EditorJumpToNextBlock => {
+                let current_line = self.editor_textarea.cursor().0;
+                if let Some(&next_pos) = self.editor_block_positions.iter().find(|&&pos| pos > current_line) {
+                    self.editor_textarea.move_cursor(CursorMove::Jump(next_pos as u16, 0));
+                } else if let Some(&first_pos) = self.editor_block_positions.first() {
+                    self.editor_textarea.move_cursor(CursorMove::Jump(first_pos as u16, 0));
+                }
+            },
+            Action::EditorJumpToPrevBlock => {
+                let current_line = self.editor_textarea.cursor().0;
+                if let Some(&prev_pos) = self.editor_block_positions.iter().rfind(|&&pos| pos < current_line) {
+                    self.editor_textarea.move_cursor(CursorMove::Jump(prev_pos as u16, 0));
+                } else if let Some(&last_pos) = self.editor_block_positions.last() {
+                    self.editor_textarea.move_cursor(CursorMove::Jump(last_pos as u16, 0));
+                }
+            },
+            
+            // --- Actions that just set a message for the network handler ---
+            Action::Refresh => self.status_message = Some("Syncing with server...".into()),
+            Action::SendNewTask(log) => {
+                self.exit_popup_mode();
+                self.status_message = Some(format!("Session '{}' created locally. Sending...", log.title));
             },
             Action::SendAppendedPrompt { .. } => {
-                // The network action handler will manage the full process.
-                // We just need to exit the popup.
                 self.mode = AppMode::TaskList;
-                self.status_message = Some("Appending prompt and sending to server...".into());
+                self.status_message = Some("Appending prompt and sending...".into());
             },
-            // MODIFIED: ExitPopup now needs to handle more cases
-
-            Action::ExitPopup => {
-                self.mode = AppMode::TaskList;
-                self.status_message = None;
-            },
-            Action::CyclePopupInput => self.cycle_popup_input(),
-            // MODIFIED: This action now triggers the network flow. The initial UI update is handled here.
-            Action::SendNewTask(log) => {
-                // The heavy lifting (saving, sending) is done in the network handler.
-                // Here, we just update the UI optimistically.
-                self.exit_popup_mode();
-                self.status_message = Some(format!("Session '{}' created locally. Sending to server...", log.title));
-            }
-            // Other actions are handled by the main loop, this just sets status text.
             Action::DeleteTask(uuid) => self.status_message = Some(format!("Deleting task {}...", uuid)),
-            Action::SyncSelected { uuid, .. } => {
-                self.status_message = Some(format!("Sync action triggered for session {}...", uuid));
-            }
-
+            Action::SyncSelected { uuid, .. } => self.status_message = Some(format!("Sync action for {}...", uuid)),
+            Action::SaveEdit => self.status_message = Some("Saving and uploading changes...".into()),
+            Action::StartEdit(_) => self.status_message = Some("Loading task for editing...".into()),
             Action::CancelEdit => {
                 self.mode = AppMode::TaskList;
                 self.editor_textarea = TextArea::default();
                 self.editor_task_uuid = None;
                 self.status_message = Some("Edit cancelled.".into());
             },
-            Action::SaveEdit => {
-                self.status_message = Some("Saving and uploading changes...".into());
-            }
-            Action::StartEdit(uuid) => {
-                self.status_message = Some(format!("Loading task {} for editing...", uuid));
-            }
-
-            //_ => {}
         }
     }
 
-
-    // REFACTOR: Methods for creating Actions based on current state.
-    // FIX: This method needs to be mutable because it calls get_popup_action which is mutable.
     pub fn get_action_for_key(&mut self, key: crossterm::event::KeyEvent) -> Option<Action> {
-        match self.mode.clone() {
+        match self.mode {
             AppMode::TaskList => self.get_tasklist_action(key),
             AppMode::NewChatPopup => self.get_popup_action(key),
             AppMode::EditingTask => self.get_editor_action(key),
             AppMode::ViewingTask => self.get_viewer_action(key),
             AppMode::AppendPromptPopup => self.get_append_popup_action(key),
+            AppMode::HelpPopup => self.get_help_action(key),
         }
     }
-
+    
+    // --- MAPPING KEYS TO ACTIONS ---
     fn get_tasklist_action(&self, key: crossterm::event::KeyEvent) -> Option<Action> {
-        use crossterm::event::{KeyCode};
-        match key.code {
-            KeyCode::Char('q') => Some(Action::Quit),
-            KeyCode::Char('j') | KeyCode::Down => Some(Action::NextTask),
-            KeyCode::Char('k') | KeyCode::Up => Some(Action::PrevTask),
-            KeyCode::Char('n') => Some(Action::EnterNewChat),
-            // MODIFIED: 'r' and 'l' both trigger a full refresh
-            KeyCode::Char('r') | KeyCode::Char('l') => Some(Action::Refresh),
-            KeyCode::Char('d') => self.get_selected_session().map(|t| Action::DeleteTask(t.uuid)),
-            KeyCode::Enter => self.get_selected_session().map(|t| Action::ViewTask(t.uuid)),
-            KeyCode::Char('e') => self.get_selected_session().map(|t| Action::StartEdit(t.uuid)),
-            KeyCode::Char('a') => self.get_selected_session().map(|t| Action::EnterAppendPrompt(t.uuid)),
-            // 's' can now send local/modified sessions or resend failed ones
-            KeyCode::Char('s') => {
-                if let Some(session) = self.get_selected_session() {
-                    Some(Action::SyncSelected {
-                        uuid: session.uuid,
-                        // remote_status: session.remote_status.clone(), // <-- LINE REMOVED
-                        local_status: session.sync_status.clone(),
-                    })
-                } else {
-                    None
-                }
+        use crossterm::event::{KeyCode, KeyModifiers};
+        match key {
+            crossterm::event::KeyEvent { code: KeyCode::Char('h'), modifiers: KeyModifiers::CONTROL, .. } => Some(Action::ToggleHelp),
+            crossterm::event::KeyEvent { code: KeyCode::Char('q'), .. } => Some(Action::Quit),
+            crossterm::event::KeyEvent { code: KeyCode::Char('j') | KeyCode::Down, .. } => Some(Action::NextTask),
+            crossterm::event::KeyEvent { code: KeyCode::Char('k') | KeyCode::Up, .. } => Some(Action::PrevTask),
+            crossterm::event::KeyEvent { code: KeyCode::Char('n'), .. } => Some(Action::EnterNewChat),
+            crossterm::event::KeyEvent { code: KeyCode::Char('r') | KeyCode::Char('l'), .. } => Some(Action::Refresh),
+            crossterm::event::KeyEvent { code: KeyCode::Char('d'), .. } => self.get_selected_session().map(|t| Action::DeleteTask(t.uuid)),
+            crossterm::event::KeyEvent { code: KeyCode::Enter, .. } => self.get_selected_session().map(|t| Action::ViewTask(t.uuid)),
+            crossterm::event::KeyEvent { code: KeyCode::Char('e'), .. } => self.get_selected_session().map(|t| Action::StartEdit(t.uuid)),
+            crossterm::event::KeyEvent { code: KeyCode::Char('a'), .. } => self.get_selected_session().map(|t| Action::EnterAppendPrompt(t.uuid)),
+            crossterm::event::KeyEvent { code: KeyCode::Char('s'), .. } => {
+                self.get_selected_session().map(|s| Action::SyncSelected { uuid: s.uuid, local_status: s.sync_status.clone() })
             },
 	    _ => None,
         }
     }
     
     fn get_viewer_action(&self, key: crossterm::event::KeyEvent) -> Option<Action> {
-        use crossterm::event::KeyCode;
-        match key.code {
-            KeyCode::Esc | KeyCode::Char('q') => Some(Action::ExitPopup),
+        use crossterm::event::{KeyCode, KeyModifiers};
+        match key {
+            crossterm::event::KeyEvent { code: KeyCode::Char('h'), modifiers: KeyModifiers::CONTROL, .. } => Some(Action::ToggleHelp),
+            crossterm::event::KeyEvent { code: KeyCode::Esc | KeyCode::Char('q'), .. } => Some(Action::ExitPopup),
+            crossterm::event::KeyEvent { code: KeyCode::Char('k') | KeyCode::Up, .. } => Some(Action::ViewerScroll(-1)),
+            crossterm::event::KeyEvent { code: KeyCode::Char('j') | KeyCode::Down, .. } => Some(Action::ViewerScroll(1)),
+            crossterm::event::KeyEvent { code: KeyCode::PageUp, .. } => Some(Action::ViewerScroll(-10)),
+            crossterm::event::KeyEvent { code: KeyCode::PageDown, .. } => Some(Action::ViewerScroll(10)),
+            crossterm::event::KeyEvent { code: KeyCode::Char('g') | KeyCode::Home, .. } => Some(Action::ViewerScrollToTop),
+            crossterm::event::KeyEvent { code: KeyCode::Char('G') | KeyCode::End, .. } => Some(Action::ViewerScrollToBottom),
             _ => None,
         }
     }
@@ -267,44 +273,28 @@ impl<'a> App<'a> {
         }
     }
 
-    // FIX: This method must take &mut self because it modifies the text areas.
+    // --- FIX: Add Tab key handling to generate CyclePopupInput action ---
     fn get_popup_action(&mut self, key: crossterm::event::KeyEvent) -> Option<Action> {
-        use crossterm::event::{KeyCode};
+        use crossterm::event::KeyCode;
         
         // Handle model selection with arrow keys when the model selector is active
         if let InputMode::Model = self.new_chat_popup_active_input {
             match key.code {
-                KeyCode::Up => {
-                    self.selected_model_index = self.selected_model_index.saturating_sub(1);
-                    return None;
-                },
-                KeyCode::Down => {
-                    if !self.models.is_empty() {
-                        self.selected_model_index = (self.selected_model_index + 1).min(self.models.len() - 1);
-                    }
-                    return None;
-                },
+                KeyCode::Up => { self.selected_model_index = self.selected_model_index.saturating_sub(1); return None; },
+                KeyCode::Down => { if !self.models.is_empty() { self.selected_model_index = (self.selected_model_index + 1).min(self.models.len() - 1); } return None; },
                 _ => {}
             }
         }
 
         match key.code {
             KeyCode::Esc => Some(Action::ExitPopup),
-            KeyCode::Tab => Some(Action::CyclePopupInput),
+            KeyCode::Tab => Some(Action::CyclePopupInput), // <-- THIS WAS MISSING
             KeyCode::Enter => {
                 // 1. Get content from text areas
                 let title = self.title_input.lines().join("\n");
                 let user_content = self.user_prompt_input.lines().join("\n");
-                
-                // 2. Validate input
-                if title.trim().is_empty() {
-                    self.status_message = Some("Error: Title cannot be empty.".to_string());
-                    return None;
-                }
-                if user_content.trim().is_empty() {
-                    self.status_message = Some("Error: Initial prompt cannot be empty.".to_string());
-                    return None;
-                }
+                if title.trim().is_empty() { self.status_message = Some("Error: Title cannot be empty.".to_string()); return None; }
+                if user_content.trim().is_empty() { self.status_message = Some("Error: Initial prompt cannot be empty.".to_string()); return None; }
                 
                 // 3. Create ChatLog object
                 let log = self.create_chat_log_from_popup();
@@ -313,7 +303,7 @@ impl<'a> App<'a> {
                 Some(Action::SendNewTask(log))
             }
             _ => {
-                let input = ratatui_textarea::Input::from(key);
+                let input = Input::from(key);
                 match self.new_chat_popup_active_input {
                     InputMode::Title => self.title_input.input(input),
                     InputMode::UserPrompt => self.user_prompt_input.input(input),
@@ -325,23 +315,16 @@ impl<'a> App<'a> {
         }
 	
     }
-    
+
     // NEW: handler for editor mode
     fn get_editor_action(&mut self, key: crossterm::event::KeyEvent) -> Option<Action> {
         use crossterm::event::{KeyCode, KeyModifiers};
         match key {
-            // Save action
-            crossterm::event::KeyEvent {
-                code: KeyCode::Char('s'),
-                modifiers: KeyModifiers::CONTROL,
-                ..
-            } => Some(Action::SaveEdit),
-            // Cancel action
-            crossterm::event::KeyEvent {
-                code: KeyCode::Esc,
-                ..
-            } => Some(Action::CancelEdit),
-            // Let the textarea handle other inputs (including undo/redo)
+            crossterm::event::KeyEvent { code: KeyCode::Char('h'), modifiers: KeyModifiers::CONTROL, .. } => Some(Action::ToggleHelp),
+            crossterm::event::KeyEvent { code: KeyCode::Char('s'), modifiers: KeyModifiers::CONTROL, .. } => Some(Action::SaveEdit),
+            crossterm::event::KeyEvent { code: KeyCode::Esc, .. } => Some(Action::CancelEdit),
+            crossterm::event::KeyEvent { code: KeyCode::Char('n'), modifiers: KeyModifiers::CONTROL, .. } => Some(Action::EditorJumpToNextBlock),
+            crossterm::event::KeyEvent { code: KeyCode::Char('p'), modifiers: KeyModifiers::CONTROL, .. } => Some(Action::EditorJumpToPrevBlock),
             _ => {
                 self.editor_textarea.input(Input::from(key));
                 None
@@ -349,8 +332,33 @@ impl<'a> App<'a> {
         }
     }
 
+    fn get_help_action(&self, key: crossterm::event::KeyEvent) -> Option<Action> {
+        use crossterm::event::{KeyCode, KeyModifiers};
+         match key {
+            crossterm::event::KeyEvent { code: KeyCode::Char('h'), modifiers: KeyModifiers::CONTROL, .. } => Some(Action::ToggleHelp),
+            crossterm::event::KeyEvent { code: KeyCode::Esc | KeyCode::Char('q'), .. } => Some(Action::ToggleHelp),
+            _ => None,
+        }
+    }
+
     // --- Helper methods for state mutation ---
+
+    fn toggle_help(&mut self) {
+        if self.mode == AppMode::HelpPopup {
+            self.mode = self.previous_mode;
+            self.status_message = None;
+        } else {
+            self.previous_mode = self.mode;
+            self.mode = AppMode::HelpPopup;
+            self.status_message = Some("Displaying help. Press Esc or Ctrl+H to close.".into());
+        }
+    }
     
+    fn exit_popup_mode(&mut self) { 
+        self.mode = AppMode::TaskList; 
+        self.status_message = None;
+    }
+
     fn next_task(&mut self) {
         if self.sessions.is_empty() { return; } 
         let i = match self.task_list_state.selected() {
@@ -373,15 +381,14 @@ impl<'a> App<'a> {
     fn enter_new_chat_mode(&mut self) { 
         self.mode = AppMode::NewChatPopup;
         self.title_input = TextArea::new(vec!["".to_string()]);
-        self.title_input.set_block(ratatui::widgets::Block::default().borders(ratatui::widgets::Borders::ALL).title(" Title (Required) "));
+        self.title_input.set_block(Block::default().borders(Borders::ALL).title(" Title (Required) "));
         self.system_prompt_input = TextArea::default();
-        self.system_prompt_input.set_block(ratatui::widgets::Block::default().borders(ratatui::widgets::Borders::ALL).title(" System Prompt (Optional) "));
+        self.system_prompt_input.set_block(Block::default().borders(Borders::ALL).title(" System Prompt (Optional) "));
         self.user_prompt_input = TextArea::default();
-        self.user_prompt_input.set_block(ratatui::widgets::Block::default().borders(ratatui::widgets::Borders::ALL).title(" Initial User Prompt (Required) "));
+        self.user_prompt_input.set_block(Block::default().borders(Borders::ALL).title(" Initial User Prompt (Required) "));
         self.status_message = Some("Press Tab to cycle, Enter to send, Esc to cancel.".to_string());
     }
 
-    fn exit_popup_mode(&mut self) { self.mode = AppMode::TaskList; self.status_message = None; }
 
     fn cycle_popup_input(&mut self) { 
         self.new_chat_popup_active_input = match self.new_chat_popup_active_input {

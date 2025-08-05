@@ -4,24 +4,30 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect, Alignment},
     style::{Color, Modifier, Style},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, List, ListItem,ListState, Paragraph, Clear},
+    widgets::{Block, Borders, List, ListItem,ListState, Paragraph, Clear, Wrap},
     Frame,
 };
 
-use super::app::{App, AppMode, InputMode}; // Import InputMode
+use super::app::{App, AppMode, InputMode};
 use crate::client::local_store::SyncStatus;
 
 pub fn draw(f: &mut Frame, app: &mut App, area: Rect) {
-    // We draw the main task list in the background regardless
-    draw_task_list(f, app, area);
-    
-    // Then, if in a popup mode, draw it on top
-    match app.mode.clone() { // Clone to avoid borrow issues
-        AppMode::NewChatPopup => draw_new_chat_popup(f, app),
+    // We draw the base UI based on the mode *before* help was triggered
+    let mode_to_draw = if app.mode == AppMode::HelpPopup { app.previous_mode } else { app.mode };
+
+    match mode_to_draw {
+        AppMode::TaskList => draw_task_list(f, app, area),
         AppMode::EditingTask => draw_editor(f, app, area),
         AppMode::ViewingTask => draw_viewer(f, app, area),
+        _ => draw_task_list(f, app, area), // Fallback to task list
+    }
+
+    // Then, if in a popup mode, draw it on top
+    match app.mode {
+        AppMode::NewChatPopup => draw_new_chat_popup(f, app),
         AppMode::AppendPromptPopup => draw_append_popup(f, app),
-        AppMode::TaskList => {}
+        AppMode::HelpPopup => draw_help_popup(f, app),
+        _ => {}
     }
 }
 
@@ -32,12 +38,97 @@ fn draw_viewer(f: &mut Frame, app: &mut App, area: Rect) {
         .border_style(Style::default().fg(Color::Yellow))
         .border_type(ratatui::widgets::BorderType::Rounded);
     
-    // We'll use a Paragraph for simplicity as TextArea is for editing
+    // Get the inner area for rendering and height calculation.
+    let inner_area = viewer_block.inner(area);
+
+    // 1. Calculate the number of lines based on newline characters.
+    // This is a robust way to get the height, although it doesn't account for visual wrapping.
+    // For our purpose of preventing overflow, it's sufficient and much safer.
+    // We add 1 because a file with 0 newlines still has 1 line of content.
+    let total_lines = app.viewer_content.lines().count() as u16;
+
+    // 2. Calculate the maximum possible scroll value.
+    let max_scroll = total_lines.saturating_sub(inner_area.height);
+
+    // 3. Clamp the app's scroll state to this maximum value.
+    // This is the core of the overflow fix.
+    let mut actual_scroll = app.viewer_scroll.min(max_scroll);
+    
+    // 4. If the user's intent was to go to the bottom, explicitly set it.
+    if app.viewer_scroll == u16::MAX {
+        actual_scroll = max_scroll;
+        // Also, update the app's state so subsequent scrolls up work correctly.
+        app.viewer_scroll = max_scroll;
+    }
+
+    // 5. Create the final paragraph for rendering, using the clamped scroll value.
     let paragraph = Paragraph::new(app.viewer_content.clone())
         .block(viewer_block)
-        .wrap( ratatui::widgets::Wrap { trim: false } );
+        .wrap(Wrap { trim: true }) // We still want visual wrapping.
+        .scroll((actual_scroll, 0)); 
 
     f.render_widget(paragraph, area);
+}
+
+// --- NEW WIDGET: Help Popup ---
+fn draw_help_popup(f: &mut Frame, app: &App) {
+    let block = Block::default()
+        .title(" ⌨️ Keybindings Help ")
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(Color::Cyan))
+        .border_type(ratatui::widgets::BorderType::Rounded);
+    
+    let area = centered_rect(60, 70, f.size());
+    f.render_widget(Clear, area); // Clear the area behind the popup
+    f.render_widget(block.clone(), area);
+
+    // Context-sensitive help text
+    let help_text = match app.previous_mode {
+        AppMode::TaskList => vec![
+            Line::from(vec![Span::from("--- General ---")]),
+            Line::from(vec![Span::styled("  Ctrl+H", Style::default().fg(Color::Cyan)), Span::raw(" : Toggle Help")]),
+            Line::from(vec![Span::styled("       q", Style::default().fg(Color::Cyan)), Span::raw(" : Quit")]),
+            Line::from(vec![Span::from("")]),
+            Line::from(vec![Span::from("--- Task List ---")]),
+            Line::from(vec![Span::styled("     j/k", Style::default().fg(Color::Cyan)), Span::raw(" : Navigate List")]),
+            Line::from(vec![Span::styled("   Enter", Style::default().fg(Color::Cyan)), Span::raw(" : View Selected")]),
+            Line::from(vec![Span::styled("       e", Style::default().fg(Color::Cyan)), Span::raw(" : Edit Selected")]),
+            Line::from(vec![Span::styled("       a", Style::default().fg(Color::Cyan)), Span::raw(" : Append to Selected")]),
+            Line::from(vec![Span::styled("       s", Style::default().fg(Color::Cyan)), Span::raw(" : Sync/Run/Resend Selected")]),
+            Line::from(vec![Span::styled("       n", Style::default().fg(Color::Cyan)), Span::raw(" : New Session")]),
+            Line::from(vec![Span::styled("       d", Style::default().fg(Color::Cyan)), Span::raw(" : Delete Selected")]),
+            Line::from(vec![Span::styled("       r", Style::default().fg(Color::Cyan)), Span::raw(" : Refresh from Server")]),
+        ],
+        AppMode::ViewingTask => vec![
+            Line::from(vec![Span::from("--- Viewer Navigation ---")]),
+            Line::from(vec![Span::styled("   j/k, ↑/↓", Style::default().fg(Color::Cyan)), Span::raw(" : Scroll line by line")]),
+            Line::from(vec![Span::styled("PgUp/PgDown", Style::default().fg(Color::Cyan)), Span::raw(" : Scroll by page")]),
+            Line::from(vec![Span::styled("     g, Home", Style::default().fg(Color::Cyan)), Span::raw(" : Jump to Top")]),
+            Line::from(vec![Span::styled("     G, End", Style::default().fg(Color::Cyan)), Span::raw(" : Jump to Bottom")]),
+            Line::from(vec![Span::styled(" Esc, q", Style::default().fg(Color::Cyan)), Span::raw(" : Close Viewer")]),
+        ],
+        AppMode::EditingTask => vec![
+            Line::from(vec![Span::from("--- Editor Navigation ---")]),
+            Line::from(vec![Span::styled(" Arrow Keys", Style::default().fg(Color::Cyan)), Span::raw(" : Move cursor")]),
+            Line::from(vec![Span::styled("PgUp/PgDown", Style::default().fg(Color::Cyan)), Span::raw(" : Scroll by page")]),
+            Line::from(vec![Span::styled("  Ctrl+Home", Style::default().fg(Color::Cyan)), Span::raw(" : Jump to Top")]),
+            Line::from(vec![Span::styled("   Ctrl+End", Style::default().fg(Color::Cyan)), Span::raw(" : Jump to Bottom")]),
+            Line::from(vec![Span::styled("    Ctrl+N", Style::default().fg(Color::Cyan)), Span::raw(" : Jump to Next Block (user/response)")]),
+            Line::from(vec![Span::styled("    Ctrl+P", Style::default().fg(Color::Cyan)), Span::raw(" : Jump to Previous Block")]),
+            Line::from(vec![Span::from("")]),
+            Line::from(vec![Span::from("--- Editor Actions ---")]),
+            Line::from(vec![Span::styled("    Ctrl+S", Style::default().fg(Color::Cyan)), Span::raw(" : Save and Sync")]),
+            Line::from(vec![Span::styled("       Esc", Style::default().fg(Color::Cyan)), Span::raw(" : Cancel Edit")]),
+        ],
+        _ => vec![Line::from("No specific help for this context.")],
+    };
+
+    let paragraph = Paragraph::new(help_text)
+        .block(Block::default().borders(Borders::NONE))
+        .alignment(Alignment::Left)
+        .wrap(Wrap { trim: true });
+
+    f.render_widget(paragraph, block.inner(area));
 }
 
 fn draw_append_popup(f: &mut Frame, app: &mut App) {
