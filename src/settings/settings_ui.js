@@ -18,7 +18,7 @@ function createNavItem(item) {
     
     let iconClass = 'fa-cog';
     if (item.type === 'apiConfig') iconClass = 'fa-key';
-    else if (item.type === 'prompt') iconClass = 'fa-robot';
+    else if (item.type === 'agent') iconClass = 'fa-robot';
 
     li.innerHTML = `<i class="fas ${iconClass}"></i><span>${item.name}</span>`;
     return li;
@@ -83,10 +83,10 @@ export function renderSettingsView() {
 
     // b. [修改] 添加动态配置项
     const apiConfigs = appState.apiConfigs.map(c => ({ id: c.id, name: c.name, type: 'apiConfig' }));
-    const prompts = appState.prompts.map(p => ({ id: p.id, name: p.name, type: 'prompt' }));
+    const agents = appState.agents.map(p => ({ id: p.id, name: p.name, type: 'agent' }));
     
     listContainer.appendChild(createNavGroup('API 配置', apiConfigs, 'apiConfig'));
-    listContainer.appendChild(createNavGroup('角色配置', prompts, 'prompt'));
+    listContainer.appendChild(createNavGroup('Agent配置', agents, 'agent'));
 }
 
 /**
@@ -105,7 +105,7 @@ export function renderSettingsDetail(item, isCreate = false) {
     let templateId;
     if (item.type === 'general') templateId = 'general-settings-form-template';
     else if (item.type === 'apiConfig') templateId = 'api-config-form-template';
-    else if (item.type === 'prompt') templateId = 'prompt-form-template';
+    else if (item.type === 'agent') templateId = 'agent-form-template';
     else {
         contentEl.innerHTML = `<div class="placeholder-content"><i class="fas fa-exclamation-circle fa-2x"></i><p>未知的配置类型</p></div>`;
         return;
@@ -122,8 +122,8 @@ export function renderSettingsDetail(item, isCreate = false) {
 
     if (item.type === 'apiConfig') {
         populateApiConfigForm(item, isCreate);
-    } else if (item.type === 'prompt') {
-        populatePromptForm(item, isCreate);
+    } else if (item.type === 'agent') {
+        populateAgentForm(item, isCreate);
     }
     
     const titleIcon = isCreate ? 'fa-plus-circle' : 'fa-edit';
@@ -167,8 +167,8 @@ function populateApiConfigForm(config, isCreate) {
  * @param {object} prompt - 角色配置数据对象。
  * @param {boolean} isCreate - 是否为创建模式。
  */
-function populatePromptForm(prompt, isCreate) {
-    const form = $id('prompt-form-dynamic');
+function populateAgentForm(agent, isCreate) { // [重构]
+    const form = $id('agent-form-dynamic');
     if (!form) return;
 
     const modelSelect = form.querySelector('.config-model');
@@ -189,13 +189,27 @@ function populatePromptForm(prompt, isCreate) {
     
     if (isCreate) {
         form.querySelector('.delete-item-btn').style.display = 'none';
+        form.querySelector('.config-sendHistory').checked = true; // [新增] 默认勾选
     } else {
-        form.querySelector('.config-id').value = prompt.id;
-        form.querySelector('.config-name').value = prompt.name;
-        form.querySelector('.config-avatar').value = prompt.avatar || '';
-        form.querySelector('.config-model').value = prompt.model || '';
-        form.querySelector('.config-systemPrompt').value = prompt.systemPrompt || '';
-        form.querySelector('.config-hint').value = prompt.hint || '';
+        form.querySelector('.config-id').value = agent.id;
+        form.querySelector('.config-name').value = agent.name;
+        form.querySelector('.config-avatar').value = agent.avatar || '';
+        form.querySelector('.config-model').value = agent.model || '';
+        form.querySelector('.config-systemPrompt').value = agent.systemPrompt || '';
+        form.querySelector('.config-hint').value = agent.hint || '';
+        // [新增] 填充新字段
+        form.querySelector('.config-sendHistory').checked = agent.sendHistory !== false;
+
+        const tagsList = form.querySelector('.tags-list');
+        tagsList.innerHTML = '';
+        if (agent.tags && agent.tags.length > 0) {
+            agent.tags.forEach(tag => {
+                const li = document.createElement('li');
+                li.textContent = tag;
+                li.innerHTML += '<button type="button" class="remove-tag-btn">×</button>';
+                tagsList.appendChild(li);
+            });
+        }
     }
 }
 

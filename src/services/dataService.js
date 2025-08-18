@@ -28,22 +28,26 @@ const DEFAULT_API_CONFIG = {
     models: 'chat:deepseek-chat,reasoner:deepseek-reasoner'
 };
 
-const DEFAULT_PROMPTS = [
+const DEFAULT_AGENTS = [
     {
-        id: 'default_prompt_nanjing_guide',
+        id: 'default_agent_nanjing_guide',
         name: '南京历史小导游',
         avatar: '史',
         model: `${DEFAULT_API_CONFIG.id}:reasoner`, // 关联默认API配置
         systemPrompt: "🎓 角色指令：你好！我是你的专属南京历史小导游。我的名字叫“金陵通”，对南京这座六朝古都的每一块砖、每一段历史都了如指掌。我将以生动有趣的方式，带你穿越时空，探索南京的魅力。我的性格会根据你选择的模式变化，就像一位真正的导游，时而风趣，时而严谨。\n\n🔄 核心导览模式：\n*   故事家 (Storyteller) → 语气风格：亲切随和，像一位学长/学姐。我会用讲故事的方式，把枯燥的历史变得鲜活起来，充满情感和趣味，让你身临其境。\n*   讲解员 (Docent) → 语气风格：清晰准确，像一位博物馆的专业讲解员。我会为你提供结构化的信息、关键时间点和准确的历史事实，帮你梳理知识脉络。\n*   历史侦探 (History Detective) → 语气风格：充满好奇与思辨，像一位和你一起探案的伙伴。我会引导你发现历史事件之间的联系，分析文物背后的深层含义，提出“为什么”，激发你的思考。\n\n🧬 互动说明：\n1.  模式匹配：我会严格按照你选择的模式（故事家、讲解员、历史侦探）来与你交流。\n2.  知识储备：我的知识库涵盖了南京从古至今的关键历史时期（如六朝、南唐、明朝、民国）、重要人物（如朱元璋、孙中山）以及标志性文物古迹（如明孝陵、总统府、中山陵、南京城墙、夫子庙、朝天宫、南京博物院馆藏等）。\n3.  智能追问：如果你的问题不够具体，我会像导游一样追问。\n4.  连续记忆：我会记住我们聊过的话题。\n5.  拒绝乏味：我的回答会避免像教科书一样枯燥。\n6.  模式切换：你随时可以让我切换模式。切换时，我会说“好的，现在切换到【XX模式】”，然后调整我的语气和回答方式。\n\n📦 输出格式参考：\n*   在 【讲解员模式】下，我会多使用列表、时间轴和要点总结。\n*   在 【故事家模式】下，我会使用更多的描述性语言。\n*   在 【历史侦探模式】下，我会多用提问、假设和对比分析。",
-        hint: '你好！我是你的专属南京历史小导游“金陵通”。想了解南京的什么故事？比如，可以这样问我：<br><b>模式：故事家 — 任务：给我讲讲夫子庙旁边的乌衣巷有什么好玩的故事？</b>'
+        hint: '你好！我是你的专属南京历史小导游“金陵通”。想了解南京的什么故事？比如，可以这样问我：<br><b>模式：故事家 — 任务：给我讲讲夫子庙旁边的乌衣巷有什么好玩的故事？</b>',
+        tags: ['历史', '文化', '旅游'], // [新增]
+        sendHistory: true, // [新增]
     },
     {
-        id: 'default_prompt_english_tutor',
+        id: 'default_agent_english_tutor',
         name: '英语导师',
         avatar: '英',
         model: `${DEFAULT_API_CONFIG.id}:chat`, // 关联默认API配置
         systemPrompt: "🎓 角色指令：你好！我是智能英语导师「牛津通」，专注中学英语教学。拥有系统的知识库和动态教学策略，能根据你的学习阶段个性化辅导。\n\n🔄 三维学习模式：\n*   【单词向导】→ 沉浸式词汇学习：词根解析/趣味联想/场景记忆\n*   【语法专家】→ 系统化语法精讲：错题透析/分层训练/对比分析\n*   【读写教练】→ 实战能力培养：文本精读/写作框架/AI批改\n\n✨ 核心功能矩阵：\n1. 词汇体系：中考高频词库｜近义词辨析｜词源故事\n2. 语法诊所：句子成分图解｜时态三维训练｜易错点预警\n3. 读写实验室：阅读理解三步法｜作文多维评估｜经典句式仿写\n4. 拓展模块：影视配音练习｜文化冷知识｜考试策略指南\n\n🧠 智能教学协议：\n1. 模式匹配：严格按所选模式输出内容\n2. 错题驱动：支持拍照诊断知识盲区\n3. 动态调节：智能调整题目难度（基础→挑战）\n4. 记忆锚点：周期性推送薄弱点强化练习\n5. 文化融合：教学中渗透英美文化背景",
-        hint: '你好！我是你的中学英语导师「牛津通」。完整功能列表：<br>🔍 <b>单词向导模式</b>：词根解析｜高频词汇｜场景记忆（例：用电影台词记"vivid"）<br>📖 <b>语法专家模式</b>：句子图解｜时态训练｜错题诊断（例：虚拟语气对比表）<br>✍️ <b>读写教练模式</b>：作文批改｜精读策略｜仿写训练（例：中考作文评分+改写）<br>🌍 <b>拓展功能</b>：影视配音｜文化常识｜考试技巧<br>试试这样问我：<b>模式：单词向导 → 任务：用超级英雄故事帮我记10个形容词</b>'
+        hint: '你好！我是你的中学英语导师「牛津通」。完整功能列表：<br>🔍 <b>单词向导模式</b>：词根解析｜高频词汇｜场景记忆（例：用电影台词记"vivid"）<br>📖 <b>语法专家模式</b>：句子图解｜时态训练｜错题诊断（例：虚拟语气对比表）<br>✍️ <b>读写教练模式</b>：作文批改｜精读策略｜仿写训练（例：中考作文评分+改写）<br>🌍 <b>拓展功能</b>：影视配音｜文化常识｜考试技巧<br>试试这样问我：<b>模式：单词向导 → 任务：用超级英雄故事帮我记10个形容词</b>',
+        tags: ['教育', '语言', '学习'], // [新增]
+        sendHistory: true, // [新增]
     }
 ];
 
@@ -57,9 +61,9 @@ const tablesToBackup = Object.keys(db.tables.reduce((acc, table) => ({...acc, [t
  * @param {Array} existingPrompts - 已存在的角色配置。
  * @returns {{apiConfigs: Array, prompts: Array, needsPersistence: boolean}} - 返回更新后的数组和是否需要保存的标志。
  */
-function seedDefaultData(existingApiConfigs, existingPrompts) {
+function seedDefaultData(existingApiConfigs, existingAgents) {
     let apiConfigs = [...existingApiConfigs];
-    let prompts = [...existingPrompts];
+    let agents = [...existingAgents];
     let needsPersistence = false;
 
     // 1. 检查并添加默认的 API 配置
@@ -71,16 +75,16 @@ function seedDefaultData(existingApiConfigs, existingPrompts) {
     }
 
     // 2. 检查并添加默认的角色
-    DEFAULT_PROMPTS.forEach(defaultPrompt => {
-        const hasDefaultPrompt = prompts.some(p => p.id === defaultPrompt.id);
-        if (!hasDefaultPrompt) {
-            prompts.push(defaultPrompt);
+    DEFAULT_AGENTS.forEach(defaultAgent => {
+        const hasDefaultAgent = agents.some(p => p.id === defaultAgent.id);
+        if (!hasDefaultAgent) {
+            agents.push(defaultAgent);
             needsPersistence = true;
-            console.log(`Seeding default prompt: "${defaultPrompt.name}".`);
+            console.log(`Seeding default agent: "${defaultAgent.name}".`);
         }
     });
 
-    return { apiConfigs, prompts, needsPersistence };
+    return { apiConfigs, agents, needsPersistence };
 }
 
 // --- Private Helpers ---
@@ -427,23 +431,23 @@ export function updateClozeState(fileId, clozeContent, rating, clozeId) {
  * [重构] 加载所有设置相关的配置数据。
  */
 export async function initializeSettingsData() {
-    let { apiConfigs, prompts, topics, history } = await storage.loadSettingsData();
+    let { apiConfigs, agents, topics, history } = await storage.loadSettingsData();
     
     // [修改] 调用 seedDefaultData 函数来检查并添加默认数据
-    const seedResult = seedDefaultData(apiConfigs || [], prompts || []);
+    const seedResult = seedDefaultData(apiConfigs || [], agents || []);
     apiConfigs = seedResult.apiConfigs;
-    prompts = seedResult.prompts;
+    agents = seedResult.agents;
 
     const settingsState = {
         apiConfigs,
-        prompts,
+        agents,
         topics: topics || [],
         history: history || [],
     };
 
-    if (settingsState.prompts.length > 0 && !appState.currentPromptId) {
-        settingsState.currentPromptId = settingsState.prompts[0].id;
-        const firstTopic = settingsState.topics.find(t => t.promptId === settingsState.currentPromptId);
+    if (settingsState.agents.length > 0 && !appState.currentAgentId) {
+        settingsState.currentAgentId = settingsState.agents[0].id;
+        const firstTopic = settingsState.topics.find(t => t.agentId === settingsState.currentAgentId);
         settingsState.currentTopicId = firstTopic ? firstTopic.id : null;
     }
 
@@ -462,7 +466,7 @@ export async function persistSettingsState() {
     try {
         await storage.saveSettingsData({
             apiConfigs: appState.apiConfigs,
-            prompts: appState.prompts,
+            agents: appState.agents, // [重构]
             topics: appState.topics,
             history: appState.history
         });
@@ -501,55 +505,60 @@ export async function deleteApiConfig(id) {
 
 // --- Prompt (Role) Management (CRUD) ---
 
-export function getPromptById(promptId) {
-    return appState.prompts.find(p => p.id === promptId);
+export function getAgentById(agentId) { // [重构]
+    return appState.agents.find(p => p.id === agentId); // [重构]
 }
 
-export async function addPrompt(data) {
-    const newPrompt = { id: generateId(), ...data };
-    const prompts = [...appState.prompts, newPrompt];
-    setState({ prompts, currentPromptId: newPrompt.id, currentTopicId: null });
+export async function addAgent(data) { // [重构]
+    const newAgent = { 
+        id: generateId(), 
+        ...data,
+        tags: data.tags || [],         // [新增] 确保字段存在
+        sendHistory: data.sendHistory !== false, // [新增] 确保字段存在
+    };
+    const agents = [...appState.agents, newAgent]; // [重构]
+    setState({ agents, currentAgentId: newAgent.id, currentTopicId: null }); // [重构]
     await persistSettingsState();
-    return newPrompt;
+    return newAgent;
 }
 
-export async function updatePrompt(id, data) {
-    const prompts = appState.prompts.map(p => p.id === id ? { ...p, ...data } : p);
-    setState({ prompts });
+export async function updateAgent(id, data) { // [重构]
+    const agents = appState.agents.map(p => p.id === id ? { ...p, ...data } : p); // [重构]
+    setState({ agents }); // [重构]
     await persistSettingsState();
 }
 
-export async function deletePrompt(id) {
-    const topicsToDelete = appState.topics.filter(t => t.promptId === id);
+export async function deleteAgent(id) { // [重构]
+    const topicsToDelete = appState.topics.filter(t => t.agentId === id); // [重构]
     const topicIdsToDelete = new Set(topicsToDelete.map(t => t.id));
 
     const history = appState.history.filter(h => !topicIdsToDelete.has(h.topicId));
-    const topics = appState.topics.filter(t => t.promptId !== id);
-    const prompts = appState.prompts.filter(p => p.id !== id);
+    const topics = appState.topics.filter(t => t.agentId !== id); // [重构]
+    const agents = appState.agents.filter(p => p.id !== id); // [重构]
 
-    let newCurrentPromptId = appState.currentPromptId;
+    let newCurrentAgentId = appState.currentAgentId; // [重构]
     let newCurrentTopicId = appState.currentTopicId;
 
-    if (newCurrentPromptId === id) {
-        newCurrentPromptId = prompts.length > 0 ? prompts[0].id : null;
-        const firstTopic = topics.find(t => t.promptId === newCurrentPromptId);
+    if (newCurrentAgentId === id) {
+        newCurrentAgentId = agents.length > 0 ? agents[0].id : null; // [重构]
+        const firstTopic = topics.find(t => t.agentId === newCurrentAgentId); // [重构]
         newCurrentTopicId = firstTopic ? firstTopic.id : null;
     }
 
-    setState({ prompts, topics, history, currentPromptId: newCurrentPromptId, currentTopicId: newCurrentTopicId });
+    setState({ agents, topics, history, currentAgentId: newCurrentAgentId, currentTopicId: newCurrentTopicId }); // [重构]
     await persistSettingsState();
 }
 
 // --- Topic Management (适配 Prompt) ---
 
 export async function addTopic(title, icon) {
-    if (!appState.currentPromptId) {
-        alert("请先选择一个角色。");
+    if (!appState.currentAgentId) {
+        alert("请先选择一个 Agent。");
         return;
     }
     const newTopic = {
         id: generateId(),
-        promptId: appState.currentPromptId,
+        agentId: appState.currentAgentId, // [重构]
         title,
         icon: icon || 'fas fa-comment',
         createdAt: new Date()
@@ -559,12 +568,21 @@ export async function addTopic(title, icon) {
     await persistSettingsState();
 }
 
+// [新增] 更新主题名称的函数
+export async function updateTopic(id, updates) {
+    const topics = appState.topics.map(t => t.id === id ? { ...t, ...updates } : t);
+    setState({ topics });
+    await persistSettingsState();
+}
+
+
 // --- History/Chat Management (适配 Prompt 和新 API Config) ---
 
 async function _addHistoryMessage(topicId, role, content, images = [], status = 'completed', reasoning = null) {
     const newMessage = {
         id: generateId(),
         topicId,
+        agentId: (role === 'assistant' || role === 'user') ? appState.currentConversationAgentId : null, // [重构]
         role,
         content,
         reasoning, // <-- 新增 reasoning 字段
@@ -575,7 +593,7 @@ async function _addHistoryMessage(topicId, role, content, images = [], status = 
     const history = [...appState.history, newMessage];
     setState({ history });
     if (status !== 'streaming') {
-    await persistAgentState();
+        await persistSettingsState(); // [修复] 之前调用了错误的 persistAgentState
     }
     return newMessage;
 }
@@ -588,17 +606,17 @@ async function _addHistoryMessage(topicId, role, content, images = [], status = 
  * @param {Array<{name: string, data: string}>} attachments - The user's attachments.
  */
 export async function sendMessageAndGetResponse(content, attachments) {
+    const agentId = appState.currentConversationAgentId; // [重构]
     if (!appState.currentTopicId || appState.isAiThinking) return;
 
     const topicId = appState.currentTopicId;
-    const currentPrompt = getPromptById(appState.currentPromptId);
-    if (!currentPrompt) {
-        alert("错误：找不到当前角色的配置。");
-        return;
-    }
+    const currentAgent = getAgentById(agentId); // [重构]
+    
+    let llmConfig;
+    if (currentAgent) {
 
     // [核心修改] 从 Prompt 配置中解析出 API 配置和模型
-    const [apiConfigId, modelAlias] = currentPrompt.model.split(':');
+    const [apiConfigId, modelAlias] = currentAgent.model.split(':');
     const apiConfig = appState.apiConfigs.find(c => c.id === apiConfigId);
     
     if (!apiConfig) {
@@ -606,7 +624,7 @@ export async function sendMessageAndGetResponse(content, attachments) {
         return;
     }
 
-    const modelMap = new Map(apiConfig.models.split(',').map(m => m.split(':').map(s => s.trim())));
+        const modelMap = new Map((apiConfig.models || '').split(',').map(m => m.split(':').map(s => s.trim())));
     const modelName = modelMap.get(modelAlias);
 
     if (!modelName) {
@@ -615,13 +633,32 @@ export async function sendMessageAndGetResponse(content, attachments) {
     }
     
     // 构建传递给 llmService 的完整配置
-    const llmConfig = {
-        provider: apiConfig.provider,
-        apiPath: apiConfig.apiUrl,
-        apiKey: apiConfig.apiKey,
-        model: modelName,
-        systemPrompt: currentPrompt.systemPrompt,
-    };
+        llmConfig = {
+            provider: apiConfig.provider,
+            apiPath: apiConfig.apiUrl,
+            apiKey: apiConfig.apiKey,
+            model: modelName,
+            systemPrompt: currentAgent.systemPrompt,
+        };
+    } else {
+        // [新增] 处理 "默认AI (无角色)" 的情况
+        // 假设第一个API配置是默认的，或者提供一个专门的默认配置
+        const apiConfig = appState.apiConfigs[0]; 
+        if (!apiConfig) {
+            alert("错误：没有找到可用的 API 配置。请在设置中添加一个。");
+            return;
+        }
+        const modelMap = new Map((apiConfig.models || '').split(',').map(m => m.split(':').map(s => s.trim())));
+        const modelName = modelMap.values().next().value; // 使用第一个模型
+        
+        llmConfig = {
+            provider: apiConfig.provider,
+            apiPath: apiConfig.apiUrl,
+            apiKey: apiConfig.apiKey,
+            model: modelName,
+            systemPrompt: "", // 没有 system prompt
+        };
+    }
     
     // --- 后续逻辑与之前基本相同 ---
     setState({ isAiThinking: true });
@@ -634,8 +671,12 @@ export async function sendMessageAndGetResponse(content, attachments) {
     let accumulatedContent = "";
     let accumulatedReasoning = "";
 
-    const conversationHistory = appState.history
-        .filter(h => h.topicId === topicId && h.status === 'completed');
+    // [修改] 构建历史记录时检查角色的 sendHistory 属性
+    let conversationHistory = [];
+    if (!currentAgent || currentAgent.sendHistory) {
+        conversationHistory = appState.history
+            .filter(h => h.topicId === topicId && h.status === 'completed' && h.id !== aiMessage.id);
+    }
 
     await llmService.streamChat(llmConfig, conversationHistory, {
         onChunk: ({ type, text }) => {
@@ -664,32 +705,53 @@ export async function deleteHistoryMessages(messageIds) {
     const idsToDelete = new Set(messageIds);
     const history = appState.history.filter(msg => !idsToDelete.has(msg.id));
     setState({ history });
-    await persistAgentState();
+    await persistSettingsState();
 }
 
 export async function editUserMessageAndRegenerate(messageId, newContent) {
-    // This is more complex. The logic would be:
-    // 1. Find the message to edit.
-    // 2. Find all subsequent messages in the same topic.
-    // 3. Delete all subsequent messages.
-    // 4. Update the content of the target message.
-    // 5. Re-run the AI conversation from that point.
-    console.log(`Editing message ${messageId} with content: ${newContent}`);
-    // Implementation would go here...
+    const allHistory = appState.history;
+    const messageIndex = allHistory.findIndex(msg => msg.id === messageId);
+    if (messageIndex === -1) return;
+
+    const targetMessage = allHistory[messageIndex];
+    const topicId = targetMessage.topicId;
+
+    // 1. 截断历史记录
+    const truncatedHistory = allHistory.slice(0, messageIndex + 1)
+        .map(msg => msg.id === messageId ? { ...msg, content: newContent } : msg);
+    
+    // 2. 移除不属于当前主题的、在截断点之后的消息 (以防万一)
+    const finalHistory = truncatedHistory.concat(
+        allHistory.slice(messageIndex + 1).filter(msg => msg.topicId !== topicId)
+    );
+    
+    setState({ history: finalHistory });
+    renderHistoryPanel();
+    
+    // 3. 重新生成回应
+    await sendMessageAndGetResponse(newContent, []);
 }
 
 
 // --- Selection (适配 Prompt) ---
-export function selectPrompt(promptId) {
-    const firstTopic = appState.topics.find(t => t.promptId === promptId);
+export function selectAgent(agentId) { // [重构]
+    const firstTopic = appState.topics.find(t => t.agentId === agentId); // [重构]
     setState({ 
-        currentPromptId: promptId,
+        currentAgentId: agentId, // [重构]
         currentTopicId: firstTopic ? firstTopic.id : null
     });
 }
 
 export function selectTopic(topicId) {
-    setState({ currentTopicId: topicId });
+    const lastMessage = appState.history
+        .filter(h => h.topicId === topicId)
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+
+    setState({ 
+        currentTopicId: topicId,
+        // [新增] 联动更新对话角色
+        currentConversationAgentId: lastMessage ? lastMessage.agentId : (appState.agents[0]?.id || null) // [重构]
+    });
 }
 
 // --- View Router ---

@@ -33,9 +33,9 @@ db.version(DB_VERSION).stores({
 
     // [新增] 新的配置表
     apiConfigs: '&id, name', // API 配置
-    prompts: '&id, name',      // 角色配置 (以前的 Agent)
+    agents: '&id, name',      // 角色配置 (以前的 Agent)
 
     // [修改] history 和 topics 表现在关联到 promptId
-    topics: '&id, promptId, createdAt',
-    history: '&id, topicId, timestamp',
+    topics: '&id, agentId, createdAt',
+    history: '&id, topicId, timestamp, agentId',
 });

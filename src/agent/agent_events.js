@@ -97,9 +97,9 @@ async function handleAgentClick(e) {
         return;
     }
     
-    const agentId = agentItem.dataset.agentId;
+    const agentId = agentItem.dataset.agentId; // [重构]
     if (agentId && !agentItem.classList.contains('active')) {
-        dataService.selectAgent(agentId);
+        dataService.selectAgent(agentId); // [重构]
         renderAgentView();
     }
 }
@@ -141,20 +141,80 @@ async function handleHistoryActionClick(e) {
     const messageId = messageItem.dataset.messageId;
 
     if (actionBtn.classList.contains('delete-btn')) {
-        if (confirm("确定要删除这条消息吗？")) {
-            await dataService.deleteHistoryMessages([messageId]);
-            renderHistoryPanel(); // Just re-render the history
+        if (confirm("确定要删除这组对话吗？")) {
+            // [修改] 删除一组对话
+            let idsToDelete = [messageId];
+            const message = appState.history.find(h => h.id === messageId);
+            const messageEl = actionBtn.closest('.history-item');
+
+            if (message.role === 'user') {
+                const nextEl = messageEl.nextElementSibling;
+                if (nextEl && nextEl.classList.contains('role-assistant')) {
+                    idsToDelete.push(nextEl.dataset.messageId);
+                }
+            } else if (message.role === 'assistant') {
+                const prevEl = messageEl.previousElementSibling;
+                if (prevEl && prevEl.classList.contains('role-user')) {
+                    idsToDelete.push(prevEl.dataset.messageId);
+                }
+            }
+            await dataService.deleteHistoryMessages(idsToDelete);
+            renderHistoryPanel();
         }
     } else if (actionBtn.classList.contains('edit-btn')) {
-        const p = messageItem.querySelector('.history-item-content p');
-        const newContent = prompt("编辑你的消息:", p.textContent);
-        if (newContent) {
-            await dataService.editUserMessageAndRegenerate(messageId, newContent);
-            renderHistoryPanel();
+        const p = messageItem.querySelector('.history-item-content p:first-of-type');
+        const currentContent = p.textContent;
+        const newContent = prompt("编辑你的消息:", currentContent);
+        if (newContent && newContent !== currentContent) {
+            if (confirm("编辑此消息将删除此后的所有对话并重新生成回应，是否继续？")) {
+                await dataService.editUserMessageAndRegenerate(messageId, newContent);
+                // UI会自动更新
+            }
         }
     } else if (actionBtn.classList.contains('regenerate-btn')) {
         // This is complex, would involve deleting this message and re-running the AI
         console.log(`Regenerating response for message ${messageId}`);
+    }
+}
+
+function handleFilterClick(e) {
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+
+    document.querySelectorAll('.filter-btn.active').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const filterType = btn.dataset.filter;
+    const tagContainer = dom.$id('tag-filter-container');
+    tagContainer.style.display = filterType === 'tagged' ? 'flex' : 'none';
+    
+    const newFilters = { ...appState.agentFilters, type: filterType, tags: [] }; // [重构]
+    setState({ agentFilters: newFilters }); // [重构]
+    renderAgentList(); // [重构]
+}
+
+function handleTagFilterChange(e) {
+    // 假设是单选，多选会更复杂
+    const selectedTag = e.target.value;
+    const newFilters = { ...appState.agentFilters, tags: selectedTag ? [selectedTag] : [] }; // [重构]
+    setState({ agentFilters: newFilters }); // [重构]
+    renderAgentList(); // [重构]
+}
+
+// [新增] 对话角色选择器事件
+function handleConversationRoleChange(e) {
+    const newAgentId = e.target.value || null; // [重构]
+    setState({ currentConversationAgentId: newAgentId }); // [重构]
+}
+
+// [新增] 主题重命名事件
+async function handleEditTopic() {
+    if (!appState.currentTopicId) return;
+    const topic = appState.topics.find(t => t.id === appState.currentTopicId);
+    const newName = prompt("请输入新的主题名称:", topic.title);
+    if (newName && newName.trim() !== topic.title) {
+        await dataService.updateTopic(appState.currentTopicId, { title: newName.trim() });
+        renderTopicList(); // 重新渲染以显示新名称
     }
 }
 
@@ -310,6 +370,12 @@ export function setupAgentEventListeners() {
     dom.navAgentList.addEventListener('click', handleAgentClick);
     dom.agentTopicList.addEventListener('click', handleTopicClick);
     dom.agentHistoryContent.addEventListener('click', handleHistoryActionClick);
+
+    // [新增]
+    dom.$('.ai-agent-nav').addEventListener('click', handleFilterClick);
+    dom.$id('tag-filter').addEventListener('change', handleTagFilterChange);
+    dom.$id('conversationRoleSelector').addEventListener('change', handleConversationRoleChange);
+    dom.$id('editTopicBtn').addEventListener('click', handleEditTopic);
 
     // New chat listeners
     dom.sendMessageBtn.addEventListener('click', handleSendMessage);

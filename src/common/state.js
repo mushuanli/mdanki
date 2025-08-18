@@ -26,17 +26,22 @@ let state = {
     folderStack: [],
     
     // --- AI Agent Data State ---
-    agents: [],  // { id, name, avatar, config }
-    topics: [],  // { id, agentId, title, icon }
-    history: [], // { id, topicId, role, content, images, timestamp，status }
+    agents: [],  // { id, name, avatar, config }[修改] 在其他地方会为它增加 tags 和 sendHistory 字段
+    topics: [],  // { id, promptId, title, icon }
+    history: [], // { id, topicId, role, content, images, timestamp，status,promptId }
 
     // --- AI Agent UI State ---
-    currentAgentId: null,
+    currentAgentId: null, // [修改] 理解为左侧导航栏选中的角色
     currentTopicId: null,
-    
+    currentConversationAgentId: null, // [新增] 当前对话实际使用的角色ID
+
     // --- Transient UI State (not saved) ---
     isLoading: true,
     isAiThinking: false, // <-- ADD THIS LINE
+    agentFilters: { // [新增] 用于存储角色列表的筛选条件
+        type: 'all', // 'all' or 'tagged'
+        tags: [],
+    },
     isSessionSidebarHidden: false,
     areAllClozeVisible: false,
     movingItems: [], // {id, type}[]

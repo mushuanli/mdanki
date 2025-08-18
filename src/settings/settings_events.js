@@ -123,8 +123,8 @@ function handleNavItemClick(e) {
         itemData = { id: 'general', type: 'general', displayName: '应用设置' };
     } else if (type === 'apiConfig') {
         itemData = appState.apiConfigs.find(c => c.id === id);
-    } else if (type === 'prompt') {
-        itemData = appState.prompts.find(p => p.id === id);
+    } else if (type === 'agent') {
+        itemData = appState.agents.find(p => p.id === id);
     }
 
     if (itemData) {
@@ -148,7 +148,7 @@ function handleAddItemClick(e) {
     const type = addBtn.dataset.type;
     let displayName = '新项目';
     if (type === 'apiConfig') displayName = '新 API 配置';
-    else if (type === 'prompt') displayName = '新角色';
+    else if (type === 'agent') displayName = '新 Agent';
 
     currentItem = { type, displayName };
     renderSettingsDetail(currentItem, true);
@@ -177,8 +177,8 @@ async function handleSave() {
     try {
         if (currentItem.type === 'apiConfig') {
             await saveApiConfig();
-        } else if (currentItem.type === 'prompt') {
-            await savePrompt();
+        } else if (currentItem.type === 'agent') {
+            await saveAgent();
         }
         // Force a re-render of the entire settings view to reflect list changes
         $id('settings-view').innerHTML = '';
@@ -210,21 +210,28 @@ async function saveApiConfig() {
     }
 }
 
-async function savePrompt() {
-    const form = $id('prompt-form-dynamic');
+async function saveAgent() {
+    const form = $id('agent-form-dynamic');
+
+    // [新增] 收集标签数据
+    const tags = Array.from(form.querySelectorAll('.tags-list li'))
+                      .map(li => li.textContent.slice(0, -1).trim()); // 移除末尾的 '×' 并 trim
+
     const data = {
         name: form.querySelector('.config-name').value,
         avatar: form.querySelector('.config-avatar').value,
         model: form.querySelector('.config-model').value,
         systemPrompt: form.querySelector('.config-systemPrompt').value,
         hint: form.querySelector('.config-hint').value,
+        tags: tags, // [新增]
+        sendHistory: form.querySelector('.config-sendHistory').checked, // [新增]
     };
     const id = form.querySelector('.config-id').value;
     
     if (id) {
-        await dataService.updatePrompt(id, data);
+        await dataService.updateAgent(id, data); // [重构]
     } else {
-        await dataService.addPrompt(data);
+        await dataService.addAgent(data); // [重构]
     }
 }
 
@@ -238,8 +245,8 @@ async function handleDelete(e) {
         try {
             if (type === 'apiConfig') {
                 await dataService.deleteApiConfig(id);
-            } else if (type === 'prompt') {
-                await dataService.deletePrompt(id);
+            } else if (type === 'agent') {
+                await dataService.deleteAgent(id);
             }
             // Force a re-render
             $id('settings-view').innerHTML = '';
@@ -272,6 +279,11 @@ export function setupEventListeners() {
             const input = target.closest('.input-group').querySelector('input');
             input.type = input.type === 'password' ? 'text' : 'password';
         }
+        // [新增] 移除标签
+        if (e.target.classList.contains('remove-tag-btn')) {
+            e.target.parentElement.remove();
+        }
+
     });
 
     view.addEventListener('change', e => {
@@ -281,6 +293,24 @@ export function setupEventListeners() {
         if (target.id === 'import-file-input') handleFileImport(e);
         if (target.matches('.config-provider')) handleProviderChange(e);
     });
+   
+    // [新增] 标签输入处理
+    view.addEventListener('keydown', e => {
+        if (e.target.classList.contains('config-tags-input') && e.key === 'Enter') {
+            e.preventDefault();
+            const input = e.target;
+            const tagText = input.value.trim();
+            if (tagText) {
+                const tagsList = input.closest('.tags-input-container').querySelector('.tags-list');
+                const li = document.createElement('li');
+                li.textContent = tagText;
+                li.innerHTML += '<button type="button" class="remove-tag-btn">×</button>';
+                tagsList.appendChild(li);
+                input.value = '';
+            }
+        }
+    });
+
 }
 
 export function initializeUI(context) {

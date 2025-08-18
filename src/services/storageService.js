@@ -147,16 +147,16 @@ export async function saveAllData({ sessions, folders, clozeStates, persistentAp
  * [新增] 加载所有设置相关的数据
  */
 export async function loadSettingsData() {
-    const [apiConfigs, prompts, topics, history] = await Promise.all([
+    const [apiConfigs, agents, topics, history] = await Promise.all([ // [重构] prompts -> agents
         db.apiConfigs.toArray(),
-        db.prompts.toArray(),
+        db.agents.toArray(), // [重构]
         db.topics.toArray(),
         db.history.toArray(),
     ]);
 
     return {
         apiConfigs: apiConfigs || [],
-        prompts: prompts || [],
+        agents: agents || [], // [重构]
         topics: topics || [],
         history: history || [],
     };
@@ -165,23 +165,23 @@ export async function loadSettingsData() {
 /**
  * [新增] 保存所有设置相关的数据
  */
-export async function saveSettingsData({ apiConfigs, prompts, topics, history }) {
-     await db.transaction('rw', db.apiConfigs, db.prompts, db.topics, db.history, async () => {
+export async function saveSettingsData({ apiConfigs, agents, topics, history }) {
+     await db.transaction('rw', db.apiConfigs, db.agents, db.topics, db.history, async () => {
         const existingApiConfigIds = new Set(apiConfigs.map(c => c.id));
-        const existingPromptIds = new Set(prompts.map(p => p.id));
+        const existingAgentIds = new Set(agents.map(p => p.id));
         const existingTopicIds = new Set(topics.map(t => t.id));
         const existingHistoryIds = new Set(history.map(h => h.id));
 
         await Promise.all([
             db.apiConfigs.where('id').noneOf(Array.from(existingApiConfigIds)).delete(),
-            db.prompts.where('id').noneOf(Array.from(existingPromptIds)).delete(),
+            db.agents.where('id').noneOf(Array.from(existingAgentIds)).delete(),
             db.topics.where('id').noneOf(Array.from(existingTopicIds)).delete(),
             db.history.where('id').noneOf(Array.from(existingHistoryIds)).delete(),
         ]);
         
         await Promise.all([
             db.apiConfigs.bulkPut(apiConfigs),
-            db.prompts.bulkPut(prompts),
+            db.agents.bulkPut(agents),
             db.topics.bulkPut(topics),
             db.history.bulkPut(history),
         ]);

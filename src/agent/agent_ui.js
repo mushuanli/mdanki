@@ -1,18 +1,18 @@
 // src/agent/agent_ui.js
 
 import * as dom from './agent_dom.js';
-import { appState } from '../common/state.js';
+import { appState, setState } from '../common/state.js'; // [新增] 导入 setState
 import { escapeHTML } from '../common/utils.js';
 import * as dataService from '../services/dataService.js';
 
-function createAgentItem(agent) {
+function createAgentItem(agent) { // [重构]
     const isActive = agent.id === appState.currentAgentId;
     const item = document.createElement('div');
     item.className = `agent-item ${isActive ? 'active' : ''}`;
-    item.dataset.agentId = agent.id;
+    item.dataset.agentId = agent.id; // [重构]
     item.innerHTML = `
         <div class="agent-avatar">${escapeHTML(agent.avatar)}</div>
-        <span>${escapeHTML(agent.displayName)}</span>
+        <span>${escapeHTML(agent.name)}</span>
     `;
     return item;
 }
@@ -22,6 +22,21 @@ function createTopicItem(topic) {
     const item = document.createElement('li');
     item.className = `topic-item ${isActive ? 'active' : ''}`;
     item.dataset.topicId = topic.id;
+
+    // [新增] 悬浮提示功能
+    const lastMessage = appState.history
+        .filter(h => h.topicId === topic.id)
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+    
+    let tooltip = `最后会话: 无`;
+    if (lastMessage) {
+    const lastAgent = dataService.getAgentById(lastMessage.agentId); // [重构]
+    const agentName = lastAgent ? lastAgent.name : '默认 AI'; // [重构]
+        const time = new Date(lastMessage.timestamp).toLocaleString();
+        tooltip = `角色: ${agentName}\n时间: ${time}`;
+    }
+    item.title = tooltip;
+
     item.innerHTML = `
         <div class="topic-icon"><i class="${escapeHTML(topic.icon)}"></i></div>
         <span>${escapeHTML(topic.title)}</span>
@@ -122,14 +137,38 @@ function createHistoryItem(message) {
 }
 
 export function renderAgentView() {
+    renderAgentFilters();
     renderAgentList();
     renderTopicList();
     renderHistoryPanel();
 }
 
-export function renderAgentList() {
+// [新增] 渲染筛选器
+function renderAgentFilters() { // [重构]
+    const allTags = [...new Set(appState.agents.flatMap(p => p.tags || []))]; // [重构]
+    const tagFilterEl = dom.$id('tag-filter');
+    tagFilterEl.innerHTML = '<option value="">所有标签</option>';
+    allTags.forEach(tag => {
+        const option = document.createElement('option');
+        option.value = tag;
+        option.textContent = tag;
+        tagFilterEl.appendChild(option);
+    });
+}
+
+// [修改] 原 renderAgentList
+export function renderAgentList() { // [重构]
     dom.navAgentList.innerHTML = '';
-    appState.agents.forEach(agent => {
+    const { type, tags } = appState.agentFilters; // [重构]
+
+    let filteredAgents = appState.agents; // [重构]
+    if (type === 'tagged' && tags.length > 0) {
+        filteredAgents = appState.agents.filter(p => // [重构]
+            tags.every(tag => (p.tags || []).includes(tag))
+        );
+    }
+    
+    filteredAgents.forEach(agent => { // [重构]
         dom.navAgentList.appendChild(createAgentItem(agent));
     });
     // Add "Add Agent" button
@@ -151,14 +190,33 @@ function renderHistoryHeader() {
         titleEl.textContent = '历史对话记录';
         // settingsBtn.style.display = 'none'; // [删除]
     }
+
+    // [新增] 渲染对话角色选择器
+    const selector = dom.$id('conversationRoleSelector');
+    selector.innerHTML = `<option value="">默认 AI (无角色)</option>`;
+    appState.agents.forEach(agent => { // [重构]
+        const option = document.createElement('option');
+        option.value = agent.id;
+        option.textContent = agent.name;
+        selector.appendChild(option);
+    });
+    selector.value = appState.currentConversationAgentId || ""; // [重构]
 }
 
 export function renderTopicList() {
     dom.agentTopicList.innerHTML = '';
-    const currentTopics = appState.topics.filter(t => t.agentId === appState.currentAgentId);
+    const currentTopics = appState.topics.filter(t => t.agentId === appState.currentAgentId); // [重构]
     currentTopics.forEach(topic => {
         dom.agentTopicList.appendChild(createTopicItem(topic));
     });
+    // [新增] 控制重命名按钮的显示
+    const editTopicBtn = dom.$id('editTopicBtn');
+    if (appState.currentTopicId) {
+        editTopicBtn.style.display = 'block';
+    } else {
+        editTopicBtn.style.display = 'none';
+    }
+
     // Add "Add Topic" button
     const addTopicBtn = document.createElement('li');
     addTopicBtn.className = 'topic-item add-topic-btn';

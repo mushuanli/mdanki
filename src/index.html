@@ -56,6 +56,17 @@
             <div class="nav-title">
                 <i class="fas fa-robot"></i> AI Agent管理
             </div>
+    <div class="agent-filters">
+        <div class="filter-group">
+            <button class="filter-btn active" data-filter="all">所有角色</button>
+            <button class="filter-btn" data-filter="tagged">按标签筛选</button>
+        </div>
+        <div class="filter-group" id="tag-filter-container" style="display: none;">
+            <label for="tag-filter">标签:</label>
+            <select id="tag-filter" class="form-control"></select>
+        </div>
+    </div>
+
             <div class="agent-list">
                 <div class="agent-item active" data-agent="1">
                     <div class="agent-avatar">AI</div>
@@ -90,6 +101,9 @@
                 <div class="topics-header">
                     <i class="fas fa-book"></i> 聊天主题
                 </div>
+    <div class="topic-actions">
+        <button id="editTopicBtn" class="edit-topic-btn" title="重命名当前主题" style="display: none;"><i class="fas fa-pencil-alt"></i></button>
+    </div>
                 <div class="topics-content">
                     <ul class="topic-list">
                         <li class="topic-item active">
@@ -124,6 +138,11 @@
                     </div>
                     <div class="history-header-actions">
                         <input type="text" class="history-search" placeholder="搜索历史记录...">
+    <!-- [新增] 对话角色选择器 -->
+    <select id="conversationRoleSelector" class="role-selector" title="选择本次对话使用的角色">
+        <!-- Options will be populated by JS -->
+    </select>
+
                     </div>
                 </div>
                 <div class="history-content">
@@ -579,9 +598,9 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
 <!-- ====================================================== -->
 <!--            [新增] 角色(Prompt)配置表单模板            -->
 <!-- ====================================================== -->
-<template id="prompt-form-template">
-    <div data-id="" data-type="prompt">
-        <form id="prompt-form-dynamic" novalidate>
+<template id="agent-form-template">
+    <div data-id="" data-type="agent">
+        <form id="agent-form-dynamic" novalidate>
             <input type="hidden" class="config-id">
             <div class="form-group">
                 <label>角色名称</label>
@@ -603,6 +622,23 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
                 <textarea class="config-systemPrompt form-control" rows="8" placeholder="定义角色的行为、知识范围和说话风格..."></textarea>
             </div>
             <div class="form-group">
+<div class="form-group">
+    <label>标签 (输入后按回车添加)</label>
+    <div class="tags-input-container">
+        <ul class="tags-list"></ul>
+        <input type="text" class="config-tags-input form-control" placeholder="例如：学习, 编程...">
+    </div>
+    <p class="form-text">为角色分类，便于在 AI 界面筛选。</p>
+</div>
+
+<div class="form-group">
+    <label class="form-checkbox-label">
+        <input type="checkbox" class="config-sendHistory">
+        <span>发送历史上下文</span>
+    </label>
+    <p class="form-text">如果不勾选，AI 将只接收到 System Prompt 和当前问题，实现“无记忆”对话。</p>
+</div>
+
                 <label>欢迎语 (可选, 支持HTML)</label>
                 <textarea class="config-hint form-control" rows="3" placeholder="例如: 您好！我是您的南京历史导游，有什么可以帮您的吗？"></textarea>
             </div>
