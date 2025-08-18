@@ -11,31 +11,6 @@ let selectedAttachments = [];
 let turnElements = []; // For chat navigation
 let currentTurnIndex = -1; // For chat navigation
 
-// --- Modal Management ---
-const modal = {
-    el: document.getElementById('agentSettingsModal'),
-    title: document.getElementById('agentSettingsModalTitle'),
-    form: document.getElementById('agentSettingsForm'),
-    id: document.getElementById('agentSettingsId'),
-    name: document.getElementById('agentSettingsName'),
-    displayName: document.getElementById('agentSettingsDisplayName'),
-    avatar: document.getElementById('agentSettingsAvatar'), // <-- 新增
-    provider: document.getElementById('agentSettingsProvider'),
-    apiPath: document.getElementById('agentSettingsApiPath'),
-    apiKey: document.getElementById('agentSettingsApiKey'),
-    apiKeyGroup: document.querySelector('.api-key-group'),
-    model: document.getElementById('agentSettingsModel'),
-    isLocal: document.getElementById('agentSettingsIsLocal'),
-    systemPrompt: document.getElementById('agentSettingsSystemPrompt'), // <-- 新增
-    deleteBtn: document.getElementById('deleteAgentBtn'),
-    deleteConfirmZone: document.querySelector('.delete-confirm-zone'),
-    agentNameToConfirm: document.getElementById('agentNameToConfirm'),
-    deleteConfirmInput: document.getElementById('deleteConfirmInput'),
-    finalDeleteBtn: document.getElementById('finalDeleteBtn'),
-    saveBtn: document.getElementById('agentSettingsSaveBtn'),
-    cancelBtn: document.getElementById('agentSettingsCancelBtn'),
-    closeBtn: document.getElementById('agentSettingsCloseBtn'),
-};
 
 /**
  * 新增：动态填充提供商下拉菜单
@@ -100,117 +75,6 @@ function openSettingsModal(agent = null) {
     updateModalUIBasedOnState();
 }
 
-function closeSettingsModal() {
-    modal.el.style.display = 'none';
-}
-
-function updateModalUIBasedOnState() {
-    const providerName = modal.provider.value;
-    const providerConfig = LLM_PROVIDERS[providerName];
-    
-    // 清空现有的模型选项
-    modal.model.innerHTML = ''; 
-
-    // 填充新的模型选项
-    if (providerConfig && providerConfig.models && providerConfig.models.length > 0) {
-        providerConfig.models.forEach(modelName => {
-            const option = document.createElement('option');
-            option.value = modelName;
-            option.textContent = modelName;
-            modal.model.appendChild(option);
-        });
-        modal.model.disabled = false;
-    } else {
-        // 如果没有预设模型，显示一个提示并禁用选择
-        const option = document.createElement('option');
-        option.textContent = '请在下方手动输入模型名';
-        option.value = '';
-        modal.model.appendChild(option);
-        modal.model.disabled = true; 
-        // 考虑是否需要一个额外的输入框来让用户手动输入
-    }
-
-    // Toggle API key based on local model checkbox
-    if (modal.isLocal.checked) {
-        modal.apiKeyGroup.style.display = 'none';
-        modal.apiKey.required = false;
-    } else {
-        modal.apiKeyGroup.style.display = 'block';
-        modal.apiKey.required = true;
-    }
-}
-
-function resetValidation() {
-    modal.form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-}
-
-function validateAndSave() {
-    resetValidation();
-    let isValid = true;
-    const agentId = modal.id.value; // 如果是创建，此值为空
-
-    // 验证显示名
-    if (!modal.displayName.checkValidity()) {
-        modal.displayName.classList.add('is-invalid');
-        isValid = false;
-    }
-
-    // 验证头像
-    if (!modal.avatar.checkValidity()) {
-        modal.avatar.classList.add('is-invalid');
-        isValid = false;
-    }
-    
-    // 验证内部名称（仅在用户手动输入时）
-    // 我们的策略是自动生成，所以主要检查重复性
-    const agentName = modal.name.value;
-    if (agentName) {
-        const isNameTaken = appState.agents.some(a => a.id !== agentId && a.name === agentName);
-        if (!modal.name.checkValidity() || isNameTaken) {
-            modal.name.classList.add('is-invalid');
-            isValid = false;
-        }
-    }
-
-    if (!isValid) return;
-
-    // 收集表单数据
-    const agentData = {
-        displayName: modal.displayName.value,
-        avatar: modal.avatar.value.substring(0, 2).toUpperCase(),
-        config: {
-            provider: modal.provider.value,
-            apiPath: modal.apiPath.value,
-            apiKey: modal.apiKey.value,
-            model: modal.model.value,
-            isLocal: modal.isLocal.checked,
-            systemPrompt: modal.systemPrompt.value, // <-- 新增
-        }
-    };
-
-    // 根据是否存在 ID 来决定是创建还是更新
-    if (agentId) { // --- 更新 ---
-        agentData.id = agentId;
-        agentData.name = modal.name.value; // 对于更新，name是已知的
-        dataService.updateAgent(agentId, agentData).then(() => {
-            closeSettingsModal();
-            renderAgentView();
-        });
-    } else { // --- 创建 ---
-        dataService.addAgent(agentData).then(() => {
-            closeSettingsModal();
-            renderAgentView();
-        });
-    }
-}
-
-async function handleDeleteAgent() {
-    if(confirm(`您确定要永久删除Agent "${modal.displayName.value}" 吗？此操作无法撤销！`)) {
-        await dataService.deleteAgent(modal.id.value);
-        closeSettingsModal();
-        renderAgentView();
-    }
-}
 
 // --- Event Handlers ---
 
@@ -218,9 +82,18 @@ async function handleAgentClick(e) {
     const agentItem = e.target.closest('.agent-item');
     if (!agentItem) return;
 
-    // --- 修改此处逻辑 ---
+    // --- [修改后] 此处逻辑完全改变 ---
     if (agentItem.classList.contains('add-agent-btn')) {
-        openSettingsModal(); // 不带参数调用，进入创建模式
+        // 派发一个全局事件来请求导航到设置页面以添加Agent
+        window.dispatchEvent(new CustomEvent('app:navigateTo', {
+            detail: {
+                view: 'settings',
+                context: {
+                    type: 'agent',
+                    action: 'create'
+                }
+            }
+        }));
         return;
     }
     
@@ -437,9 +310,6 @@ export function setupAgentEventListeners() {
     dom.navAgentList.addEventListener('click', handleAgentClick);
     dom.agentTopicList.addEventListener('click', handleTopicClick);
     dom.agentHistoryContent.addEventListener('click', handleHistoryActionClick);
-    // **新增**: 监听历史记录标题栏的设置按钮
-    const settingsTriggerBtn = document.getElementById('agentSettingsTriggerBtn');
-    settingsTriggerBtn.addEventListener('click', handleSettingsTriggerClick);
 
     // New chat listeners
     dom.sendMessageBtn.addEventListener('click', handleSendMessage);
@@ -451,6 +321,5 @@ export function setupAgentEventListeners() {
     });
     dom.attachmentInput.addEventListener('change', handleAttachmentChange);
     dom.attachmentPreviewContainer.addEventListener('click', handleRemoveAttachment);
-    setupModalEventListeners();
     setupChatNavigation(); // <-- 新增
 }

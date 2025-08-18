@@ -142,49 +142,46 @@ export async function saveAllData({ sessions, folders, clozeStates, persistentAp
     });
 }
 
+
 /**
- * --- Example of AI Agent data persistence (for future use) ---
- *
- * Loads all AI agent-related data.
- * @returns {Promise<object>} An object with agents, topics, and history arrays.
+ * [新增] 加载所有设置相关的数据
  */
-export async function loadAgentData() {
-    const [agents, topics, history] = await Promise.all([
-        db.agents.toArray(),
+export async function loadSettingsData() {
+    const [apiConfigs, prompts, topics, history] = await Promise.all([
+        db.apiConfigs.toArray(),
+        db.prompts.toArray(),
         db.topics.toArray(),
         db.history.toArray(),
     ]);
 
     return {
-        agents: agents || [],
+        apiConfigs: apiConfigs || [],
+        prompts: prompts || [],
         topics: topics || [],
         history: history || [],
     };
 }
 
 /**
- * Saves all AI agent-related data.
- * @param {object} agentData - The data to save.
+ * [新增] 保存所有设置相关的数据
  */
-export async function saveAgentData({ agents, topics, history }) {
-     await db.transaction('rw', db.agents, db.topics, db.history, async () => {
-        // --- ADDING FULL IMPLEMENTATION FOR DATA CONSISTENCY ---
-        
-        // 1. Get IDs/keys of current state items
-        const existingAgentIds = new Set(agents.map(a => a.id));
+export async function saveSettingsData({ apiConfigs, prompts, topics, history }) {
+     await db.transaction('rw', db.apiConfigs, db.prompts, db.topics, db.history, async () => {
+        const existingApiConfigIds = new Set(apiConfigs.map(c => c.id));
+        const existingPromptIds = new Set(prompts.map(p => p.id));
         const existingTopicIds = new Set(topics.map(t => t.id));
         const existingHistoryIds = new Set(history.map(h => h.id));
 
-        // 2. Delete items from DB that are NOT in the current state
         await Promise.all([
-            db.agents.where('id').noneOf(Array.from(existingAgentIds)).delete(),
+            db.apiConfigs.where('id').noneOf(Array.from(existingApiConfigIds)).delete(),
+            db.prompts.where('id').noneOf(Array.from(existingPromptIds)).delete(),
             db.topics.where('id').noneOf(Array.from(existingTopicIds)).delete(),
             db.history.where('id').noneOf(Array.from(existingHistoryIds)).delete(),
         ]);
         
-        // 3. Use 'bulkPut' to insert new items and update existing ones
         await Promise.all([
-            db.agents.bulkPut(agents),
+            db.apiConfigs.bulkPut(apiConfigs),
+            db.prompts.bulkPut(prompts),
             db.topics.bulkPut(topics),
             db.history.bulkPut(history),
         ]);

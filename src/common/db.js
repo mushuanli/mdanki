@@ -18,22 +18,24 @@ db.version(DB_VERSION).stores({
     
     // appState 用于存储简单的、非集合类的持久化状态。
     appState: '&key',
-
-    // AI Agent 功能的表
-    agents: '&id, &name',
-    topics: '&id, agentId, createdAt',
-    history: '&id, topicId, timestamp',
-    
-    // --- [新增] 错题集的数据表 ---
     // &uuid: 主键，保证唯一性
     // subject: 按科目索引
     // *tags: 多值索引，用于标签筛选
     // analysis.reason_for_error: 按错误原因索引
     // review.due: 按复习到期时间索引，用于排序和查询
     mistakes: '&uuid, subject, *tags, analysis.reason_for_error, review.due',
-    // [新增] 统计表
-    reviewStats: '&id, date, folderId' // id: 'YYYY-MM-DD:folderId', date: 'YYYY-MM-DD'
-});
+    reviewStats: '&id, date, folderId',
 
-// [移除] connectToDatabase 函数。Dexie 会在首次操作数据库时自动打开连接，无需手动调用。
-// 这个函数可能会导致时序问题，移除后代码更健壮。
+    // [废弃] 旧的 Agent 表
+    // agents: '&id, &name',
+    // topics: '&id, agentId, createdAt',
+    // history: '&id, topicId, timestamp',
+
+    // [新增] 新的配置表
+    apiConfigs: '&id, name', // API 配置
+    prompts: '&id, name',      // 角色配置 (以前的 Agent)
+
+    // [修改] history 和 topics 表现在关联到 promptId
+    topics: '&id, promptId, createdAt',
+    history: '&id, topicId, timestamp',
+});

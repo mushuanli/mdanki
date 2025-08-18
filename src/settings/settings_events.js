@@ -1,21 +1,21 @@
 // src/settings/settings_events.js
-
-import * as dom from './settings_dom.js';
-import * as ui from './settings_ui.js';
+import { $, $id } from '../common/dom.js';
 import { appState, setState } from '../common/state.js';
-import { autoSave } from '../services/dataService.js';
+import * as dataService from '../services/dataService.js';
 import { exportDatabase, importDatabase } from '../services/dbService.js';
+import { renderSettingsView, renderSettingsDetail, setButtonLoadingState } from './settings_ui.js';
+import { LLM_PROVIDERS, getDefaultApiPath, getDefaultModel } from '../services/llm/llmProviders.js';
 
+// --- Module State ---
 let autoSaveIntervalId = null;
+let currentItem = null; // 跟踪当前正在编辑的项目
 
-// --- Private Functions ---
+// ======================================================
+//      [保留] 旧功能：全局设置相关逻辑
+// ======================================================
 
 function applyTheme(themeName) {
-    if (themeName) {
-        document.documentElement.setAttribute('data-theme', themeName);
-    } else {
-        document.documentElement.removeAttribute('data-theme');
-    }
+    document.documentElement.setAttribute('data-theme', themeName || '');
 }
 
 function saveTheme(themeName) {
@@ -24,17 +24,10 @@ function saveTheme(themeName) {
 
 function setupAutoSaveTimer(intervalInMinutes) {
     if (autoSaveIntervalId) clearInterval(autoSaveIntervalId);
-    
     if (intervalInMinutes > 0) {
-        const intervalInMs = intervalInMinutes * 60 * 1000;
-        autoSaveIntervalId = setInterval(autoSave, intervalInMs);
-        console.log(`Auto-save timer set for every ${intervalInMinutes} minutes.`);
-    } else {
-        console.log("Auto-save timer disabled.");
+        autoSaveIntervalId = setInterval(dataService.autoSave, intervalInMinutes * 60 * 1000);
     }
 }
-
-// --- Event Handlers ---
 
 function handleThemeChange(event) {
     const selectedTheme = event.target.value;
@@ -52,16 +45,14 @@ function handleAutoSaveChange(event) {
     setupAutoSaveTimer(newInterval);
 }
 
-/**
- * [新增] 处理导出按钮点击事件。
- */
 async function handleExportClick() {
-    const originalText = dom.exportDbBtn.innerHTML;
-    ui.setButtonLoadingState(dom.exportDbBtn, true, originalText);
+    const exportDbBtn = $id('export-db-btn');
+    const originalText = exportDbBtn.innerHTML;
+    setButtonLoadingState(exportDbBtn, true, originalText);
 
     try {
         const data = await exportDatabase();
-        const jsonString = JSON.stringify(data, null, 2); // 使用2个空格缩进，方便阅读
+        const jsonString = JSON.stringify(data, null, 2);
         const blob = new Blob([jsonString], { type: 'application/json' });
         
         const url = URL.createObjectURL(blob);
@@ -69,89 +60,249 @@ async function handleExportClick() {
         a.href = url;
         const date = new Date().toISOString().slice(0, 10);
         a.download = `anki-suite-backup-${date}.json`;
-        document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        
     } catch (error) {
         console.error("导出数据库失败:", error);
-        alert("导出数据时发生错误，详情请查看控制台。");
+        alert("导出数据时发生错误。");
     } finally {
-        ui.setButtonLoadingState(dom.exportDbBtn, false, originalText);
+        setButtonLoadingState(exportDbBtn, false, originalText);
     }
 }
 
-/**
- * [新增] 处理导入文件选择事件。
- */
 async function handleFileImport(event) {
+    const importDbBtn = $id('import-db-btn');
+    const importFileInput = $id('import-file-input');
     const file = event.target.files[0];
     if (!file) return;
 
-    if (!confirm("警告！\n\n导入新数据将会完全覆盖您当前的全部数据，此操作不可撤销。\n\n您确定要继续吗？")) {
-        // 清空文件输入，以便下次可以选择相同的文件
-        dom.importFileInput.value = '';
+    if (!confirm("警告！导入将覆盖所有数据，此操作不可撤销。确定继续吗？")) {
+        importFileInput.value = '';
         return;
     }
 
-    const originalText = dom.importDbBtn.innerHTML;
-    ui.setButtonLoadingState(dom.importDbBtn, true, originalText);
+    const originalText = importDbBtn.innerHTML;
+    setButtonLoadingState(importDbBtn, true, originalText);
 
     const reader = new FileReader();
     reader.onload = async (e) => {
         try {
             const data = JSON.parse(e.target.result);
             await importDatabase(data);
-            
-            alert("数据导入成功！应用将重新加载新数据。");
-
-            // ✨ 核心改动：发布一个全局事件，而不是调用一个导入的函数
+            alert("数据导入成功！应用将重新加载。");
             window.dispatchEvent(new CustomEvent('app:dataImported'));
-
         } catch (error) {
             console.error("导入数据库失败:", error);
-            alert(`导入数据失败：${error.message}\n详情请查看控制台。`);
+            alert(`导入数据失败：${error.message}`);
         } finally {
-            // 注意：因为不再刷新页面，我们需要在这里手动恢复按钮状态
-            ui.setButtonLoadingState(dom.importDbBtn, false, originalText);
+            setButtonLoadingState(importDbBtn, false, originalText);
         }
     };
-    reader.onerror = () => {
-        alert("读取文件时发生错误。");
-        ui.setButtonLoadingState(dom.importDbBtn, false, originalText);
-    };
     reader.readAsText(file);
+    importFileInput.value = '';
+}
+
+
+// ======================================================
+//      [新增] 新功能：动态配置项管理逻辑
+// ======================================================
+
+function handleNavItemClick(e) {
+    const navItem = e.target.closest('.settings-nav-item');
+    if (!navItem) return;
+
+    // 移除其他激活状态
+    document.querySelectorAll('.settings-nav-item.active').forEach(el => el.classList.remove('active'));
+    navItem.classList.add('active');
     
-    // 清空文件输入
-    dom.importFileInput.value = '';
+    const id = navItem.dataset.id;
+    const type = navItem.dataset.type;
+
+    let itemData;
+    if (type === 'general') {
+        itemData = { id: 'general', type: 'general', displayName: '应用设置' };
+    } else if (type === 'apiConfig') {
+        itemData = appState.apiConfigs.find(c => c.id === id);
+    } else if (type === 'prompt') {
+        itemData = appState.prompts.find(p => p.id === id);
+    }
+
+    if (itemData) {
+        currentItem = { ...itemData, type }; // 确保类型被保存
+        renderSettingsDetail(currentItem);
+        // 如果是全局设置，需要手动初始化其UI值
+        if(type === 'general') {
+            const themeSelector = $id('theme-selector');
+            if(themeSelector) themeSelector.value = localStorage.getItem('app-theme') || '';
+            
+            const autoSaveInput = $id('autosave-interval');
+            if(autoSaveInput) autoSaveInput.value = appState.settings.autoSaveInterval;
+        }
+    }
+}
+
+function handleAddItemClick(e) {
+    const addBtn = e.target.closest('.add-item-btn');
+    if (!addBtn) return;
+    
+    const type = addBtn.dataset.type;
+    let displayName = '新项目';
+    if (type === 'apiConfig') displayName = '新 API 配置';
+    else if (type === 'prompt') displayName = '新角色';
+
+    currentItem = { type, displayName };
+    renderSettingsDetail(currentItem, true);
+}
+
+
+// --- Event Handlers for Detail Panel (Agent Form specific) ---
+
+function handleProviderChange(e) {
+    const form = e.target.closest('form');
+    if (!form) return;
+    const providerName = e.target.value;
+    const apiUrlInput = form.querySelector('.config-apiUrl');
+    if (apiUrlInput) {
+        apiUrlInput.value = getDefaultApiPath(providerName);
+    }
+}
+
+async function handleSave() {
+    if (!currentItem) return;
+    
+    const saveBtn = $id('settings-save-btn');
+    const originalText = saveBtn.innerHTML;
+    setButtonLoadingState(saveBtn, true, "保存中...");
+
+    try {
+        if (currentItem.type === 'apiConfig') {
+            await saveApiConfig();
+        } else if (currentItem.type === 'prompt') {
+            await savePrompt();
+        }
+        // Force a re-render of the entire settings view to reflect list changes
+        $id('settings-view').innerHTML = '';
+        renderSettingsView();
+        // Maybe re-select the item that was just saved
+    } catch (error) {
+        console.error("Save failed:", error);
+        alert(`保存失败: ${error.message}`);
+    } finally {
+        setButtonLoadingState(saveBtn, false, originalText);
+    }
+}
+
+async function saveApiConfig() {
+    const form = $id('api-config-form-dynamic');
+    const data = {
+        name: form.querySelector('.config-name').value,
+        provider: form.querySelector('.config-provider').value,
+        apiUrl: form.querySelector('.config-apiUrl').value,
+        apiKey: form.querySelector('.config-apiKey').value,
+        models: form.querySelector('.config-models').value,
+    };
+    const id = form.querySelector('.config-id').value;
+
+    if (id) {
+        await dataService.updateApiConfig(id, data);
+    } else {
+        await dataService.addApiConfig(data);
+    }
+}
+
+async function savePrompt() {
+    const form = $id('prompt-form-dynamic');
+    const data = {
+        name: form.querySelector('.config-name').value,
+        avatar: form.querySelector('.config-avatar').value,
+        model: form.querySelector('.config-model').value,
+        systemPrompt: form.querySelector('.config-systemPrompt').value,
+        hint: form.querySelector('.config-hint').value,
+    };
+    const id = form.querySelector('.config-id').value;
+    
+    if (id) {
+        await dataService.updatePrompt(id, data);
+    } else {
+        await dataService.addPrompt(data);
+    }
+}
+
+async function handleDelete(e) {
+    if(!e.target.closest('.delete-item-btn') || !currentItem || !currentItem.id) return;
+
+    const { type, id, name } = currentItem;
+    let confirmMessage = `你确定要删除 "${name}" 吗? 此操作无法撤销。`;
+    
+    if (confirm(confirmMessage)) {
+        try {
+            if (type === 'apiConfig') {
+                await dataService.deleteApiConfig(id);
+            } else if (type === 'prompt') {
+                await dataService.deletePrompt(id);
+            }
+            // Force a re-render
+            $id('settings-view').innerHTML = '';
+            renderSettingsView();
+            // Show placeholder
+            renderSettingsDetail({}, false);
+        } catch (error) {
+            console.error("Delete failed:", error);
+            alert(`删除失败: ${error.message}`);
+        }
+    }
 }
 
 // --- Public Functions ---
 
-/**
- * 设置所有设置页面的事件监听器。
- */
 export function setupEventListeners() {
-    if (dom.themeSelector) dom.themeSelector.addEventListener('change', handleThemeChange);
-    if (dom.autoSaveInput) dom.autoSaveInput.addEventListener('change', handleAutoSaveChange);
-    
-    // [新增] 数据库操作事件监听
-    if (dom.exportDbBtn) dom.exportDbBtn.addEventListener('click', handleExportClick);
-    if (dom.importDbBtn) dom.importDbBtn.addEventListener('click', () => dom.importFileInput.click());
-    if (dom.importFileInput) dom.importFileInput.addEventListener('change', handleFileImport);
+    const view = $id('settings-view');
+    if (!view) return;
+
+    // --- 使用事件委托统一处理所有事件 ---
+    view.addEventListener('click', e => {
+        const target = e.target;
+        if (target.id === 'export-db-btn') handleExportClick(e);
+        if (target.id === 'import-db-btn') $id('import-file-input').click();
+        if (target.closest('.settings-nav-item')) handleNavItemClick(e);
+        if (target.closest('.add-item-btn')) handleAddItemClick(e);
+        if (target.id === 'settings-save-btn') handleSave(e);
+        if (target.closest('.delete-item-btn')) handleDelete(e);
+        if (target.closest('.toggle-api-key-visibility')) {
+            const input = target.closest('.input-group').querySelector('input');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+    });
+
+    view.addEventListener('change', e => {
+        const target = e.target;
+        if (target.id === 'theme-selector') handleThemeChange(e);
+        if (target.id === 'autosave-interval') handleAutoSaveChange(e);
+        if (target.id === 'import-file-input') handleFileImport(e);
+        if (target.matches('.config-provider')) handleProviderChange(e);
+    });
 }
 
-/**
- * 根据应用初始状态来初始化UI。
- */
-export function initializeUI() {
-    // 初始化主题
-    const savedTheme = localStorage.getItem('app-theme') || '';
-    applyTheme(savedTheme);
-    if (dom.themeSelector) dom.themeSelector.value = savedTheme;
-
-    // 初始化自动保存
-    if (dom.autoSaveInput) dom.autoSaveInput.value = appState.settings.autoSaveInterval;
+export function initializeUI(context) {
+    // --- 初始化全局计时器 ---
     setupAutoSaveTimer(appState.settings.autoSaveInterval);
+    
+    let initialItemSelector;
+    if (context?.type === 'prompt' && context?.action === 'create') {
+        const addBtn = $(`.add-item-btn[data-type="prompt"]`);
+        if (addBtn) {
+            addBtn.click();
+            return;
+        }
+    }
+    // Default to general settings
+    initialItemSelector = '#settings-view .settings-nav-item[data-type="general"]';
+    
+    const initialItem = $(initialItemSelector);
+    if (initialItem) {
+        initialItem.click();
+    } else {
+        // Fallback if the default item isn't found
+        renderSettingsDetail({}, false);
+    }
 }

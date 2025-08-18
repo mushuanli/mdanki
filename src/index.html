@@ -123,9 +123,6 @@
                         <span id="historyHeaderTitle">历史对话记录</span>
                     </div>
                     <div class="history-header-actions">
-                        <button id="agentSettingsTriggerBtn" class="header-action-btn" title="当前Agent设置" style="display: none;">
-                            <i class="fas fa-cog"></i>
-                        </button>
                         <input type="text" class="history-search" placeholder="搜索历史记录...">
                     </div>
                 </div>
@@ -425,18 +422,43 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
             </div>
             <!-- 设置视图结束 -->
 
-            <!-- ====================================================== -->
-            <!--            [新增] 设置界面所需的 HTML 模板              -->
-            <!-- ====================================================== -->
-            <template id="settings-section-template">
-                <div class="app-container">
-                    <div class="panel">
-                        <div class="panel-header">
-                            <div class="panel-title">
-                                <i class="fas fa-cog"></i> 应用程序设置
-                            </div>
+        <!-- ====================================================== -->
+        <!--          [重构后] 统一的设置布局模板                   -->
+        <!-- ====================================================== -->
+        <template id="settings-layout-template">
+            <div class="settings-nav-panel">
+                <div class="settings-nav-header">
+                    <h3><i class="fas fa-sliders-h"></i> 设置</h3>
+                </div>
+                <div class="settings-nav-list">
+                    <!-- 导航项将由JS动态填充 -->
+                </div>
+            </div>
+            <div class="settings-detail-panel">
+                <div class="panel" style="height: 100%;"> <!-- 确保面板占满高度 -->
+                    <div class="panel-header">
+                        <div id="settings-detail-title" class="panel-title">
+                            <!-- 标题由JS填充 -->
                         </div>
-                        <div class="panel-content" style="padding: 25px; overflow-y: auto;">
+                        <div class="panel-actions">
+                            <button id="settings-save-btn" class="panel-btn panel-btn-text" style="display: none;"><i class="fas fa-save"></i> 保存</button>
+                        </div>
+                    </div>
+                    <div id="settings-detail-content" class="panel-content" style="padding: 25px; overflow-y: auto;">
+                         <div class="placeholder-content">
+                            <i class="fas fa-cogs fa-3x" style="color: var(--gray-300);"></i>
+                            <p style="margin-top: 15px; color: var(--text-tertiary);">从左侧选择一个项目进行配置</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- ====================================================== -->
+        <!--          [重构后] 全局应用设置表单模板                  -->
+        <!-- ====================================================== -->
+        <template id="general-settings-form-template">
+            <div data-id="general" data-type="general">
                             <!-- 主题设置区域 -->
                             <div class="settings-section">
                                 <h3 class="settings-section-title">外观与主题</h3>
@@ -460,21 +482,21 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
                                 <div class="form-group">
                                     <label for="autosave-interval">自动保存间隔 (分钟)</label>
                                     <input type="number" id="autosave-interval" class="form-control" min="0" value="5">
-                                    <p class="form-text" style="margin-top: 8px; font-size: var(--text-sm); color: var(--text-secondary);">
+                                    <p class="form-text">
                                         数据将按此时间间隔自动保存到本地数据库。设置为 0 可禁用自动保存。
                                     </p>
                                 </div>
                             </div>
 
                             <!-- 导入/导出按钮 -->
-                            <div class="form-group" style="margin-top: 25px;">
+                    <div class="form-group">
                                 <label>数据库同步</label>
                                 <div style="display: flex; gap: 15px;">
                                     <button id="export-db-btn" class="btn-secondary" style="flex: 1;"><i class="fas fa-download"></i> 导出数据</button>
                                     <button id="import-db-btn" class="btn-danger" style="flex: 1;"><i class="fas fa-upload"></i> 导入数据</button>
                                 </div>
                                 <input type="file" id="import-file-input" accept=".json" style="display: none;">
-                                <p class="form-text" style="margin-top: 8px; font-size: var(--text-sm); color: var(--text-secondary);">
+                                <p class="form-text">
                                     导出所有数据到一个JSON文件。导入文件将会覆盖当前所有数据，请谨慎操作。
                                 </p>
                             </div>
@@ -482,6 +504,116 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
                     </div>
                 </div>
             </template>
+
+			<!-- ====================================================== -->
+			<!--            [新增] 所有设置项的主从布局模板             -->
+			<!-- ====================================================== -->
+			<template id="settings-layout-template">
+			    <div class="settings-nav-panel">
+			        <div class="settings-nav-header">
+			            <h3>配置项</h3>
+			        </div>
+			        <div class="settings-nav-list">
+			            <!-- 列表项将由JS动态填充 -->
+			        </div>
+			    </div>
+			    <div class="settings-detail-panel">
+			        <div class="panel">
+			            <div class="panel-header">
+			                <div id="settings-detail-title" class="panel-title">
+			                    <i class="fas fa-arrow-left"></i> 请选择一个配置项
+			                </div>
+			                <div class="panel-actions">
+			                    <button id="settings-save-btn" class="panel-btn panel-btn-text" style="display: none;"><i class="fas fa-save"></i> 保存</button>
+			                </div>
+			            </div>
+			            <div id="settings-detail-content" class="panel-content" style="padding: 25px; overflow-y: auto;">
+			                <div class="placeholder-content">
+			                    <i class="fas fa-cogs"></i>
+			                    <p>从左侧选择一个项目进行编辑，或添加一个新项目。</p>
+			                </div>
+			            </div>
+			        </div>
+			    </div>
+			</template>
+
+<!-- ====================================================== -->
+<!--            [新增] API 配置表单模板                  -->
+<!-- ====================================================== -->
+<template id="api-config-form-template">
+    <div data-id="" data-type="apiConfig">
+        <form id="api-config-form-dynamic" novalidate>
+            <input type="hidden" class="config-id">
+            <div class="form-group">
+                <label>配置名称 (如 DeepSeek, OpenAI)</label>
+                <input type="text" class="config-name form-control" required placeholder="例如：我的 DeepSeek Key">
+            </div>
+             <div class="form-group">
+                <label>提供商</label>
+                <select class="config-provider form-control" required></select>
+            </div>
+            <div class="form-group">
+                <label>API 地址</label>
+                <input type="url" class="config-apiUrl form-control" placeholder="会自动填充，也可自定义">
+            </div>
+            <div class="form-group">
+                <label>API Key</label>
+                <div class="input-group">
+                    <input type="password" class="config-apiKey form-control">
+                    <button type="button" class="toggle-api-key-visibility input-group-btn" title="显示/隐藏"><i class="fas fa-eye"></i></button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Models (格式: 别名:模型名, 多个用逗号隔开)</label>
+                <textarea class="config-models form-control" rows="3" placeholder="例如: chat:deepseek-chat, code:deepseek-coder"></textarea>
+                <p class="form-text">为长模型名设置一个简短的别名，方便在角色配置中选择。</p>
+            </div>
+            <div class="settings-detail-footer">
+                <button type="button" class="btn btn-danger delete-item-btn">删除此 API 配置</button>
+            </div>
+        </form>
+    </div>
+</template>
+
+
+<!-- ====================================================== -->
+<!--            [新增] 角色(Prompt)配置表单模板            -->
+<!-- ====================================================== -->
+<template id="prompt-form-template">
+    <div data-id="" data-type="prompt">
+        <form id="prompt-form-dynamic" novalidate>
+            <input type="hidden" class="config-id">
+            <div class="form-group">
+                <label>角色名称</label>
+                <input type="text" class="config-name form-control" required placeholder="例如：南京历史导游">
+            </div>
+            <div class="form-group">
+                <label>头像 (2个字符)</label>
+                <input type="text" class="config-avatar form-control" required maxlength="2" placeholder="例如: 史, 导">
+            </div>
+            <div class="form-group">
+                <label>选择模型</label>
+                <select class="config-model form-control" required>
+                    <!-- 选项将由JS动态生成 -->
+                </select>
+                <p class="form-text">此列表来源于您已配置的 API。</p>
+            </div>
+            <div class="form-group">
+                <label>System Prompt (系统提示词)</label>
+                <textarea class="config-systemPrompt form-control" rows="8" placeholder="定义角色的行为、知识范围和说话风格..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>欢迎语 (可选, 支持HTML)</label>
+                <textarea class="config-hint form-control" rows="3" placeholder="例如: 您好！我是您的南京历史导游，有什么可以帮您的吗？"></textarea>
+            </div>
+            <div class="settings-detail-footer">
+                <button type="button" class="btn btn-danger delete-item-btn">删除此角色</button>
+            </div>
+        </form>
+    </div>
+</template>
+
+
             
             <input type="file" id="fileInput" class="file-input" accept=".md, .txt" multiple>
 
@@ -519,94 +651,6 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
                 <button class="audio-btn" id="playBtn"><i class="fas fa-play"></i> 播放</button>
                 <button class="audio-btn" id="pauseBtn"><i class="fas fa-pause"></i> 暂停</button>
                 <button class="audio-btn" id="stopBtn"><i class="fas fa-stop"></i> 停止</button>
-            </div>
-        </div>
-
-        <!-- ====================================================== -->
-        <!--          AGENT SETTINGS MODAL (Initially Hidden)       -->
-        <!-- ====================================================== -->
-        <div class="modal-overlay" id="agentSettingsModal" style="display: none;">
-            <div class="modal-content agent-settings-modal">
-                <div class="modal-header">
-                    <h2 id="agentSettingsModalTitle">Agent 设置</h2>
-                    <button class="modal-close" id="agentSettingsCloseBtn">×</button>
-                </div>
-                <div class="modal-body">
-                    <form id="agentSettingsForm" novalidate>
-                        <input type="hidden" id="agentSettingsId">
-
-                        <div class="form-group">
-                        <label for="agentSettingsName">Agent名 (内部标识) <i class="fas fa-info-circle" title="唯一标识，仅限字母、数字、下划线。"></i></label>
-                        <input type="text" id="agentSettingsName" class="form-control" required pattern="[a-zA-Z0-9_]+">
-                            <div class="invalid-feedback">名称已被使用或格式不正确。</div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="agentSettingsDisplayName">会话显示名</label>
-                            <input type="text" id="agentSettingsDisplayName" class="form-control" required>
-                        </div>
-                        <!-- 新增 Avatar 输入框 -->
-                        <div class="form-group">
-                            <label for="agentSettingsAvatar">头像 (2个字符)</label>
-                        <input type="text" id="agentSettingsAvatar" class="form-control" required maxlength="2" placeholder="例如：AI, 数, 语">
-                        </div>
-                        <hr>
-
-                        <h4>模型配置</h4>
-
-                        <div class="form-group">
-                            <label for="agentSettingsProvider">提供商</label>
-                            <select id="agentSettingsProvider" class="form-control" required>
-                                <!-- 选项将由JS动态填充 -->
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="agentSettingsApiPath">API 地址</label>
-                            <input type="url" id="agentSettingsApiPath" class="form-control">
-                        </div>
-
-                        <div class="form-group api-key-group">
-                            <label for="agentSettingsApiKey">API Key</label>
-                            <div class="input-group">
-                                <input type="password" id="agentSettingsApiKey" class="form-control">
-                            <button type="button" id="toggleApiKeyVisibility" class="input-group-btn" title="显示/隐藏"><i class="fas fa-eye"></i></button>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="agentSettingsModel">模型名</label>
-                            <select id="agentSettingsModel" class="form-control" required>
-                                <!-- 选项将由JS动态填充 -->
-                            </select>
-                        </div>
-
-                        <div class="form-check">
-                            <input type="checkbox" id="agentSettingsIsLocal" class="form-check-input">
-                            <label for="agentSettingsIsLocal">这是一个本地推理模型 (无需API Key)</label>
-                        </div>
-
-                        <hr>
-
-                        <h4>危险操作区</h4>
-                    <button type="button" class="btn-danger" id="deleteAgentBtn"><i class="fas fa-trash"></i> 删除此 Agent</button>
-                        <div class="delete-confirm-zone" style="display:none;">
-                            <p>请输入Agent名 "<b><span id="agentNameToConfirm"></span></b>" 以确认删除：</p>
-                            <input type="text" id="deleteConfirmInput" class="form-control">
-                            <button type="button" class="btn-danger" id="finalDeleteBtn" disabled>我已了解后果，永久删除</button>
-                        </div>
-                        <hr>
-                        <h4>Agent 行为设定</h4>
-                        <div class="form-group">
-                            <label for="agentSettingsSystemPrompt">System Prompt (系统提示词)</label>
-                        <textarea id="agentSettingsSystemPrompt" class="form-control" rows="5" placeholder="定义Agent的角色和行为，例如：你是一个专业的数学学习助手..."></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-secondary" id="agentSettingsCancelBtn">取消</button>
-                <button type="submit" class="btn-primary" id="agentSettingsSaveBtn" form="agentSettingsForm">保存更改</button>
-                </div>
             </div>
         </div>
 

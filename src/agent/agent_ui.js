@@ -141,15 +141,15 @@ export function renderAgentList() {
 
 function renderHistoryHeader() {
     const titleEl = document.getElementById('historyHeaderTitle');
-    const settingsBtn = document.getElementById('agentSettingsTriggerBtn');
+    // const settingsBtn = document.getElementById('agentSettingsTriggerBtn'); // [删除]
     const currentAgent = dataService.getAgentById(appState.currentAgentId);
 
     if (currentAgent) {
         titleEl.textContent = `${currentAgent.displayName} - 对话记录`;
-        settingsBtn.style.display = 'flex'; // 显示按钮
+        // settingsBtn.style.display = 'flex'; // [删除]
     } else {
         titleEl.textContent = '历史对话记录';
-        settingsBtn.style.display = 'none'; // 隐藏按钮
+        // settingsBtn.style.display = 'none'; // [删除]
     }
 }
 
