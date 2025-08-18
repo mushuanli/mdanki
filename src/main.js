@@ -24,49 +24,62 @@ import { initializeSettingsApp } from './settings/settings_main.js';
 function handleViewChange() {
     console.log('[ViewChange] Switching to view:', appState.activeView);
 
-    // 隐藏所有视图
+    // 隐藏所有视图和特定导航
     dom.ankiView.style.display = 'none';
     dom.agentView.style.display = 'none';
     dom.mistakesView.style.display = 'none';
-    dom.settingsView.style.display = 'none'; // [新增] 隐藏设置视图
+    dom.settingsView.style.display = 'none';
     if (dom.agentNav) dom.agentNav.style.display = 'none';
+    
+    // 从所有主视图容器移除 active 类
+    document.querySelectorAll('.main-layout').forEach(view => view.classList.remove('active'));
 
-    // 重置所有按钮状态
+    // 重置所有导航按钮状态
     document.querySelectorAll('.app-nav-btn').forEach(btn => {
         btn.classList.remove('active');
     });
 
-    // 根据 activeView 显示对应视图
+    let activeViewElement = null;
+    let activeButtonElement = null;
+
+    // 根据 activeView 显示对应视图和激活按钮
     switch (appState.activeView) {
         case 'anki':
-            dom.ankiView.style.display = 'flex';
-            document.getElementById('nav-anki').classList.add('active');
+            activeViewElement = dom.ankiView;
+            activeButtonElement = document.getElementById('nav-anki');
             break;
         case 'agent':
-            dom.agentView.style.display = 'flex';
+            activeViewElement = dom.agentView;
             if (dom.agentNav) dom.agentNav.style.display = 'flex';
-            document.getElementById('nav-agents').classList.add('active');
+            activeButtonElement = document.getElementById('nav-agents');
             break;
         case 'mistakes':
-            dom.mistakesView.style.display = 'flex';
-            document.getElementById('nav-mistakes').classList.add('active');
+            activeViewElement = dom.mistakesView;
+            activeButtonElement = document.getElementById('nav-mistakes');
             break;
-        // [新增] 处理 settings 视图的 case
         case 'settings':
-            dom.settingsView.style.display = 'flex';
-            document.getElementById('nav-settings').classList.add('active');
+            activeViewElement = dom.settingsView;
+            activeButtonElement = document.getElementById('nav-settings');
             break;
-
         default:
-            console.warn(`Unknown view: ${appState.activeView}, defaulting to mistakes`);
-            dom.mistakesView.style.display = 'flex';
-            document.getElementById('nav-mistakes').classList.add('active');
+            console.warn(`Unknown view: ${appState.activeView}, defaulting to agent`);
+            activeViewElement = dom.agentView;
+            if (dom.agentNav) dom.agentNav.style.display = 'flex';
+            activeButtonElement = document.getElementById('nav-agents');
             break;
+    }
+
+    if (activeViewElement) {
+        activeViewElement.style.display = 'flex';
+        activeViewElement.classList.add('active'); // 同时管理 active 类
+    }
+    if (activeButtonElement) {
+        activeButtonElement.classList.add('active');
     }
 }
 
 /**
- * Sets up the top-level navigation that switches between Anki and Agent views.
+ * Sets up the top-level navigation that switches between application views.
  */
 function setupAppNavigation() {
     const appNavContainer = document.querySelector('.app-nav');
@@ -82,25 +95,12 @@ function setupAppNavigation() {
         // 阻止默认的链接跳转行为
         e.preventDefault();
         
-        // 根据按钮ID确定目标视图
-        let targetView;
-        switch (button.id) {
-            case 'nav-anki':
-                targetView = 'anki';
-                break;
-            case 'nav-agents':
-                targetView = 'agent';
-                break;
-            case 'nav-mistakes':
-                targetView = 'mistakes';
-                break;
-            // [新增] 处理 settings 导航按钮的 case
-            case 'nav-settings':
-                targetView = 'settings';
-                break;
-            default:
-                console.warn('Unknown navigation button:', button.id);
-                return;
+        // [修改后] 使用 data-view 属性来获取目标视图，更健壮
+        const targetView = button.dataset.view;
+        
+        if (!targetView) {
+            console.warn('Clicked navigation button is missing data-view attribute:', button);
+            return;
         }
         
         console.log(`[Navigation] Switching to view: ${targetView}`);
@@ -193,8 +193,8 @@ async function main() {
         setupAppEventListeners(); // ✨ 核心改动：设置全局事件监听
 
         // 4. 设置并显示初始视图
-        // 如果 appState 中没有 activeView，则默认为 'mistakes'
-        const initialView = appState.activeView || 'mistakes';
+        // 如果 appState 中没有 activeView，则默认为 'anki'
+        const initialView = appState.activeView || 'anki';
         setState({ activeView: initialView }); // 确保状态被设置
         handleViewChange();
 

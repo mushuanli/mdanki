@@ -740,9 +740,7 @@ body {
     text-align: center;
     flex-shrink: 0;
 }
-.app-nav-btn span {
-    display: none;
-}
+
 .app-nav-btn.active i {
     color: var(--primary-color);
 }

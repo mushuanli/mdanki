@@ -32,22 +32,17 @@
     <div class="sidebar">
         
         <nav class="app-nav">
-            <a href="#" class="app-nav-btn" id="nav-anki">
+            <a href="#" class="app-nav-btn active" data-view="anki" id="nav-anki" title="Anki 笔记">
                 <i class="fas fa-layer-group"></i>
-                <span>Anki 笔记</span>
             </a>
-            <a href="#" class="app-nav-btn active" id="nav-mistakes">
+            <a href="#" class="app-nav-btn" data-view="mistakes" id="nav-mistakes" title="错题本">
                 <i class="fas fa-book"></i>
-                <span>错题本</span>
             </a>
-            <a href="#" class="app-nav-btn" id="nav-agents">
+            <a href="#" class="app-nav-btn" data-view="agent" id="nav-agents" title="AI角色">
                 <i class="fas fa-robot"></i>
-                <span>AI Agents</span>
             </a>
-                        <!-- [新增] 设置按钮 -->
-            <a href="#" class="app-nav-btn" id="nav-settings">
+            <a href="#" class="app-nav-btn" data-view="settings" id="nav-settings" title="设置">
                 <i class="fas fa-cog"></i>
-                <span>设置</span>
             </a>
         </nav>
     </div>
@@ -57,7 +52,7 @@
             <!-- 1. 创建一个新的内容包装器 -->
     <div class="content-wrapper">
         <!-- AI Agent导航栏 (此部分在初始视图中可能隐藏) -->
-        <nav class="ai-agent-nav" style="display: none;">
+        <nav class="ai-agent-nav">
             <div class="nav-title">
                 <i class="fas fa-robot"></i> AI Agent管理
             </div>
@@ -90,7 +85,7 @@
         </nav>
 
         <!-- AI Agent内容区域 (此部分在初始视图中可能隐藏) -->
-        <div class="agent-content-container" id="agent-view" style="display: none;">
+        <div class="agent-content-container main-layout" id="agent-view">
             <div class="topics-panel">
                 <div class="topics-header">
                     <i class="fas fa-book"></i> 聊天主题
@@ -319,7 +314,7 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
             <!-- ====================================================== -->
             <!--          [MODIFIED] 错题本视图 (应用所有修改)           -->
             <!-- ====================================================== -->
-            <div id="mistakes-view" class="main-layout active">
+            <div id="mistakes-view" class="main-layout" style="display: none;">
 
                 <!-- [MODIFIED] 错题本侧边栏 -->
                 <div class="session-sidebar">
@@ -426,6 +421,14 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
             <!--                  [新增] 设置视图                     -->
             <!-- ====================================================== -->
             <div id="settings-view" class="main-layout" style="display: none;">
+                <!-- 内容将由 JavaScript 从模板动态填充 -->
+            </div>
+            <!-- 设置视图结束 -->
+
+            <!-- ====================================================== -->
+            <!--            [新增] 设置界面所需的 HTML 模板              -->
+            <!-- ====================================================== -->
+            <template id="settings-section-template">
                 <div class="app-container">
                     <div class="panel">
                         <div class="panel-header">
@@ -451,7 +454,7 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
                                 </div>
                             </div>
 
-                            <!-- [新增] 数据与同步设置区域 -->
+                            <!-- 数据与同步设置区域 -->
                             <div class="settings-section">
                                 <h3 class="settings-section-title">数据与同步</h3>
                                 <div class="form-group">
@@ -463,7 +466,7 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
                                 </div>
                             </div>
 
-                            <!-- [新增] 导入/导出按钮 -->
+                            <!-- 导入/导出按钮 -->
                             <div class="form-group" style="margin-top: 25px;">
                                 <label>数据库同步</label>
                                 <div style="display: flex; gap: 15px;">
@@ -475,13 +478,11 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
                                     导出所有数据到一个JSON文件。导入文件将会覆盖当前所有数据，请谨慎操作。
                                 </p>
                             </div>
-
                         </div>
                     </div>
                 </div>
-            </div>
-            <!-- 设置视图结束 -->
-
+            </template>
+            
             <input type="file" id="fileInput" class="file-input" accept=".md, .txt" multiple>
 
             <div class="move-modal" id="moveModal">
