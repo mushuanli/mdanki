@@ -35,17 +35,23 @@ let state = {
     currentTopicId: null,
     currentConversationAgentId: null, // [新增] 当前对话实际使用的角色ID
 
+    // [新增] 主题列表的筛选标签
+    topicListFilterTag: 'all', // 'all' 或具体的标签名
+
     // --- Transient UI State (not saved) ---
     isLoading: true,
     isAiThinking: false, // <-- ADD THIS LINE
-    agentFilters: { // [新增] 用于存储角色列表的筛选条件
-        type: 'all', // 'all' or 'tagged'
-        tags: [],
-    },
+    isTopicsPanelHidden: false, // [新增]
+
     isSessionSidebarHidden: false,
     areAllClozeVisible: false,
     movingItems: [], // {id, type}[]
     selectedMoveTarget: null,
+    
+    // --- Transient UI State (not saved) ---
+    isTopicSelectionMode: false, // [新增] 主题选择模式标志
+    selectedTopicIds: [],      // [新增] 存储选中的主题ID
+
 };
 
 // Provides a read-only view of the state to the rest of the app.

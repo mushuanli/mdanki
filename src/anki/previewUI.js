@@ -6,6 +6,7 @@ import { playMultimedia } from './audioUI.js';
 // [MODIFIED] 导入需要的模块
 import * as dataService from '../services/dataService.js';
 import { simpleHash } from '../common/utils.js';
+import { renderRichContent } from '../common/renderingService.js'; // [新增] 导入新服务
 
 let isPreviewUpdating = false; // <--- 1. 在顶部添加一个锁变量
 
@@ -83,13 +84,9 @@ function processClozeElementsInNode(node) {
             let locatorKey = null;
             if (locator && locator.trim()) {
                 locatorKey = locator.trim();
-                // 优先使用 locator 生成哈希
-                const uniquePart = simpleHash(locatorKey);
-                clozeId = `${fileId}_${uniquePart}`;
+                clozeId = `${fileId}_${simpleHash(locatorKey)}`;
             } else {
-                // 回退到兼容模式，使用内容生成哈希
-                const uniquePart = simpleHash(clozeContent);
-                clozeId = `${fileId}_${uniquePart}`;
+                clozeId = `${fileId}_${simpleHash(clozeContent)}`;
             }
             
             // [MODIFIED] 将计算好的 clozeId 传递给数据服务
@@ -97,16 +94,10 @@ function processClozeElementsInNode(node) {
 
             const clozeSpan = document.createElement('span');
             clozeSpan.className = `cloze hidden ${getClozeColorClassByState(clozeState)}`;
-            
-            // [MODIFIED] 存储更多数据以供后续使用
-            clozeSpan.dataset.clozeId = clozeId; // 存储完整的ID
-            clozeSpan.dataset.content = clozeContent; // 存储可见内容
-            if (locatorKey) {
-                clozeSpan.dataset.locator = locatorKey; // 如果有locator，也存起来用于检查重复
-            }
-            if (multimedia) {
-                clozeSpan.dataset.multimedia = multimedia;
-            }
+            clozeSpan.dataset.clozeId = clozeId;
+            clozeSpan.dataset.content = clozeContent;
+            if (locatorKey) clozeSpan.dataset.locator = locatorKey;
+            if (multimedia) clozeSpan.dataset.multimedia = multimedia;
             
             clozeSpan.innerHTML = `
                 ${multimedia ? '<span class="media-icon" title="播放音频"><i class="fas fa-volume-up"></i></span>' : ''}
@@ -556,7 +547,11 @@ export async function updatePreview() {
             const subsession = fileSubsessions[currentSessionId]?.find(s => s.id === currentSubsessionId);
             if (subsession) markdownText = subsession.content;
         }
-        dom.preview.innerHTML = window.marked.parse(markdownText || '');
+
+        // 1. 调用公共渲染服务
+        await renderRichContent(dom.preview, markdownText);
+
+        // 2. 执行 Anki 特有的后处理
         processClozeElementsInNode(dom.preview);
         processTaskLists();
         

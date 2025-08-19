@@ -51,88 +51,42 @@
     <div class="main-content">
             <!-- 1. 创建一个新的内容包装器 -->
     <div class="content-wrapper">
-        <!-- AI Agent导航栏 (此部分在初始视图中可能隐藏) -->
-        <nav class="ai-agent-nav">
-            <div class="nav-title">
-                <i class="fas fa-robot"></i> AI Agent管理
-            </div>
-    <div class="agent-filters">
-        <div class="filter-group">
-            <button class="filter-btn active" data-filter="all">所有角色</button>
-            <button class="filter-btn" data-filter="tagged">按标签筛选</button>
+
+            <!-- AI Agent内容区域 -->
+            <div class="agent-content-container main-layout" id="agent-view">
+                <div class="topics-panel">
+    <div class="topics-header">
+        <div class="header-title-group">
+            <i class="fas fa-book"></i> 聊天主题
         </div>
-        <div class="filter-group" id="tag-filter-container" style="display: none;">
-            <label for="tag-filter">标签:</label>
-            <select id="tag-filter" class="form-control"></select>
+        <div class="header-actions-group">
+            <select id="topic-tag-filter" class="topic-filter-select" title="按标签筛选主题"></select>
+            <button id="editTopicBtn" class="topic-action-btn" title="重命名当前主题" style="display: none;"><i class="fas fa-pencil-alt"></i></button>
+            <button id="manageTopicsBtn" class="topic-action-btn" title="管理主题"><i class="fas fa-tasks"></i></button>
         </div>
     </div>
 
-            <div class="agent-list">
-                <div class="agent-item active" data-agent="1">
-                    <div class="agent-avatar">AI</div>
-                    <span>数学学习助手</span>
-                </div>
-                <div class="agent-item" data-agent="2">
-                    <div class="agent-avatar">MD</div>
-                    <span>语言学习助手</span>
-                </div>
-                <div class="agent-item" data-agent="3">
-                    <div class="agent-avatar">CS</div>
-                    <span>计算机科学助手</span>
-                </div>
-                <div class="agent-item">
-                    <div class="agent-avatar">+</div>
-                    <span>添加新Agent</span>
-                </div>
-            </div>
-            <div class="nav-actions">
-                <button class="nav-action-btn">
-                    <i class="fas fa-history"></i> 历史记录
-                </button>
-                <button class="nav-action-btn">
-                    <i class="fas fa-cog"></i> 设置
-                </button>
-            </div>
-        </nav>
-
-        <!-- AI Agent内容区域 (此部分在初始视图中可能隐藏) -->
-        <div class="agent-content-container main-layout" id="agent-view">
-            <div class="topics-panel">
-                <div class="topics-header">
-                    <i class="fas fa-book"></i> 聊天主题
-                </div>
-    <div class="topic-actions">
-        <button id="editTopicBtn" class="edit-topic-btn" title="重命名当前主题" style="display: none;"><i class="fas fa-pencil-alt"></i></button>
+    <!-- [修复] 将 .topics-batch-actions 移到 header 的外部，作为其兄弟元素 -->
+    <div class="topics-batch-actions" style="display: none;">
+        <button id="selectAllTopicsBtn" class="batch-action-btn">全选</button>
+        <button id="deleteSelectedTopicsBtn" class="batch-action-btn danger" disabled>删除选中 (0)</button>
+        <button id="cancelTopicSelectionBtn" class="batch-action-btn">取消</button>
     </div>
-                <div class="topics-content">
-                    <ul class="topic-list">
-                        <li class="topic-item active">
-                            <div class="topic-icon"><i class="fas fa-calculator"></i></div>
-                            <span>线性代数</span>
-                        </li>
-                        <li class="topic-item">
-                            <div class="topic-icon"><i class="fas fa-infinity"></i></div>
-                            <span>微积分</span>
-                        </li>
-                        <li class="topic-item">
-                            <div class="topic-icon"><i class="fas fa-project-diagram"></i></div>
-                            <span>概率统计</span>
-                        </li>
-                        <li class="topic-item">
-                            <div class="topic-icon"><i class="fas fa-cube"></i></div>
-                            <span>几何学</span>
-                        </li>
-                        <li class="topic-item">
-                            <div class="topic-icon"><i class="fas fa-plus-circle"></i></div>
-                            <span>添加新主题</span>
-                        </li>
-                    </ul>
+    
+                    
+                    <div class="topics-content">
+                        <ul class="topic-list">
+                            <!-- Topic items will be dynamically generated -->
+                        </ul>
+                    </div>
                 </div>
-            </div>
 
             <div class="history-panel">
                 <div class="history-header">
                     <div class="history-title">
+            <button id="toggleTopicsBtn" class="panel-btn" title="隐藏主题栏" style="background: none; border: none; color: white; width: 32px; height: 32px; padding: 0; margin-right: 10px;">
+                <i class="fas fa-bars"></i>
+            </button>
                         <i class="fas fa-comments"></i>
                         <span id="historyHeaderTitle">历史对话记录</span>
                     </div>
@@ -249,6 +203,13 @@
                                     <a href="#" id="showStatsBtn"><i class="fas fa-chart-line"></i> 统计</a>
                                 </div>
                             </div>
+    <button id="clozeNavUpBtn" class="panel-btn" title="上一个 Cloze">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+    <button id="clozeNavDownBtn" class="panel-btn" title="下一个 Cloze">
+        <i class="fas fa-arrow-down"></i>
+    </button>
+    
                             <button id="toggleVisibilityClozeBtn" class="panel-btn" title="全部隐藏">
                                 <i class="fas fa-eye-eye"></i>
                             </button>
@@ -524,37 +485,6 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
                 </div>
             </template>
 
-			<!-- ====================================================== -->
-			<!--            [新增] 所有设置项的主从布局模板             -->
-			<!-- ====================================================== -->
-			<template id="settings-layout-template">
-			    <div class="settings-nav-panel">
-			        <div class="settings-nav-header">
-			            <h3>配置项</h3>
-			        </div>
-			        <div class="settings-nav-list">
-			            <!-- 列表项将由JS动态填充 -->
-			        </div>
-			    </div>
-			    <div class="settings-detail-panel">
-			        <div class="panel">
-			            <div class="panel-header">
-			                <div id="settings-detail-title" class="panel-title">
-			                    <i class="fas fa-arrow-left"></i> 请选择一个配置项
-			                </div>
-			                <div class="panel-actions">
-			                    <button id="settings-save-btn" class="panel-btn panel-btn-text" style="display: none;"><i class="fas fa-save"></i> 保存</button>
-			                </div>
-			            </div>
-			            <div id="settings-detail-content" class="panel-content" style="padding: 25px; overflow-y: auto;">
-			                <div class="placeholder-content">
-			                    <i class="fas fa-cogs"></i>
-			                    <p>从左侧选择一个项目进行编辑，或添加一个新项目。</p>
-			                </div>
-			            </div>
-			        </div>
-			    </div>
-			</template>
 
 <!-- ====================================================== -->
 <!--            [新增] API 配置表单模板                  -->
@@ -669,11 +599,8 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
             </div>
         </div>
     </div>
-            <div class="footer">
-                <p>© 2024 Anki MD管理系统 | 数据保存在浏览器本地存储中</p>
-            </div>
+
             
-        <script type="module" src="./main.js"></script>
 
         <!-- ====================================================== -->
         <!--          AUDIO PLAYING                                 -->
@@ -753,5 +680,10 @@ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
             </div>
             </div>
         </div>
+        <div class="footer">
+                <p>© 2024 Anki MD管理系统 | 数据保存在浏览器本地存储中</p>
+            </div>
+                    <script type="module" src="./main.js"></script>
+
 </body>
 </html>

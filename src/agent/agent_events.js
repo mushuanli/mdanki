@@ -2,113 +2,33 @@
 
 import * as dom from './agent_dom.js';
 import * as dataService from '../services/dataService.js';
-import { appState } from '../common/state.js';
-import { renderAgentView, renderHistoryPanel, renderAttachmentPreviews, updateTurnElements } from './agent_ui.js';
-import { LLM_PROVIDERS, getDefaultModel, getDefaultApiPath } from '../services/llm/llmProviders.js'; // <-- 新增导入
+import { appState, setState } from '../common/state.js';
+import { renderAgentView, renderHistoryPanel, renderTopicList, renderAttachmentPreviews, updateTurnElements } from './agent_ui.js';
 
 // --- Module State ---
 let selectedAttachments = [];
 let turnElements = []; // For chat navigation
 let currentTurnIndex = -1; // For chat navigation
 
-
-/**
- * 新增：动态填充提供商下拉菜单
- */
-function populateProviderDropdown() {
-    modal.provider.innerHTML = ''; // 清空现有选项
-    for (const providerName in LLM_PROVIDERS) {
-        const option = document.createElement('option');
-        option.value = providerName;
-        option.textContent = providerName;
-        modal.provider.appendChild(option);
-    }
-}
-
-/**
- * 打开设置模态框，支持创建和编辑模式。
- * @param {object | null} agent - 如果提供 agent 对象，则为编辑模式；否则为创建模式。
- */
-function openSettingsModal(agent = null) {
-    modal.el.style.display = 'flex';
-    resetValidation();
-    modal.deleteConfirmZone.style.display = 'none';
-
-    // 1. 首先，动态填充提供商列表
-    populateProviderDropdown();
-
-    if (agent) { // --- 编辑模式 ---
-        modal.title.textContent = `Agent 设置: ${agent.displayName}`;
-        modal.deleteBtn.style.display = 'block';
-        
-        // 填充表单
-        modal.id.value = agent.id;
-        modal.name.value = agent.name;
-        modal.displayName.value = agent.displayName;
-        modal.avatar.value = agent.avatar || '';
-        modal.systemPrompt.value = agent.config.systemPrompt || '';
-
-        // 3. 设置保存的提供商，并手动触发change事件来加载关联的模型列表和API路径
-        modal.provider.value = agent.config.provider || '火山';
-        modal.provider.dispatchEvent(new Event('change', { bubbles: true }));
-
-        // 4. 填充其余字段（在change事件后，以防被覆盖）
-        modal.apiPath.value = agent.config.apiPath || '';
-        modal.apiKey.value = agent.config.apiKey || '';
-        modal.model.value = agent.config.model || '';
-        modal.isLocal.checked = agent.config.isLocal || false;
-
-    } else { // --- 创建模式 ---
-        modal.title.textContent = '创建新 Agent';
-        modal.deleteBtn.style.display = 'none'; // 创建时隐藏删除按钮
-        
-        // 重置表单
-        modal.form.reset();
-        modal.id.value = ''; // 关键：ID为空表示是新对象
-        modal.name.value = ''; // 内部名称也为空，稍后生成
-
-        // 3. 设置默认提供商，并手动触发change事件来加载默认的模型和API路径
-        modal.provider.value = '火山'; 
-        modal.provider.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-
-    updateModalUIBasedOnState();
-}
-
-
 // --- Event Handlers ---
 
-async function handleAgentClick(e) {
-    const agentItem = e.target.closest('.agent-item');
-    if (!agentItem) return;
-
-    // --- [修改后] 此处逻辑完全改变 ---
-    if (agentItem.classList.contains('add-agent-btn')) {
-        // 派发一个全局事件来请求导航到设置页面以添加Agent
-        window.dispatchEvent(new CustomEvent('app:navigateTo', {
-            detail: {
-                view: 'settings',
-                context: {
-                    type: 'agent',
-                    action: 'create'
-                }
-            }
-        }));
-        return;
-    }
-    
-    const agentId = agentItem.dataset.agentId; // [重构]
-    if (agentId && !agentItem.classList.contains('active')) {
-        dataService.selectAgent(agentId); // [重构]
-        renderAgentView();
-    }
-}
-
 async function handleTopicClick(e) {
-    const topicItem = e.target.closest('.topic-item');
+    // [修改] 增加对选择模式和删除按钮的判断
+    const target = e.target;
+    const topicItem = target.closest('.topic-item');
     if (!topicItem) return;
 
+    // [重构] 优先处理特殊按钮点击
+    // 1. "添加新主题" 按钮
     if (topicItem.classList.contains('add-topic-btn')) {
+        if (!appState.currentAgentId && appState.agents.length > 0) {
+            // 如果没有默认选中的Agent，帮用户选一个
+            setState({ currentAgentId: appState.agents[0].id });
+        }
+        if (!appState.currentAgentId) {
+            alert("请先在设置中创建一个 Agent 角色。");
+            return;
+        }
         const title = prompt("请输入新主题的名称:");
         if (title) {
             await dataService.addTopic(title);
@@ -117,19 +37,38 @@ async function handleTopicClick(e) {
         return;
     }
 
-    const topicId = topicItem.dataset.topicId;
-    if (topicId) {
-        dataService.selectTopic(topicId);
-        renderAgentView(); // Only need to re-render topics and history
+    // 2. 单个删除按钮
+    if (target.closest('.topic-delete-btn')) {
+        const topicId = topicItem.dataset.topicId;
+        if (confirm(`确定要删除主题 "${topicItem.querySelector('span').textContent}" 吗？\n这将同时删除所有相关聊天记录。`)) {
+            await dataService.deleteTopics([topicId]);
+            renderAgentView();
+        }
+        return; // 结束处理
     }
-}
 
-function handleSettingsTriggerClick() {
-    const currentAgent = dataService.getAgentById(appState.currentAgentId);
-    if (currentAgent) {
-        openSettingsModal(currentAgent);
-    } else {
-        console.error("No agent selected to configure.");
+    // 3. 选择模式下的点击
+    if (appState.isTopicSelectionMode) {
+        const checkbox = topicItem.querySelector('.topic-selection-checkbox');
+        if (checkbox) {
+            checkbox.checked = !checkbox.checked;
+            checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        return; // 结束处理
+    }
+
+    // [重构] 最后处理常规的主题选择
+    const topicId = topicItem.dataset.topicId;
+    if (topicId && topicId !== appState.currentTopicId) {
+        // 在切换主题之前保存当前滚动位置
+        if (appState.currentTopicId) {
+            const currentScrollTop = dom.agentHistoryContent.scrollTop;
+            const newScrollPositions = { ...appState.topicScrollPositions, [appState.currentTopicId]: currentScrollTop };
+            setState({ topicScrollPositions: newScrollPositions });
+        }
+        
+        dataService.selectTopic(topicId);
+        renderAgentView();
     }
 }
 
@@ -177,34 +116,49 @@ async function handleHistoryActionClick(e) {
     }
 }
 
-function handleFilterClick(e) {
-    const btn = e.target.closest('.filter-btn');
-    if (!btn) return;
-
-    document.querySelectorAll('.filter-btn.active').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    const filterType = btn.dataset.filter;
-    const tagContainer = dom.$id('tag-filter-container');
-    tagContainer.style.display = filterType === 'tagged' ? 'flex' : 'none';
-    
-    const newFilters = { ...appState.agentFilters, type: filterType, tags: [] }; // [重构]
-    setState({ agentFilters: newFilters }); // [重构]
-    renderAgentList(); // [重构]
-}
-
-function handleTagFilterChange(e) {
-    // 假设是单选，多选会更复杂
+/**
+ * [新增] 处理主题标签筛选器变化的事件
+ */
+function handleTopicFilterChange(e) {
     const selectedTag = e.target.value;
-    const newFilters = { ...appState.agentFilters, tags: selectedTag ? [selectedTag] : [] }; // [重构]
-    setState({ agentFilters: newFilters }); // [重构]
-    renderAgentList(); // [重构]
+    setState({ topicListFilterTag: selectedTag });
+
+    // 重新渲染主题列表，它会自动应用筛选
+    renderTopicList();
+
+    // **重要**：检查当前选中的主题是否还在筛选结果中
+    const currentTopics = dataService.getFilteredTopics(); // 假设在dataService中创建此辅助函数
+    const isCurrentTopicVisible = currentTopics.some(t => t.id === appState.currentTopicId);
+
+    if (!isCurrentTopicVisible) {
+        // 如果当前主题被筛掉了，自动选择列表中的第一个主题
+        const newTopicId = currentTopics.length > 0 ? currentTopics[0].id : null;
+        if (newTopicId) {
+            dataService.selectTopic(newTopicId);
+        } else {
+             setState({ currentTopicId: null });
+        }
+        // 重新渲染整个视图以更新历史记录面板
+        renderAgentView();
+    }
 }
 
-// [新增] 对话角色选择器事件
+/**
+ * [新增] 对话角色选择器事件
+ */
 function handleConversationRoleChange(e) {
-    const newAgentId = e.target.value || null; // [重构]
-    setState({ currentConversationAgentId: newAgentId }); // [重构]
+    // 如果没有选中任何主题，则不允许切换对话角色
+    if (!appState.currentTopicId) return;
+
+    const newAgentId = e.target.value || null; // 'null' for "默认 AI"
+    
+    // 只更新对话角色ID，不改变当前主题
+    setState({
+        currentConversationAgentId: newAgentId,
+    });
+    
+    // 重新渲染历史记录面板，这会根据新角色更新 hint 或历史
+    renderHistoryPanel();
 }
 
 // [新增] 主题重命名事件
@@ -282,26 +236,19 @@ function handleRemoveAttachment(e) {
 function setupChatNavigation() {
     const upBtn = document.getElementById('chatNavUp');
     const downBtn = document.getElementById('chatNavDown');
-
-    upBtn.addEventListener('click', () => navigateTurns(-1));
-    downBtn.addEventListener('click', () => navigateTurns(1));
+    if(upBtn) upBtn.addEventListener('click', () => navigateTurns(-1));
+    if(downBtn) downBtn.addEventListener('click', () => navigateTurns(1));
 }
 
 function navigateTurns(direction) {
-    turnElements = Array.from(dom.agentHistoryContent.querySelectorAll('.history-item .role.user'));
+    turnElements = Array.from(dom.agentHistoryContent.querySelectorAll('.history-item.role-user'));
     if (turnElements.length === 0) return;
 
     document.querySelectorAll('.history-item.highlighted').forEach(el => el.classList.remove('highlighted'));
 
-    currentTurnIndex += direction;
-
-    if (currentTurnIndex < 0) {
-        currentTurnIndex = turnElements.length - 1;
-    } else if (currentTurnIndex >= turnElements.length) {
-        currentTurnIndex = 0;
-    }
+    currentTurnIndex = (currentTurnIndex + direction + turnElements.length) % turnElements.length;
     
-    const userTurnEl = turnElements[currentTurnIndex].closest('.history-item');
+    const userTurnEl = turnElements[currentTurnIndex];
     if (userTurnEl) {
         userTurnEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
@@ -313,69 +260,104 @@ function navigateTurns(direction) {
     }
 }
 
+// [新增] 切换主题面板的处理器
+function handleToggleTopicsPanel() {
+    const isHidden = !appState.isTopicsPanelHidden;
+    setState({ isTopicsPanelHidden: isHidden });
+    
+    const topicsPanel = document.querySelector('.topics-panel');
+    const toggleBtn = document.getElementById('toggleTopicsBtn');
+
+    if (isHidden) {
+        topicsPanel.classList.add('collapsed');
+        toggleBtn.title = "显示主题栏";
+    } else {
+        topicsPanel.classList.remove('collapsed');
+        toggleBtn.title = "隐藏主题栏";
+    }
+}
 
 // --- Setup ---
 
-function setupModalEventListeners() {
-    modal.form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        validateAndSave();
-    });
-
-    modal.closeBtn.addEventListener('click', closeSettingsModal);
-    modal.cancelBtn.addEventListener('click', closeSettingsModal);
-    
-    modal.provider.addEventListener('change', () => {
-        const providerName = modal.provider.value;
-        
-        // 自动填充API路径和默认模型
-        modal.apiPath.value = getDefaultApiPath(providerName);
-        
-        // **重要**：先更新模型列表，然后再设置默认值
-        updateModalUIBasedOnState(); 
-        
-        // 设置默认模型
-        modal.model.value = getDefaultModel(providerName);
-    });
-
-    modal.isLocal.addEventListener('change', updateModalUIBasedOnState);
-
-    modal.deleteBtn.addEventListener('click', () => {
-        modal.deleteConfirmZone.style.display = 'block';
-        modal.agentNameToConfirm.textContent = modal.name.value;
-        modal.deleteConfirmInput.value = '';
-        modal.finalDeleteBtn.disabled = true;
-    });
-
-    modal.deleteConfirmInput.addEventListener('input', (e) => {
-        modal.finalDeleteBtn.disabled = e.target.value !== modal.name.value;
-    });
-
-    modal.finalDeleteBtn.addEventListener('click', handleDeleteAgent);
-    
-    const toggleBtn = document.getElementById('toggleApiKeyVisibility');
-    toggleBtn.addEventListener('click', () => {
-        const icon = toggleBtn.querySelector('i');
-        if (modal.apiKey.type === 'password') {
-            modal.apiKey.type = 'text';
-            icon.classList.replace('fa-eye', 'fa-eye-slash');
-        } else {
-            modal.apiKey.type = 'password';
-            icon.classList.replace('fa-eye-slash', 'fa-eye');
-        }
-    });
-}
-
 export function setupAgentEventListeners() {
-    dom.navAgentList.addEventListener('click', handleAgentClick);
+    // [已修复] 移除了对不存在元素的事件监听
     dom.agentTopicList.addEventListener('click', handleTopicClick);
     dom.agentHistoryContent.addEventListener('click', handleHistoryActionClick);
+    
+    // [新增] 为新的筛选器和操作按钮添加监听
+    const topicTagFilter = dom.$id('topic-tag-filter');
+    if (topicTagFilter) {
+        topicTagFilter.addEventListener('change', handleTopicFilterChange);
+    }
+    
+    const conversationRoleSelector = dom.$id('conversationRoleSelector');
+    if(conversationRoleSelector) {
+        conversationRoleSelector.addEventListener('change', handleConversationRoleChange);
+    }
 
-    // [新增]
-    dom.$('.ai-agent-nav').addEventListener('click', handleFilterClick);
-    dom.$id('tag-filter').addEventListener('change', handleTagFilterChange);
-    dom.$id('conversationRoleSelector').addEventListener('change', handleConversationRoleChange);
-    dom.$id('editTopicBtn').addEventListener('click', handleEditTopic);
+    const editTopicBtn = dom.$id('editTopicBtn');
+    if (editTopicBtn) {
+        editTopicBtn.addEventListener('click', handleEditTopic);
+    }
+
+    // [新增] 批量删除相关事件
+    const manageBtn = document.getElementById('manageTopicsBtn');
+    const cancelBtn = document.getElementById('cancelTopicSelectionBtn');
+    const selectAllBtn = document.getElementById('selectAllTopicsBtn');
+    const deleteSelectedBtn = document.getElementById('deleteSelectedTopicsBtn');
+
+    manageBtn.addEventListener('click', () => {
+        setState({ isTopicSelectionMode: true, selectedTopicIds: [] });
+        renderTopicList();
+    });
+    cancelBtn.addEventListener('click', () => {
+        setState({ isTopicSelectionMode: false, selectedTopicIds: [] });
+        renderTopicList();
+    });
+    selectAllBtn.addEventListener('click', () => {
+        const allTopicIds = appState.topics.map(t => t.id);
+        const selectedIds = appState.selectedTopicIds;
+
+        // 判断当前是否已经全选
+        if (allTopicIds.length > 0 && selectedIds.length === allTopicIds.length) {
+            // 如果是，则执行“全不选”
+            setState({ selectedTopicIds: [] });
+        } else {
+            // 否则，执行“全选”
+            setState({ selectedTopicIds: allTopicIds });
+        }
+        
+        // 重新渲染列表以更新复选框状态和按钮文本
+        renderTopicList();
+    });
+    deleteSelectedBtn.addEventListener('click', async () => {
+        const count = appState.selectedTopicIds.length;
+        if (count > 0 && confirm(`确定要删除选中的 ${count} 个主题吗？\n这将同时删除所有相关聊天记录。`)) {
+            await dataService.deleteTopics(appState.selectedTopicIds);
+            renderAgentView();
+        }
+    });
+
+    // 使用事件委托处理复选框
+    dom.agentTopicList.addEventListener('change', e => {
+        if (e.target.classList.contains('topic-selection-checkbox')) {
+            const topicId = e.target.dataset.topicId;
+            const selectedIds = new Set(appState.selectedTopicIds);
+            if (e.target.checked) {
+                selectedIds.add(topicId);
+            } else {
+                selectedIds.delete(topicId);
+            }
+            setState({ selectedTopicIds: Array.from(selectedIds) });
+            renderTopicList(); // 只重绘列表以更新按钮状态
+        }
+    });
+
+    // [新增] 切换主题面板的事件监听
+    const toggleTopicsBtn = document.getElementById('toggleTopicsBtn');
+    if (toggleTopicsBtn) {
+        toggleTopicsBtn.addEventListener('click', handleToggleTopicsPanel);
+    }
 
     // New chat listeners
     dom.sendMessageBtn.addEventListener('click', handleSendMessage);

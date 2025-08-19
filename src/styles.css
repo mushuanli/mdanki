@@ -1189,74 +1189,14 @@ body {
 .cloze-btn.double:hover { background-color: #43a047; color: var(--text-on-primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(67, 160, 71, 0.3); }
 .cloze-btn.easy { color: #1e88e5; background-color: rgba(30, 136, 229, 0.1); }
 .cloze-btn.easy:hover { background-color: #1e88e5; color: var(--text-on-primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3); }
+.cloze.cloze-nav-active {
+    outline: 3px solid var(--accent-color, #06B6D4);
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
+    transition: outline 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
 
 /* --- AI Agent 视图 --- */
-.ai-agent-nav {
-    background: var(--bg-elevated);
-    border: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    border-radius: var(--border-radius);
-    padding: 12px 20px;
-    margin-bottom: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.nav-title { color: var(--text-primary); font-size: var(--text-xl); color: var(--secondary-color); font-weight: 600; display: flex; align-items: center; gap: 10px; }
-.nav-title i { color: var(--accent-color); }
-.agent-list { display: flex; gap: 15px; overflow-x: auto; padding: 5px 0; }
-.agent-item { 
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    box-shadow: 0 2px 8px rgba(91, 102, 245, 0.3);
-    color: var(--text-on-primary); 
-    padding: 8px 20px; 
-    border-radius: 30px; 
-    cursor: pointer; 
-    transition: var(--transition); 
-    font-size: 0.95rem; 
-    display: flex; 
-    align-items: center; 
-    gap: 8px; 
-    white-space: nowrap; 
-}
-.agent-item:nth-child(2) { 
-    background: linear-gradient(135deg, var(--accent-color), #0891b2);
-}
-.agent-item:nth-child(3) {
-    background: linear-gradient(135deg, var(--agent-color-4), var(--agent-color-5));
-}
-.agent-item:hover {
-   transform: translateY(-3px); 
-   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); 
-}
-.agent-item.active { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.8), 0 5px 15px rgba(0,0,0,0.2); }
-.nav-actions { display: flex; gap: 12px; }
-.nav-action-btn { 
-    background: var(--primary-color); 
-    color: var(--text-on-primary); 
-    border: none; 
-    padding: 8px 15px; 
-    border-radius: 6px; 
-    cursor: pointer; 
-    display: flex; 
-    align-items: center; 
-    gap: 8px; 
-    transition: var(--transition); 
-    font-size: 0.9rem; 
-}
-.nav-action-btn:hover { background: var(--secondary-color); transform: translateY(-2px); }
-.agent-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #4361ee 0%, #3f37c9 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-on-primary);
-    font-weight: bold;
-    flex-shrink: 0;
-}
+
 .agent-content-container { 
     display: flex; 
     gap: 20px; 
@@ -1277,9 +1217,80 @@ body {
     background: var(--header-bg);
     color: var(--text-on-primary);
     border-bottom: none;
-    padding: 15px 20px; 
+    padding: 10px 15px; /* 调整内边距以适应更多元素 */
     font-size: var(--text-lg); 
     font-weight: 600; 
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 60px; /* 固定高度以保持对齐 */
+    transition: transform 0.3s ease, width 0.3s ease, padding 0.3s ease, border 0.3s ease;
+    flex-shrink: 0; /* [新增] 确保头部高度固定，不会被压缩 */
+}
+
+.topics-panel.collapsed {
+    width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    border-width: 0;
+    transform: translateX(-100%);
+    overflow: hidden;
+}
+
+.header-title-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* [新增] 头部操作区域容器 */
+.header-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* [新增] 主题筛选下拉框样式 */
+.topic-filter-select {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-size: var(--text-sm);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-on-primary);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 30px; /* 为箭头留出空间 */
+    cursor: pointer;
+}
+.topic-filter-select:focus {
+    outline: none;
+    border-color: #fff;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+/* [新增] 主题操作按钮（如重命名）的统一类 */
+.topic-action-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: var(--text-on-primary);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.topic-action-btn:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
 }
 .topics-content { 
     flex: 1; 
@@ -1302,10 +1313,67 @@ body {
     align-items: center;
     gap: 10px;
 }
+.topic-selection-checkbox {
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+.topic-item-content {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.topic-delete-btn {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: none; /* Initially hidden */
+}
+
 .topic-item:hover { 
     transform: translateX(5px); 
     background: var(--bg-elevated);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+.topic-item:hover .topic-delete-btn {
+    display: inline-flex; /* Show on hover */
+    align-items: center;
+    justify-content: center;
+}
+.topic-delete-btn:hover {
+    background-color: var(--danger-light);
+    color: var(--danger-color);
+}
+.topics-batch-actions {
+    padding: 10px 15px;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color); /* 从头部移到底部 */
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0; /* [新增] 确保此栏高度固定，不会被压缩 */
+}
+
+.batch-action-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    cursor: pointer;
+}
+
+.batch-action-btn.danger {
+    background-color: var(--danger-light);
+    color: var(--danger-color);
+}
+.batch-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 .topic-item.active { 
     background: var(--primary-light); 
@@ -1332,6 +1400,36 @@ body {
 .topic-item:nth-child(2) .topic-icon { background: var(--topic-color-2); }
 .topic-item:nth-child(3) .topic-icon { background: var(--topic-color-3); }
 .topic-item:nth-child(4) .topic-icon { background: var(--topic-color-4); }
+
+
+.topic-item.add-topic-btn {
+    background-color: transparent;
+    border: 2px dashed var(--primary-color);
+    color: var(--primary-color);
+    font-weight: 600;
+    justify-content: center; /* 居中内容 */
+}
+
+.topic-item.add-topic-btn:hover {
+    background-color: var(--primary-light);
+    border-style: solid;
+}
+.topic-item.add-topic-btn .topic-icon {
+    background-color: var(--primary-color);
+    color: var(--text-on-primary);
+}
+
+/* [修正] 确保 topic-item 的边框颜色逻辑不影响 "添加" 按钮 */
+.topic-item:not(.add-topic-btn):nth-child(1) { border-left-color: var(--topic-color-1); }
+.topic-item:not(.add-topic-btn):nth-child(2n) { border-left-color: var(--topic-color-2); }
+.topic-item:not(.add-topic-btn):nth-child(3n) { border-left-color: var(--topic-color-3); }
+.topic-item:not(.add-topic-btn):nth-child(4n) { border-left-color: var(--topic-color-4); }
+
+.topic-item:not(.add-topic-btn):nth-child(1) .topic-icon { background: var(--topic-color-1); }
+.topic-item:not(.add-topic-btn):nth-child(2) .topic-icon { background: var(--topic-color-2); }
+.topic-item:not(.add-topic-btn):nth-child(3) .topic-icon { background: var(--topic-color-3); }
+.topic-item:not(.add-topic-btn):nth-child(4) .topic-icon { background: var(--topic-color-4); }
+
 .history-panel {
     flex: 1;
     background: var(--bg-elevated);
@@ -1735,54 +1833,7 @@ body {
 #startReviewBtn.editor-btn-text i {
     font-size: 0.9rem;
 }
-.instructions { 
-    background: var(--bg-elevated); 
-    padding: 22px; 
-    border-radius: var(--border-radius); 
-    box-shadow: var(--shadow); 
-    margin-top: 25px; 
-}
-.instructions h2 { 
-    color: var(--secondary-color); 
-    margin-bottom: 18px; 
-    text-align: center; 
-    font-size: 1.4rem; 
-}
-.instructions-grid { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-    gap: 22px; 
-}
-.instruction-card { 
-    background: var(--bg-primary); 
-    border-radius: var(--border-radius); 
-    padding: 18px; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08); 
-    transition: var(--transition); 
-}
-.instruction-card:hover { 
-    transform: translateY(-4px); 
-    box-shadow: 0 6px 15px rgba(0,0,0,0.1); 
-}
-.instruction-card h3 { 
-    color: var(--primary-color); 
-    margin-bottom: 14px; 
-    display: flex; 
-    align-items: center; 
-    gap: 8px; 
-    font-size: 1.1rem; 
-}
-.instruction-card h3 i { 
-    background: var(--primary-color); 
-    color: var(--text-on-primary); 
-    width: 32px; 
-    height: 32px; 
-    border-radius: 50%; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    font-size: 0.9rem; 
-}
+
 .media-icon {
     display: inline-flex;
     align-items: center;
@@ -2252,42 +2303,7 @@ body {
     height: 1.2em;
 }
 
-/* --- AI 角色 - 列表筛选器 --- */
-.agent-filters {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 15px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--border-color);
-}
-.filter-btn {
-    padding: 8px 16px;
-    border-radius: 20px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-primary);
-    color: var(--text-secondary);
-    cursor: pointer;
-    font-weight: 500;
-    transition: var(--transition);
-}
-.filter-btn:hover {
-    background: var(--gray-100);
-}
-.filter-btn.active {
-    background: var(--primary-color);
-    color: var(--text-on-primary);
-    border-color: var(--primary-color);
-}
-.filter-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.filter-group label {
-    font-weight: 500;
-    color: var(--text-secondary);
-}
+
 #tag-filter, .role-selector {
     padding: 8px 15px; 
     border-radius: 20px; 
@@ -2302,23 +2318,61 @@ body {
     box-shadow: 0 0 0 3px rgba(91, 102, 245, 0.1);
 }
 
-/* --- AI 角色 - 主题操作 --- */
-.topics-header {
+/* [新增] Agent 提示/欢迎语面板样式 */
+.hint-panel {
+    padding: 20px;
+    margin: 15px;
+    border-radius: 8px;
+    background-color: var(--background-secondary);
+    border: 1px solid var(--border-color);
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 15px;
+    color: var(--text-secondary);
+    opacity: 0;
+    animation: fadeIn 0.5s forwards;
 }
-.topic-actions .edit-topic-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: var(--text-on-primary);
+
+.hint-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hint-panel-avatar {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    cursor: pointer;
-    transition: var(--transition);
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+    flex-shrink: 0;
 }
-.topic-actions .edit-topic-btn:hover {
-    background: rgba(255, 255, 255, 0.4);
-    transform: scale(1.1);
+
+.hint-panel-title {
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.hint-panel-content {
+    padding-left: 44px; /* 与头像宽度+gap对齐 */
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* 提示内容中的 HTML 标签样式 */
+.hint-panel-content b, .hint-panel-content strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.hint-panel-content code {
+    background-color: var(--background-tertiary);
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
 }

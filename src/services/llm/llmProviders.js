@@ -34,14 +34,6 @@ export const LLM_PROVIDERS = {
     },
 };
 
-/**
- * 根据提供商名称获取默认模型。
- * @param {string} providerName - 提供商的名称。
- * @returns {string} 默认模型的名称。
- */
-export function getDefaultModel(providerName) {
-    return LLM_PROVIDERS[providerName]?.models[0] || '';
-}
 
 /**
  * 根据提供商名称获取默认API地址。

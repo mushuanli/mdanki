@@ -51,20 +51,6 @@ function createH2Li(subsession, parentId) {
     return li;
 }
 
-function createSubsessionLi(subsession) {
-    const li = document.createElement('li');
-    li.className = `session-item subsession ${subsession.id === appState.currentSubsessionId ? 'active' : ''}`;
-    li.dataset.id = subsession.id;
-    li.dataset.parent = subsession.parentId;
-    li.innerHTML = `
-        <div class="name-container">
-            <span class="name">
-                <i class="fas fa-stream"></i>
-                ${escapeHTML(subsession.title)}
-            </span>
-        </div>`;
-    return li;
-}
 
 /**
  * [重写] 渲染整个会话列表。

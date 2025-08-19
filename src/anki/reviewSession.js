@@ -116,7 +116,3 @@ export function moveToNextCardInSession() {
     currentReviewIndex++;
     showNextReviewCard();
 }
-
-export function isInReviewSession() {
-    return reviewQueue.length > 0 && currentReviewIndex !== -1;
-}

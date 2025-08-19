@@ -37,7 +37,6 @@ async function handleViewChange(context = null) {
     dom.agentView.style.display = 'none';
     dom.mistakesView.style.display = 'none';
     dom.settingsView.style.display = 'none';
-    if (dom.agentNav) dom.agentNav.style.display = 'none';
     
     document.querySelectorAll('.app-nav-btn').forEach(btn => btn.classList.remove('active'));
 
@@ -74,9 +73,6 @@ async function handleViewChange(context = null) {
         activeButtonElement.classList.add('active');
     }
 
-    if (viewName === 'agent' && dom.agentNav) {
-        dom.agentNav.style.display = 'flex';
-    }
 }
 
 /**
@@ -123,35 +119,6 @@ function setupAutoPersistence() {
     });
 }
 
-/**
- * [重构后] 封装应用初始化和重载的逻辑
- */
-async function reinitializeAndRenderApp() {
-    console.log("Re-initializing application state and UI...");
-    document.body.classList.add('is-loading');
-
-    try {
-        await dataService.initializeApp();
-        // [修复] 更新函数名
-        await dataService.initializeSettingsData(); 
-
-        // [修改] 重置所有模块的初始化状态
-        Object.keys(initializationState).forEach(key => {
-            initializationState[key] = false;
-        });
-
-        // [修改] 只重新初始化并显示当前活动的视图
-        const viewToShow = appState.activeView || 'anki';
-        setState({ activeView: viewToShow });
-        await handleViewChange(); // `handleViewChange` 现在是异步的
-
-        console.log("Application re-initialization successful.");
-    } catch(error) {
-        console.error("Failed to re-initialize the application:", error);
-    } finally {
-        document.body.classList.remove('is-loading');
-    }
-}
 
 /**
  * [保留] 设置全局应用事件监听器
@@ -162,8 +129,6 @@ function setupAppEventListeners() {
         // 这里可以直接reload，因为数据已写入IndexedDB，更简单可靠
         alert("数据导入成功！应用将刷新以应用更改。");
         location.reload();
-        // 或者使用 reinitializeAndRenderApp() 进行无刷新更新
-        // await reinitializeAndRenderApp();
     });
 }
 

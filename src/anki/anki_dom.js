@@ -43,7 +43,6 @@ export const playBtn = $id('playBtn');
 export const pauseBtn = $id('pauseBtn');
 export const stopBtn = $id('stopBtn');
 export const sessionTitleContainer = $('.session-title');
-export const instructionsSection = $('.instructions');
 export const toggleVisibilityClozeBtn = $id('toggleVisibilityClozeBtn');
 export const invertClozeBtn = $id('invertClozeBtn');
 

@@ -18,25 +18,29 @@ const MAX_HISTORY_SIZE = 100; // Limit the history size to prevent memory issues
 // [NEW] 用于跟踪 Shift-Click 多选操作的最后一个复选框索引
 let lastCheckedIndex = -1;
 
-// --- Event Handlers ---
+// [新增] 用于 Cloze 导航的模块级变量
+let currentClozeIndex = -1;
 
 // Navigation handlers are exported so anki_ui.js can use them
 export function handleGoBack() {
     dataService.goBack();
     rerenderAnki();
-    lastCheckedIndex = -1; // [NEW] 重置选择状态
+    lastCheckedIndex = -1;
+    currentClozeIndex = -1; // [新增] 重置
 }
 
 export function handleGoToFolder(folderId, stackIndex) {
     dataService.goToFolder(folderId, stackIndex);
     rerenderAnki();
-    lastCheckedIndex = -1; // [NEW] 重置选择状态
+    lastCheckedIndex = -1;
+    currentClozeIndex = -1; // [新增] 重置
 }
 
 export function handleGoToRoot() {
     dataService.goToRoot();
     rerenderAnki();
     lastCheckedIndex = -1; // [NEW] 重置选择状态
+    currentClozeIndex = -1; // [新增] 重置
 }
 
 async function handleNewFile() {
@@ -158,6 +162,8 @@ async function handleSessionListClick(e) {
     } else if (item.classList.contains('subsession')) {
         dataService.selectSubsession(parent, id);
     }
+
+    currentClozeIndex = -1; // [新增] 重置
 
     rerenderAnki();
 }
@@ -647,6 +653,28 @@ function setupReviewUIEventListeners() {
     });
 }
 
+// [新增] Cloze 导航函数
+function navigateCloze(direction) {
+    const clozeElements = Array.from(dom.preview.querySelectorAll('.cloze'));
+    if (clozeElements.length === 0) return;
+
+    // 移除旧的高亮
+    const currentActive = dom.preview.querySelector('.cloze-nav-active');
+    if (currentActive) {
+        currentActive.classList.remove('cloze-nav-active');
+    }
+
+    // 计算新索引 (循环)
+    currentClozeIndex = (currentClozeIndex + direction + clozeElements.length) % clozeElements.length;
+
+    // 高亮并滚动到新元素
+    const nextCloze = clozeElements[currentClozeIndex];
+    if (nextCloze) {
+        nextCloze.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        nextCloze.classList.add('cloze-nav-active');
+    }
+}
+
 export function setupAnkiEventListeners() {
     dom.newFileBtn.addEventListener('click', handleNewFile);
     dom.newFolderBtn.addEventListener('click', handleNewFolder);
@@ -720,6 +748,12 @@ export function setupAnkiEventListeners() {
     dom.playBtn.addEventListener('click', resumeAudio);
     dom.pauseBtn.addEventListener('click', pauseAudio);
     dom.stopBtn.addEventListener('click', stopAudio);
+
+    // [新增] 为 Cloze 导航按钮绑定事件
+    const clozeNavUpBtn = document.getElementById('clozeNavUpBtn');
+    const clozeNavDownBtn = document.getElementById('clozeNavDownBtn');
+    if (clozeNavUpBtn) clozeNavUpBtn.addEventListener('click', () => navigateCloze(-1));
+    if (clozeNavDownBtn) clozeNavDownBtn.addEventListener('click', () => navigateCloze(1));
 
         // [NEW] Add keydown event listener for Undo/Redo
     dom.editor.addEventListener('keydown', (e) => {

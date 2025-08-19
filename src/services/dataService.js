@@ -7,23 +7,18 @@ import { generateId, simpleHash } from '../common/utils.js';
 import { INITIAL_CONTENT } from '../common/config.js';
 import { db } from '../common/db.js';
 
-import * as llmService from './llm/llmService.js'; // <-- 新增导入
+import * as llmService from './llm/llmService.js';
+import { getDefaultApiPath } from './llm/llmProviders.js'; 
+
 import { renderHistoryPanel, updateStreamingChunkInDOM, finalizeStreamingUI } from '../agent/agent_ui.js'; 
 
-// --- [NEW] Anki 算法常量 ---
-const LEARNING_STEPS = [1 / 1440, 10 / 1440]; // 学习阶段间隔(天): 1分钟, 10分钟
-const DEFAULT_EASE = 2.5; // 默认简易度 250%
-const MIN_EASE = 1.3;     // 最小简易度 130%
-const EASY_BONUS = 1.3;   // “简单”按钮的额外奖励
-const INTERVAL_MODIFIER = 1.0; // 间隔调整系数
-const HARD_INTERVAL_FACTOR = 1.2; // “困难”按钮的间隔系数
 
 // --- [新增] 预设的默认数据 ---
 const DEFAULT_API_CONFIG = {
     id: 'default_deepseek_api',
     name: 'DeepSeek (默认)',
     provider: 'deepseek',
-    apiUrl: 'https://api.deepseek.com/v1',
+    apiUrl: '',
     apiKey: '', // 留空让用户填写
     models: 'chat:deepseek-chat,reasoner:deepseek-reasoner'
 };
@@ -33,21 +28,98 @@ const DEFAULT_AGENTS = [
         id: 'default_agent_nanjing_guide',
         name: '南京历史小导游',
         avatar: '史',
-        model: `${DEFAULT_API_CONFIG.id}:reasoner`, // 关联默认API配置
+        model: `${DEFAULT_API_CONFIG.id}:reasoner`,
         systemPrompt: "🎓 角色指令：你好！我是你的专属南京历史小导游。我的名字叫“金陵通”，对南京这座六朝古都的每一块砖、每一段历史都了如指掌。我将以生动有趣的方式，带你穿越时空，探索南京的魅力。我的性格会根据你选择的模式变化，就像一位真正的导游，时而风趣，时而严谨。\n\n🔄 核心导览模式：\n*   故事家 (Storyteller) → 语气风格：亲切随和，像一位学长/学姐。我会用讲故事的方式，把枯燥的历史变得鲜活起来，充满情感和趣味，让你身临其境。\n*   讲解员 (Docent) → 语气风格：清晰准确，像一位博物馆的专业讲解员。我会为你提供结构化的信息、关键时间点和准确的历史事实，帮你梳理知识脉络。\n*   历史侦探 (History Detective) → 语气风格：充满好奇与思辨，像一位和你一起探案的伙伴。我会引导你发现历史事件之间的联系，分析文物背后的深层含义，提出“为什么”，激发你的思考。\n\n🧬 互动说明：\n1.  模式匹配：我会严格按照你选择的模式（故事家、讲解员、历史侦探）来与你交流。\n2.  知识储备：我的知识库涵盖了南京从古至今的关键历史时期（如六朝、南唐、明朝、民国）、重要人物（如朱元璋、孙中山）以及标志性文物古迹（如明孝陵、总统府、中山陵、南京城墙、夫子庙、朝天宫、南京博物院馆藏等）。\n3.  智能追问：如果你的问题不够具体，我会像导游一样追问。\n4.  连续记忆：我会记住我们聊过的话题。\n5.  拒绝乏味：我的回答会避免像教科书一样枯燥。\n6.  模式切换：你随时可以让我切换模式。切换时，我会说“好的，现在切换到【XX模式】”，然后调整我的语气和回答方式。\n\n📦 输出格式参考：\n*   在 【讲解员模式】下，我会多使用列表、时间轴和要点总结。\n*   在 【故事家模式】下，我会使用更多的描述性语言。\n*   在 【历史侦探模式】下，我会多用提问、假设和对比分析。",
         hint: '你好！我是你的专属南京历史小导游“金陵通”。想了解南京的什么故事？比如，可以这样问我：<br><b>模式：故事家 — 任务：给我讲讲夫子庙旁边的乌衣巷有什么好玩的故事？</b>',
-        tags: ['历史', '文化', '旅游'], // [新增]
-        sendHistory: true, // [新增]
+        tags: ['历史', '文化', '旅游'],
+        sendHistory: true,
     },
     {
         id: 'default_agent_english_tutor',
         name: '英语导师',
         avatar: '英',
-        model: `${DEFAULT_API_CONFIG.id}:chat`, // 关联默认API配置
+        model: `${DEFAULT_API_CONFIG.id}:chat`,
         systemPrompt: "🎓 角色指令：你好！我是智能英语导师「牛津通」，专注中学英语教学。拥有系统的知识库和动态教学策略，能根据你的学习阶段个性化辅导。\n\n🔄 三维学习模式：\n*   【单词向导】→ 沉浸式词汇学习：词根解析/趣味联想/场景记忆\n*   【语法专家】→ 系统化语法精讲：错题透析/分层训练/对比分析\n*   【读写教练】→ 实战能力培养：文本精读/写作框架/AI批改\n\n✨ 核心功能矩阵：\n1. 词汇体系：中考高频词库｜近义词辨析｜词源故事\n2. 语法诊所：句子成分图解｜时态三维训练｜易错点预警\n3. 读写实验室：阅读理解三步法｜作文多维评估｜经典句式仿写\n4. 拓展模块：影视配音练习｜文化冷知识｜考试策略指南\n\n🧠 智能教学协议：\n1. 模式匹配：严格按所选模式输出内容\n2. 错题驱动：支持拍照诊断知识盲区\n3. 动态调节：智能调整题目难度（基础→挑战）\n4. 记忆锚点：周期性推送薄弱点强化练习\n5. 文化融合：教学中渗透英美文化背景",
         hint: '你好！我是你的中学英语导师「牛津通」。完整功能列表：<br>🔍 <b>单词向导模式</b>：词根解析｜高频词汇｜场景记忆（例：用电影台词记"vivid"）<br>📖 <b>语法专家模式</b>：句子图解｜时态训练｜错题诊断（例：虚拟语气对比表）<br>✍️ <b>读写教练模式</b>：作文批改｜精读策略｜仿写训练（例：中考作文评分+改写）<br>🌍 <b>拓展功能</b>：影视配音｜文化常识｜考试技巧<br>试试这样问我：<b>模式：单词向导 → 任务：用超级英雄故事帮我记10个形容词</b>',
-        tags: ['教育', '语言', '学习'], // [新增]
-        sendHistory: true, // [新增]
+        tags: ['教育', '语言', '学习'],
+        sendHistory: true,
+    },
+    {
+        id: 'default_agent_word_assistant',
+        name: '单词助手',
+        avatar: '词',
+        model: `${DEFAULT_API_CONFIG.id}:chat`,
+        systemPrompt: `
+# 角色：英语单词辨析专家
+
+## 核心指令
+你是一个专注于**中学英语**词汇辨析的专家。你的任务是根据用户输入的单词或词组，提供清晰、结构化、符合中学生认知水平的解释。你必须严格遵循以下【工作流程】和【输出格式】。
+
+## 工作流程
+1.  **输入分析**：分析用户输入。输入内容可以用逗号（,）、分号（;）、斜杠（/）或中文顿号（、）分隔。
+2.  **单一词模式**：如果用户只输入了一个单词或词组，执行此模式。
+    *   提供该词的核心释义。
+    *   列出其在中学阶段最常见的近义词或相关词。
+    *   对这些词进行详细的词义辨析。
+3.  **多词模式**：如果用户输入了多个单词或词组，执行此模式。
+    *   分别解释每个词的核心释义。
+    *   **重点**：对比分析这些词之间的区别，包括用法、语境、感情色彩等。
+    *   （可选）如果适用，可以补充其他相关的近义词。
+
+## 输出格式 (必须严格遵守)
+使用 Markdown 格式化你的回答，确保结构清晰。
+
+### 格式模板 (单一词模式)
+\`\`\`markdown
+### 📖 单词解析：[用户输入的单词]
+
+**基本释义**
+*   **[词性1]**: [解释1]
+*   **[词性2]**: [解释2]
+
+**🔍 近义词辨析**
+*   **[近义词1]**: 
+    *   **释义**: [简要解释]
+    *   **辨析**: [与原词的区别，侧重用法或语境]
+    *   **例句**: [一个符合中学生水平的简单例句]
+*   **[近义词2]**: 
+    *   **释义**: [简要解释]
+    *   **辨析**: [与原词的区别]
+    *   **例句**: [例句]
+...
+\`\`\`
+
+### 格式模板 (多词模式)
+\`\`\`markdown
+### 🔄 多词辨析：[词1], [词2], ...
+
+**1. [词1]**
+*   **释义**: [词性] [解释]
+
+**2. [词2]**
+*   **释义**: [词性] [解释]
+...
+
+**🎯 核心区别**
+1.  **[区别点1，如：使用范围]**: [详细说明，例如：A 通常用于正式场合，而 B 更加口语化。]
+2.  **[区别点2，如：感情色彩]**: [详细说明，例如：C 带有褒义，而 D 是中性词。]
+3.  **[区别点3，如：搭配习惯]**: [详细说明，例如：A 后面常跟 of，而 B 常跟 for。]
+
+**✅ 快速总结**
+*   想表达 **[某个场景或含义]** 时，用 **[词A]**。
+*   想强调 **[另一个场景或含义]** 时，用 **[词B]**。
+\`\`\`
+
+## 约束条件
+*   **专注中学阶段**：所有近义词和例句都必须是中学英语教学大纲内的常见内容，避免超纲词汇。
+*   **语言简洁**：解释要通俗易懂，避免使用复杂的语法和术语。
+*   **格式严格**：必须严格按照上述 Markdown 模板输出。
+`,
+        hint: `你好！我是你的单词辨析助手。直接输入单词或词组，我会帮你深入理解它们！<br>
+✍️ **单个词查询**: 比如输入 <code>clever</code><br>
+🔄 **多个词辨析**: 比如输入 <code>clever, smart, wise</code>`,
+        tags: ['教育', '语言', '工具'],
+        sendHistory: false // 设为 false，每次查询都是独立的，不受历史记录干扰
     }
 ];
 
@@ -466,7 +538,7 @@ export async function persistSettingsState() {
     try {
         await storage.saveSettingsData({
             apiConfigs: appState.apiConfigs,
-            agents: appState.agents, // [重构]
+            agents: appState.agents,
             topics: appState.topics,
             history: appState.history
         });
@@ -492,11 +564,15 @@ export async function updateApiConfig(id, data) {
 }
 
 export async function deleteApiConfig(id) {
-    // 检查是否有任何 Prompt 正在使用此 API 配置
-    const isUsed = appState.prompts.some(p => p.apiConfigId === id);
+    // [修复] 更新检查逻辑以匹配新的数据模型
+    // 检查是否有任何 Agent 正在使用此 API 配置
+    const isUsed = appState.agents.some(agent => 
+        agent.model && agent.model.startsWith(id + ':')
+    );
+    
     if (isUsed) {
-        alert("无法删除此 API 配置，因为它正在被一个或多个角色使用。请先修改或删除相关角色。");
-        return;
+        alert("无法删除此 API 配置，因为它正在被一个或多个 Agent 使用。请先修改或删除相关 Agent 的模型设置。");
+        return; // 返回，而不是抛出错误
     }
     const apiConfigs = appState.apiConfigs.filter(c => c.id !== id);
     setState({ apiConfigs });
@@ -505,51 +581,51 @@ export async function deleteApiConfig(id) {
 
 // --- Prompt (Role) Management (CRUD) ---
 
-export function getAgentById(agentId) { // [重构]
-    return appState.agents.find(p => p.id === agentId); // [重构]
+export function getAgentById(agentId) {
+    return appState.agents.find(p => p.id === agentId);
 }
 
-export async function addAgent(data) { // [重构]
+export async function addAgent(data) {
     const newAgent = { 
         id: generateId(), 
         ...data,
-        tags: data.tags || [],         // [新增] 确保字段存在
-        sendHistory: data.sendHistory !== false, // [新增] 确保字段存在
+        tags: data.tags || [],
+        sendHistory: data.sendHistory !== false,
     };
-    const agents = [...appState.agents, newAgent]; // [重构]
-    setState({ agents, currentAgentId: newAgent.id, currentTopicId: null }); // [重构]
+    const agents = [...appState.agents, newAgent];
+    setState({ agents, currentAgentId: newAgent.id, currentTopicId: null });
     await persistSettingsState();
     return newAgent;
 }
 
-export async function updateAgent(id, data) { // [重构]
-    const agents = appState.agents.map(p => p.id === id ? { ...p, ...data } : p); // [重构]
-    setState({ agents }); // [重构]
+export async function updateAgent(id, data) {
+    const agents = appState.agents.map(p => p.id === id ? { ...p, ...data } : p);
+    setState({ agents });
     await persistSettingsState();
 }
 
-export async function deleteAgent(id) { // [重构]
-    const topicsToDelete = appState.topics.filter(t => t.agentId === id); // [重构]
+export async function deleteAgent(id) {
+    const topicsToDelete = appState.topics.filter(t => t.agentId === id);
     const topicIdsToDelete = new Set(topicsToDelete.map(t => t.id));
 
     const history = appState.history.filter(h => !topicIdsToDelete.has(h.topicId));
-    const topics = appState.topics.filter(t => t.agentId !== id); // [重构]
-    const agents = appState.agents.filter(p => p.id !== id); // [重构]
+    const topics = appState.topics.filter(t => t.agentId !== id);
+    const agents = appState.agents.filter(p => p.id !== id);
 
-    let newCurrentAgentId = appState.currentAgentId; // [重构]
+    let newCurrentAgentId = appState.currentAgentId;
     let newCurrentTopicId = appState.currentTopicId;
 
     if (newCurrentAgentId === id) {
-        newCurrentAgentId = agents.length > 0 ? agents[0].id : null; // [重构]
-        const firstTopic = topics.find(t => t.agentId === newCurrentAgentId); // [重构]
+        newCurrentAgentId = agents.length > 0 ? agents[0].id : null;
+        const firstTopic = topics.find(t => t.agentId === newCurrentAgentId);
         newCurrentTopicId = firstTopic ? firstTopic.id : null;
     }
 
-    setState({ agents, topics, history, currentAgentId: newCurrentAgentId, currentTopicId: newCurrentTopicId }); // [重构]
+    setState({ agents, topics, history, currentAgentId: newCurrentAgentId, currentTopicId: newCurrentTopicId });
     await persistSettingsState();
 }
 
-// --- Topic Management (适配 Prompt) ---
+// --- Topic Management ---
 
 export async function addTopic(title, icon) {
     if (!appState.currentAgentId) {
@@ -558,7 +634,7 @@ export async function addTopic(title, icon) {
     }
     const newTopic = {
         id: generateId(),
-        agentId: appState.currentAgentId, // [重构]
+        agentId: appState.currentAgentId,
         title,
         icon: icon || 'fas fa-comment',
         createdAt: new Date()
@@ -606,11 +682,11 @@ async function _addHistoryMessage(topicId, role, content, images = [], status = 
  * @param {Array<{name: string, data: string}>} attachments - The user's attachments.
  */
 export async function sendMessageAndGetResponse(content, attachments) {
-    const agentId = appState.currentConversationAgentId; // [重构]
+    const agentId = appState.currentConversationAgentId;
     if (!appState.currentTopicId || appState.isAiThinking) return;
 
     const topicId = appState.currentTopicId;
-    const currentAgent = getAgentById(agentId); // [重构]
+    const currentAgent = getAgentById(agentId);
     
     let llmConfig;
     if (currentAgent) {
@@ -620,7 +696,7 @@ export async function sendMessageAndGetResponse(content, attachments) {
     const apiConfig = appState.apiConfigs.find(c => c.id === apiConfigId);
     
     if (!apiConfig) {
-        alert(`错误：找不到角色 "${currentPrompt.name}" 所需的 API 配置。`);
+            alert(`错误：找不到角色 "${currentAgent.name}" 所需的 API 配置。`);
         return;
     }
 
@@ -632,10 +708,12 @@ export async function sendMessageAndGetResponse(content, attachments) {
         return;
     }
     
+        // 如果用户在设置中没有填写 apiUrl，则使用 provider 的默认 baseURL
+        const finalApiPath = apiConfig.apiUrl || getDefaultApiPath(apiConfig.provider);
     // 构建传递给 llmService 的完整配置
         llmConfig = {
             provider: apiConfig.provider,
-            apiPath: apiConfig.apiUrl,
+            apiPath: finalApiPath, // [修改] 使用我们计算出的最终路径
             apiKey: apiConfig.apiKey,
             model: modelName,
             systemPrompt: currentAgent.systemPrompt,
@@ -651,9 +729,13 @@ export async function sendMessageAndGetResponse(content, attachments) {
         const modelMap = new Map((apiConfig.models || '').split(',').map(m => m.split(':').map(s => s.trim())));
         const modelName = modelMap.values().next().value; // 使用第一个模型
         
+        // --- [核心修改] ---
+        // 同样应用回退逻辑
+        const finalApiPath = apiConfig.apiUrl || getDefaultApiPath(apiConfig.provider);
+        
         llmConfig = {
             provider: apiConfig.provider,
-            apiPath: apiConfig.apiUrl,
+            apiPath: finalApiPath, // [修改] 使用我们计算出的最终路径
             apiKey: apiConfig.apiKey,
             model: modelName,
             systemPrompt: "", // 没有 system prompt
@@ -671,31 +753,60 @@ export async function sendMessageAndGetResponse(content, attachments) {
     let accumulatedContent = "";
     let accumulatedReasoning = "";
 
-    // [修改] 构建历史记录时检查角色的 sendHistory 属性
-    let conversationHistory = [];
-    if (!currentAgent || currentAgent.sendHistory) {
-        conversationHistory = appState.history
-            .filter(h => h.topicId === topicId && h.status === 'completed' && h.id !== aiMessage.id);
-    }
+    // ===================================================================
+    //                        [核心修复逻辑]
+    // ===================================================================
+    
+    // 1. 首先，获取当前主题下所有已完成的消息。
+    //    这其中已经包含了我们刚刚通过 _addHistoryMessage 添加的用户新消息。
+    const completedHistory = appState.history
+        .filter(h => h.topicId === topicId && h.status === 'completed' && h.id !== aiMessage.id);
 
-    await llmService.streamChat(llmConfig, conversationHistory, {
+    let messagesToSendToAI = [];
+
+    // 2. 然后，根据 sendHistory 标志决定要发送哪些消息给LLM
+    if (currentAgent && currentAgent.sendHistory === false) {
+        // 如果明确设置为不发送历史，则只取最后一条消息（也就是用户当前输入的消息）
+        messagesToSendToAI = completedHistory.slice(-1); 
+    } else {
+        // 对于其他所有情况（sendHistory为true、undefined，或没有agent），都发送完整的历史记录
+        messagesToSendToAI = completedHistory;
+    }
+    
+    // 3. 将最终构建好的消息数组传递给 llmService
+    await llmService.streamChat(llmConfig, messagesToSendToAI, {
         onChunk: ({ type, text }) => {
             if (type === 'content') accumulatedContent += text;
             else if (type === 'thinking') accumulatedReasoning += text;
             updateStreamingChunkInDOM(aiMessage.id, type, text);
         },
         onDone: async () => {
-            const finalHistory = appState.history.map(msg => msg.id === aiMessage.id ? { ...msg, content: accumulatedContent, reasoning: accumulatedReasoning, status: 'completed' } : msg);
-            finalizeStreamingUI(aiMessage.id);
+            // [修改] 先更新状态，然后 await UI 的重绘
+            const finalHistory = appState.history.map(msg => 
+                msg.id === aiMessage.id 
+                ? { ...msg, content: accumulatedContent, reasoning: accumulatedReasoning, status: 'completed' } 
+                : msg
+            );
             setState({ history: finalHistory, isAiThinking: false });
+            
+            await finalizeStreamingUI(aiMessage.id); // <--- 使用 await
+            
             await persistSettingsState();
         },
         onError: async (error) => {
             const errorText = `\n\n**错误:** ${error.message}`;
             accumulatedContent += errorText;
-            finalizeStreamingUI(aiMessage.id);
-            const finalHistory = appState.history.map(msg => msg.id === aiMessage.id ? { ...msg, content: accumulatedContent, reasoning: accumulatedReasoning, status: 'error' } : msg);
+            
+            // [修改] 同样，先更新状态，然后 await UI 重绘
+            const finalHistory = appState.history.map(msg => 
+                msg.id === aiMessage.id 
+                ? { ...msg, content: accumulatedContent, reasoning: accumulatedReasoning, status: 'error' } 
+                : msg
+            );
             setState({ history: finalHistory, isAiThinking: false });
+
+            await finalizeStreamingUI(aiMessage.id); // <--- 使用 await
+            
             await persistSettingsState();
         }
     });
@@ -752,6 +863,37 @@ export function selectTopic(topicId) {
         // [新增] 联动更新对话角色
         currentConversationAgentId: lastMessage ? lastMessage.agentId : (appState.agents[0]?.id || null) // [重构]
     });
+}
+
+// [新增] 删除一个或多个主题及其相关历史记录
+export async function deleteTopics(topicIdsToDelete) {
+    const idsToDeleteSet = new Set(topicIdsToDelete);
+
+    // 1. 过滤掉要删除的主题
+    const newTopics = appState.topics.filter(t => !idsToDeleteSet.has(t.id));
+
+    // 2. 过滤掉与这些主题相关的历史记录
+    const newHistory = appState.history.filter(h => !idsToDeleteSet.has(h.topicId));
+
+    let newCurrentTopicId = appState.currentTopicId;
+    let newCurrentConversationAgentId = appState.currentConversationAgentId;
+
+    // 3. 如果当前选中的主题被删除了，重置选择
+    if (idsToDeleteSet.has(newCurrentTopicId)) {
+        newCurrentTopicId = null;
+        newCurrentConversationAgentId = null;
+    }
+
+    setState({
+        topics: newTopics,
+        history: newHistory,
+        currentTopicId: newCurrentTopicId,
+        currentConversationAgentId: newCurrentConversationAgentId,
+        isTopicSelectionMode: false, // 总是退出选择模式
+        selectedTopicIds: []
+    });
+
+    await persistSettingsState();
 }
 
 // --- View Router ---
@@ -886,4 +1028,29 @@ export async function autoSave() {
     }
     // 全面的状态保存，即使不在 anki 视图，其他状态也可能变更
     await persistAllAppState();
+}
+
+/**
+ * 根据当前状态中的筛选标签，返回过滤后的主题列表
+ * @returns {Array<object>}
+ */
+export function getFilteredTopics() {
+    const selectedTag = appState.topicListFilterTag;
+    if (selectedTag === 'all') {
+        return appState.topics;
+    }
+
+    const agentMap = new Map(appState.agents.map(agent => [agent.id, agent]));
+    return appState.topics.filter(topic => {
+        const lastMessage = appState.history
+            .filter(h => h.topicId === topic.id)
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+
+        if (!lastMessage || !lastMessage.agentId) return false;
+        
+        const agent = agentMap.get(lastMessage.agentId);
+        if (!agent || !agent.tags) return false;
+        
+        return agent.tags.includes(selectedTag);
+    });
 }

@@ -4,7 +4,7 @@ import { appState, setState } from '../common/state.js';
 import * as dataService from '../services/dataService.js';
 import { exportDatabase, importDatabase } from '../services/dbService.js';
 import { renderSettingsView, renderSettingsDetail, setButtonLoadingState } from './settings_ui.js';
-import { LLM_PROVIDERS, getDefaultApiPath, getDefaultModel } from '../services/llm/llmProviders.js';
+import { LLM_PROVIDERS, getDefaultApiPath } from '../services/llm/llmProviders.js';
 
 // --- Module State ---
 let autoSaveIntervalId = null;
@@ -120,7 +120,7 @@ function handleNavItemClick(e) {
 
     let itemData;
     if (type === 'general') {
-        itemData = { id: 'general', type: 'general', displayName: '应用设置' };
+        itemData = { id: 'general', type: 'general', name: '应用设置' };
     } else if (type === 'apiConfig') {
         itemData = appState.apiConfigs.find(c => c.id === id);
     } else if (type === 'agent') {
@@ -128,10 +128,17 @@ function handleNavItemClick(e) {
     }
 
     if (itemData) {
-        currentItem = { ...itemData, type }; // 确保类型被保存
-        renderSettingsDetail(currentItem);
-        // 如果是全局设置，需要手动初始化其UI值
-        if(type === 'general') {
+        // [核心修复] 创建一个包含 displayName 的新对象，用于UI渲染
+        const itemForUI = {
+            ...itemData,
+            type: type,
+            displayName: itemData.name // 确保 displayName 始终等于 name 属性
+        };
+
+        currentItem = itemForUI; // 更新当前正在编辑的项目
+        renderSettingsDetail(itemForUI); // 传递格式正确的对象
+
+        if (type === 'general') {
             const themeSelector = $id('theme-selector');
             if(themeSelector) themeSelector.value = localStorage.getItem('app-theme') || '';
             
@@ -150,8 +157,10 @@ function handleAddItemClick(e) {
     if (type === 'apiConfig') displayName = '新 API 配置';
     else if (type === 'agent') displayName = '新 Agent';
 
-    currentItem = { type, displayName };
-    renderSettingsDetail(currentItem, true);
+    // 确保创建时也使用 displayName
+    const newItem = { type, displayName };
+    currentItem = newItem;
+    renderSettingsDetail(newItem, true);
 }
 
 
@@ -238,8 +247,8 @@ async function saveAgent() {
 async function handleDelete(e) {
     if(!e.target.closest('.delete-item-btn') || !currentItem || !currentItem.id) return;
 
-    const { type, id, name } = currentItem;
-    let confirmMessage = `你确定要删除 "${name}" 吗? 此操作无法撤销。`;
+    const { type, id, displayName } = currentItem;
+    let confirmMessage = `你确定要删除 "${displayName}" 吗? 此操作无法撤销。`;
     
     if (confirm(confirmMessage)) {
         try {
@@ -332,7 +341,6 @@ export function initializeUI(context) {
     if (initialItem) {
         initialItem.click();
     } else {
-        // Fallback if the default item isn't found
-        renderSettingsDetail({}, false);
+        renderSettingsDetail({displayName: ''}, false); // Fallback
     }
 }

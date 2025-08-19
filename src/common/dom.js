@@ -15,5 +15,3 @@ export const agentView = $id('agent-view');
 export const mistakesView = $id('mistakes-view');
 // [新增] 导出设置视图
 export const settingsView = $id('settings-view');
-
-export const agentNav = document.querySelector('.ai-agent-nav');

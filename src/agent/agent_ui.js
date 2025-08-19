@@ -1,21 +1,10 @@
 // src/agent/agent_ui.js
 
 import * as dom from './agent_dom.js';
-import { appState, setState } from '../common/state.js'; // [新增] 导入 setState
+import { appState, setState } from '../common/state.js';
 import { escapeHTML } from '../common/utils.js';
 import * as dataService from '../services/dataService.js';
-
-function createAgentItem(agent) { // [重构]
-    const isActive = agent.id === appState.currentAgentId;
-    const item = document.createElement('div');
-    item.className = `agent-item ${isActive ? 'active' : ''}`;
-    item.dataset.agentId = agent.id; // [重构]
-    item.innerHTML = `
-        <div class="agent-avatar">${escapeHTML(agent.avatar)}</div>
-        <span>${escapeHTML(agent.name)}</span>
-    `;
-    return item;
-}
+import { renderRichContent } from '../common/renderingService.js';
 
 function createTopicItem(topic) {
     const isActive = topic.id === appState.currentTopicId;
@@ -30,96 +19,74 @@ function createTopicItem(topic) {
     
     let tooltip = `最后会话: 无`;
     if (lastMessage) {
-    const lastAgent = dataService.getAgentById(lastMessage.agentId); // [重构]
-    const agentName = lastAgent ? lastAgent.name : '默认 AI'; // [重构]
+        const lastAgent = dataService.getAgentById(lastMessage.agentId);
+        const agentName = lastAgent ? lastAgent.name : '默认 AI';
         const time = new Date(lastMessage.timestamp).toLocaleString();
         tooltip = `角色: ${agentName}\n时间: ${time}`;
     }
     item.title = tooltip;
+    const isSelected = appState.selectedTopicIds.includes(topic.id);
+
+    // [修改] 增加复选框和删除按钮的逻辑
+    const checkboxHTML = appState.isTopicSelectionMode
+        ? `<input type="checkbox" class="topic-selection-checkbox" data-topic-id="${topic.id}" ${isSelected ? 'checked' : ''}>`
+        : '';
 
     item.innerHTML = `
-        <div class="topic-icon"><i class="${escapeHTML(topic.icon)}"></i></div>
-        <span>${escapeHTML(topic.title)}</span>
+        ${checkboxHTML}
+        <div class="topic-item-content">
+            <div class="topic-icon"><i class="${escapeHTML(topic.icon)}"></i></div>
+            <span>${escapeHTML(topic.title)}</span>
+        </div>
+        <button class="topic-delete-btn" title="删除此主题"><i class="fas fa-trash-alt"></i></button>
     `;
     return item;
 }
 
-function preprocessMarkdown(markdownText) {
-    if (!markdownText) return '';
+/**
+ * [修改] 这是一个新的辅助函数，用于将消息体渲染到指定的容器中。
+ * @param {HTMLElement} container - 要填充内容的DOM元素。
+ * @param {object} message - 消息对象。
+ */
+async function _renderMessageBody(container, message) {
+    let markdownText = message.content || '';
     
-    // --- FIX START ---
-    // 1. 先合并相邻的、可能由流式传输产生的多个 thinking 块
-    const mergedText = markdownText.replace(/<\/thinking>\s*<thinking>/gi, ' ');
+    // 如果是AI助手且有思考过程，则将其与内容合并
+    if (message.role === 'assistant' && message.reasoning && message.reasoning.trim()) {
+        const thinkingBlock = `<details class="thinking-block"><summary>AI 思考过程</summary><pre><code>${escapeHTML(message.reasoning)}</code></pre></details>`;
+        markdownText = thinkingBlock + markdownText;
+    }
 
-    // 2. 将 <thinking>...</thinking> 替换为 <details>
-    const thinkingRegex = /<thinking>([\s\S]*?)<\/thinking>/gi;
-    return mergedText.replace(thinkingRegex, 
-        `<details class="thinking-block">
-            <summary>AI 思考过程</summary>
-            <pre><code class="language-text">$1</code></pre>
-         </details>`);
+    await renderRichContent(container, markdownText);
 }
 
-// --- Create DOM Elements ---
-function createHistoryItem(message) {
+/**
+ * [修改] createHistoryItem 现在是 async 函数，因为它需要等待内容渲染。
+ */
+async function createHistoryItem(message) {
     const item = document.createElement('div');
     item.className = `history-item role-${message.role}`;
     item.dataset.messageId = message.id;
 
-    // --- 核心修改 START ---
-
-    let reasoningHTML = '';
-    let contentHTML = '';
-
-    if (message.role === 'assistant') {
-        if (message.status === 'streaming') {
-            // 正在流式传输时，创建两个容器用于实时更新
-            // <details> 默认是 open 的，这样用户就能实时看到
-            reasoningHTML = `
-                <details class="thinking-block" open>
-                    <summary>AI 思考过程</summary>
-                    <pre><code class="language-text streaming-reasoning-container"></code></pre>
-                </details>
-            `;
-            // 主内容区显示加载动画
-            contentHTML = `<div class="streaming-content-container"><p><i class="fas fa-spinner fa-pulse"></i></p></div>`;
-        } else {
-            // 流式结束后，根据最终数据渲染
-            if (message.reasoning && message.reasoning.trim()) {
-                reasoningHTML = preprocessMarkdown(message.reasoning); // 使用我们之前的函数
-            }
-            contentHTML = marked.parse(message.content || '');
-        }
-    } else { // 用户消息
-        contentHTML = marked.parse(message.content || '');
-    }
-    
-    // --- 核心修改 END ---
-
-    // 3. 处理图片 (未来功能)
-    const imagesHTML = (message.images || []).map(src => 
-        `<img src="${src}" alt="Uploaded image" class="history-image">`
-    ).join('');
-
-    // 使用模板字符串构建完整的innerHTML，确保所有部分都被包含
+    // 1. 创建基本的 DOM 骨架，内容区域为空
     item.innerHTML = `
         <div class="history-item-header">
             <span class="role ${message.role}">${message.role === 'user' ? '用户' : 'AI助手'}</span>
             <span>${new Date(message.timestamp).toLocaleString()}</span>
         </div>
-        <div class="history-item-content">
-            ${reasoningHTML}
-            ${contentHTML}
-            <div class="image-previews">${imagesHTML}</div>
-        </div>
+        <div class="history-item-content"></div>
         <div class="history-item-actions">
             <button class="history-action-btn regenerate-btn" title="重新生成"><i class="fas fa-redo"></i> 重新生成</button>
             <button class="history-action-btn edit-btn" title="编辑"><i class="fas fa-edit"></i> 编辑</button>
             <button class="history-action-btn delete-btn" title="删除"><i class="fas fa-trash"></i> 删除</button>
         </div>
     `;
+    
+    // 2. 填充内容
+    const contentContainer = item.querySelector('.history-item-content');
+    await _renderMessageBody(contentContainer, message);
 
-    // 根据消息角色，隐藏不适用的按钮
+    // 3. 调整按钮可见性
     const actionsContainer = item.querySelector('.history-item-actions');
 
     if (message.role === 'user') {
@@ -127,68 +94,67 @@ function createHistoryItem(message) {
     } else {
         actionsContainer.querySelector('.edit-btn').style.display = 'none';
     }
-
-    // 如果消息仍在流式传输中，不应显示任何操作按钮
-    if (message.status === 'streaming') {
-        actionsContainer.style.display = 'none';
-    }
     
     return item;
 }
 
 export function renderAgentView() {
-    renderAgentFilters();
-    renderAgentList();
+    // [新增] 根据状态设置初始显示
+    const topicsPanel = document.querySelector('.topics-panel');
+    const toggleBtn = document.getElementById('toggleTopicsBtn');
+
+    if (appState.isTopicsPanelHidden) {
+        topicsPanel.classList.add('collapsed');
+        if(toggleBtn) toggleBtn.title = "显示主题栏";
+    } else {
+        topicsPanel.classList.remove('collapsed');
+        if(toggleBtn) toggleBtn.title = "隐藏主题栏";
+    }
+
+    renderTopicFilters();
     renderTopicList();
-    renderHistoryPanel();
+    renderHistoryPanel(); // 异步调用
 }
 
-// [新增] 渲染筛选器
-function renderAgentFilters() { // [重构]
-    const allTags = [...new Set(appState.agents.flatMap(p => p.tags || []))]; // [重构]
-    const tagFilterEl = dom.$id('tag-filter');
-    tagFilterEl.innerHTML = '<option value="">所有标签</option>';
+/**
+ * [新增] 渲染主题列表的标签筛选器
+ */
+function renderTopicFilters() {
+    const filterEl = dom.$id('topic-tag-filter');
+    if (!filterEl) return;
+
+    // 1. 从所有Agent中收集独一无二的标签
+    const allTags = [...new Set(appState.agents.flatMap(agent => agent.tags || []))];
+    
+    const currentFilter = appState.topicListFilterTag;
+    
+    // 2. 填充下拉框
+    filterEl.innerHTML = '<option value="all">所有主题</option>';
     allTags.forEach(tag => {
         const option = document.createElement('option');
         option.value = tag;
         option.textContent = tag;
-        tagFilterEl.appendChild(option);
+        filterEl.appendChild(option);
     });
-}
-
-// [修改] 原 renderAgentList
-export function renderAgentList() { // [重构]
-    dom.navAgentList.innerHTML = '';
-    const { type, tags } = appState.agentFilters; // [重构]
-
-    let filteredAgents = appState.agents; // [重构]
-    if (type === 'tagged' && tags.length > 0) {
-        filteredAgents = appState.agents.filter(p => // [重构]
-            tags.every(tag => (p.tags || []).includes(tag))
-        );
-    }
     
-    filteredAgents.forEach(agent => { // [重构]
-        dom.navAgentList.appendChild(createAgentItem(agent));
-    });
-    // Add "Add Agent" button
-    const addAgentBtn = document.createElement('div');
-    addAgentBtn.className = 'agent-item add-agent-btn';
-    addAgentBtn.innerHTML = `<div class="agent-avatar">+</div><span>添加Agent</span>`;
-    dom.navAgentList.appendChild(addAgentBtn);
+    // 3. 设置当前选中的值
+    filterEl.value = currentFilter;
 }
 
 function renderHistoryHeader() {
     const titleEl = document.getElementById('historyHeaderTitle');
-    // const settingsBtn = document.getElementById('agentSettingsTriggerBtn'); // [删除]
-    const currentAgent = dataService.getAgentById(appState.currentAgentId);
+    const topicId = appState.currentTopicId;
 
-    if (currentAgent) {
-        titleEl.textContent = `${currentAgent.displayName} - 对话记录`;
-        // settingsBtn.style.display = 'flex'; // [删除]
+    if (topicId) {
+        const currentTopic = appState.topics.find(t => t.id === topicId);
+        if (currentTopic) {
+            titleEl.textContent = `${escapeHTML(currentTopic.title)} - 对话记录`;
+        } else {
+            // 如果找不到主题（边缘情况），显示通用标题
+            titleEl.textContent = '对话记录';
+        }
     } else {
-        titleEl.textContent = '历史对话记录';
-        // settingsBtn.style.display = 'none'; // [删除]
+        titleEl.textContent = '选择一个主题开始';
     }
 
     // [新增] 渲染对话角色选择器
@@ -205,29 +171,109 @@ function renderHistoryHeader() {
 
 export function renderTopicList() {
     dom.agentTopicList.innerHTML = '';
-    const currentTopics = appState.topics.filter(t => t.agentId === appState.currentAgentId); // [重构]
-    currentTopics.forEach(topic => {
+
+    const selectedTag = appState.topicListFilterTag;
+    let filteredTopics = appState.topics;
+
+    // 如果设置了筛选标签 (不是 'all')
+    if (selectedTag !== 'all') {
+        const agentMap = new Map(appState.agents.map(agent => [agent.id, agent]));
+
+        filteredTopics = appState.topics.filter(topic => {
+            // a. 找到该主题的最后一条消息
+            const lastMessage = appState.history
+                .filter(h => h.topicId === topic.id)
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+
+            if (!lastMessage || !lastMessage.agentId) return false;
+            
+            // b. 找到对应的Agent
+            const agent = agentMap.get(lastMessage.agentId);
+            if (!agent || !agent.tags) return false;
+            
+            // c. 检查标签是否匹配
+            return agent.tags.includes(selectedTag);
+        });
+    }
+
+    // 渲染过滤后的主题列表
+    filteredTopics.forEach(topic => {
         dom.agentTopicList.appendChild(createTopicItem(topic));
     });
-    // [新增] 控制重命名按钮的显示
+
+    // 控制重命名按钮的显示
     const editTopicBtn = dom.$id('editTopicBtn');
-    if (appState.currentTopicId) {
+    if (appState.currentTopicId && filteredTopics.some(t => t.id === appState.currentTopicId)) {
         editTopicBtn.style.display = 'block';
     } else {
         editTopicBtn.style.display = 'none';
     }
 
+    // [新增] 批量操作栏的UI更新
+    const batchActions = document.querySelector('.topics-batch-actions');
+    const manageBtn = document.getElementById('manageTopicsBtn');
+    if (appState.isTopicSelectionMode) {
+        batchActions.style.display = 'flex';
+        manageBtn.classList.add('active'); // Add active state for visual feedback
+        const deleteBtn = document.getElementById('deleteSelectedTopicsBtn');
+        const count = appState.selectedTopicIds.length;
+        deleteBtn.textContent = `删除选中 (${count})`;
+        deleteBtn.disabled = count === 0;
+
+        // --- [核心修改开始] ---
+        // 动态更新“全选/全不选”按钮的文本
+        const selectAllBtn = document.getElementById('selectAllTopicsBtn');
+        const totalTopics = appState.topics.length;
+        if (totalTopics > 0 && count === totalTopics) {
+            selectAllBtn.textContent = '全不选';
+        } else {
+            selectAllBtn.textContent = '全选';
+        }
+        // --- [核心修改结束] ---
+
+    } else {
+        batchActions.style.display = 'none';
+        manageBtn.classList.remove('active');
+    }
+    
     // Add "Add Topic" button
     const addTopicBtn = document.createElement('li');
     addTopicBtn.className = 'topic-item add-topic-btn';
-    addTopicBtn.innerHTML = `<div class="topic-icon"><i class="fas fa-plus-circle"></i></div><span>添加新主题</span>`;
+    // [修改] 简化 innerHTML，因为样式由 CSS 控制
+    addTopicBtn.innerHTML = `
+        <div class="topic-item-content">
+            <div class="topic-icon"><i class="fas fa-plus"></i></div>
+            <span>添加新主题</span>
+        </div>
+    `;
     dom.agentTopicList.appendChild(addTopicBtn);
 }
 
-export function renderHistoryPanel() {
-    renderHistoryHeader(); // **在这里调用！**
+/**
+ * [新增] 创建一个 Agent 提示/欢迎语的 HTML 面板。
+ * @param {object} agent - 包含提示信息的 Agent 对象。
+ * @returns {string} - 返回 HTML 字符串。
+ */
+function createHintPanel(agent) {
+    // 默认的欢迎图标
+    const iconHTML = `<i class="fas fa-lightbulb" style="margin-right: 8px;"></i>`;
 
-    const scrollIsAtBottom = dom.agentHistoryContent.scrollHeight - dom.agentHistoryContent.clientHeight <= dom.agentHistoryContent.scrollTop + 1;
+    return `
+        <div class="hint-panel">
+            <div class="hint-panel-header">
+                <div class="hint-panel-avatar">${escapeHTML(agent.avatar)}</div>
+                <div class="hint-panel-title">${escapeHTML(agent.name)} 为您服务</div>
+            </div>
+            <div class="hint-panel-content">
+                ${iconHTML}
+                ${agent.hint}
+            </div>
+        </div>
+    `;
+}
+
+export async function renderHistoryPanel() {
+    renderHistoryHeader();
 
     dom.agentHistoryContent.innerHTML = '';
     if (!appState.currentTopicId) {
@@ -245,36 +291,48 @@ export function renderHistoryPanel() {
         .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
     if (currentHistory.length === 0) {
-        dom.agentHistoryContent.innerHTML = `<div class="no-history"><i class="fas fa-comment-dots"></i><p>这个主题还没有对话记录，开始提问吧！</p></div>`;
-        return;
+        // 如果没有历史记录，尝试显示 Agent 的 hint
+        const agent = dataService.getAgentById(appState.currentConversationAgentId);
+
+        if (agent && agent.hint) {
+            // 如果当前 Agent 有 hint，则显示提示面板
+            dom.agentHistoryContent.innerHTML = createHintPanel(agent);
+        } else {
+            // 否则，显示默认的空状态消息
+            dom.agentHistoryContent.innerHTML = `<div class="no-history"><i class="fas fa-comment-dots"></i><p>这个主题还没有对话记录，开始提问吧！</p></div>`;
+        }
+        return; // 显示完提示或空状态后，直接返回
     }
 
-    currentHistory.forEach(message => {
-        // AI 正在思考的占位符不在此处渲染，因为它已经在history数组里了
-        if (message.status !== 'streaming' || message.content.length > 0 || appState.isAiThinking) {
-             dom.agentHistoryContent.appendChild(createHistoryItem(message));
+    // [修改] 使用 Promise.all 来并行创建所有历史项
+    const itemPromises = currentHistory.map(message => {
+        // 如果是正在流式传输的消息，只创建骨架
+        if (message.status === 'streaming') {
+            // 对于正在流式传输的消息，我们只创建骨架
+            const item = document.createElement('div');
+            item.className = 'history-item role-assistant';
+            item.dataset.messageId = message.id;
+            item.innerHTML = `
+                <div class="history-item-header">
+                    <span class="role assistant">AI助手</span>
+                    <span>${new Date(message.timestamp).toLocaleString()}</span>
+                </div>
+                <div class="history-item-content">
+                    <div class="streaming-content-container"><p><i class="fas fa-spinner fa-pulse"></i></p></div>
+                </div>
+            `;
+            return Promise.resolve(item);
+        } else {
+            return createHistoryItem(message);
         }
     });
 
-    if (scrollIsAtBottom) {
-        dom.agentHistoryContent.scrollTop = dom.agentHistoryContent.scrollHeight;
-    }
-    
-    updateTurnElements(); // 更新导航元素
-}
+    const renderedItems = await Promise.all(itemPromises);
+    renderedItems.forEach(item => dom.agentHistoryContent.appendChild(item));
 
-function createLoadingIndicator() {
-    const item = document.createElement('div');
-    item.className = 'history-item loading-indicator';
-    item.innerHTML = `
-        <div class="history-item-header">
-            <span class="role assistant">AI助手</span>
-        </div>
-        <div class="history-item-content">
-            <p><i class="fas fa-spinner fa-pulse"></i> 正在输入...</p>
-        </div>
-    `;
-    return item;
+    dom.agentHistoryContent.scrollTop = dom.agentHistoryContent.scrollHeight;
+    
+    updateTurnElements();
 }
 
 export function renderAttachmentPreviews(attachments) {
@@ -296,15 +354,30 @@ export function renderAttachmentPreviews(attachments) {
 export function updateStreamingChunkInDOM(messageId, type, textChunk) {
     const messageEl = document.querySelector(`.history-item[data-message-id="${messageId}"]`);
     if (!messageEl) return;
+    
+    const contentContainer = messageEl.querySelector('.history-item-content');
+    if (!contentContainer) return;
 
     let targetContainer;
     if (type === 'thinking') {
-        targetContainer = messageEl.querySelector('.streaming-reasoning-container');
-        // thinking 文本块可能包含 <thinking> 标签，先去掉
-        textChunk = textChunk.replace(/<\/?thinking>/g, '');
+        // 只有在接收到思考过程时才创建 <details> 元素
+        let detailsEl = contentContainer.querySelector('.thinking-block');
+        if (!detailsEl) {
+            detailsEl = document.createElement('details');
+            detailsEl.className = 'thinking-block';
+            detailsEl.open = true;
+            detailsEl.innerHTML = `<summary>AI 思考过程</summary><pre><code class="language-text streaming-reasoning-container"></code></pre>`;
+            // 将其插入到内容容器的最前面
+            contentContainer.prepend(detailsEl);
+        }
+        targetContainer = detailsEl.querySelector('.streaming-reasoning-container');
     } else if (type === 'content') {
-        targetContainer = messageEl.querySelector('.streaming-content-container');
-        // 如果是第一个 content chunk，清空加载动画
+        targetContainer = contentContainer.querySelector('.streaming-content-container');
+        if (!targetContainer) { // 如果容器不存在，则创建
+            targetContainer = document.createElement('div');
+            targetContainer.className = 'streaming-content-container';
+            contentContainer.appendChild(targetContainer);
+        }
         const spinner = targetContainer.querySelector('.fa-spinner');
         if (spinner) {
             targetContainer.innerHTML = '';
@@ -319,28 +392,42 @@ export function updateStreamingChunkInDOM(messageId, type, textChunk) {
     }
 }
 
-// 新增一个函数，用于在流结束后折叠思考过程
-export function finalizeStreamingUI(messageId) {
+/**
+ * [修改] 实现了“完成时重绘”的逻辑
+ */
+export async function finalizeStreamingUI(messageId) {
     const messageEl = document.querySelector(`.history-item[data-message-id="${messageId}"]`);
     if (!messageEl) return;
 
-    // 找到 thinking block 的 details 元素并移除 open 属性
-    const detailsEl = messageEl.querySelector('.thinking-block');
-    if (detailsEl) {
-        detailsEl.removeAttribute('open');
+    const messageData = appState.history.find(msg => msg.id === messageId);
+    if (!messageData) return;
+
+    // 1. 重绘内容区域
+    const contentContainer = messageEl.querySelector('.history-item-content');
+    if(contentContainer) {
+        await _renderMessageBody(contentContainer, messageData);
     }
 
     // 显示操作按钮
     const actionsContainer = messageEl.querySelector('.history-item-actions');
     if (actionsContainer) {
         actionsContainer.style.display = 'flex';
+    } else { // 如果不存在，则创建并附加
+        const newActions = document.createElement('div');
+        newActions.className = 'history-item-actions';
+        newActions.innerHTML = `
+            <button class="history-action-btn regenerate-btn" title="重新生成"><i class="fas fa-redo"></i> 重新生成</button>
+            <button class="history-action-btn edit-btn" title="编辑" style="display: none;"><i class="fas fa-edit"></i> 编辑</button>
+            <button class="history-action-btn delete-btn" title="删除"><i class="fas fa-trash"></i> 删除</button>
+        `;
+        messageEl.appendChild(newActions);
     }
 }
 
 export function updateTurnElements() {
     const upBtn = document.getElementById('chatNavUp');
     const downBtn = document.getElementById('chatNavDown');
-    const hasTurns = dom.agentHistoryContent.querySelector('.history-item .role.user');
+    const hasTurns = dom.agentHistoryContent.querySelector('.history-item .role-user');
     
     if (upBtn && downBtn) {
         upBtn.disabled = !hasTurns;

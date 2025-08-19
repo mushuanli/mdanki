@@ -68,7 +68,9 @@ export class GeminiAdapter extends BaseAdapter {
                         const parsed = JSON.parse(line);
                         const content = parsed.candidates?.[0]?.content?.parts?.[0]?.text || '';
                         if (content) {
-                            onChunk(content);
+                            // [修复] 将 onChunk(content) 修改为 onChunk({ type: 'content', text: content })
+                            // 以匹配 dataService 中回调函数的期望签名。
+                            onChunk({ type: 'content', text: content });
                         }
                     } catch (e) {
                         // console.warn('Skipping non-JSON line in Gemini stream:', line, e);
