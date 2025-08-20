@@ -21,32 +21,34 @@ let lastCheckedIndex = -1;
 // [新增] 用于 Cloze 导航的模块级变量
 let currentClozeIndex = -1;
 
-// Navigation handlers are exported so anki_ui.js can use them
-export function handleGoBack() {
-    dataService.goBack();
+// --- Exported Navigation Handlers ---
+export function anki_goBack() {
+    dataService.anki_goBack();
+    resetUIStateOnNavigate();
     rerenderAnki();
-    lastCheckedIndex = -1;
-    currentClozeIndex = -1; // [新增] 重置
 }
 
-export function handleGoToFolder(folderId, stackIndex) {
-    dataService.goToFolder(folderId, stackIndex);
+export function anki_goToFolder(folderId, stackIndex) {
+    dataService.anki_goToFolder(folderId, stackIndex);
+    resetUIStateOnNavigate();
     rerenderAnki();
-    lastCheckedIndex = -1;
-    currentClozeIndex = -1; // [新增] 重置
 }
 
-export function handleGoToRoot() {
-    dataService.goToRoot();
+export function anki_goToRoot() {
+    dataService.anki_goToRoot();
+    resetUIStateOnNavigate();
     rerenderAnki();
-    lastCheckedIndex = -1; // [NEW] 重置选择状态
-    currentClozeIndex = -1; // [新增] 重置
+}
+
+function resetUIStateOnNavigate() {
+    lastCheckedIndex = -1;
+    currentClozeIndex = -1;
 }
 
 async function handleNewFile() {
-    const fileName = prompt("请输入新文件的名称：", "新文件");
+    const fileName = prompt("请输入新文件的名称：", "新笔记");
     if (fileName === null) return;
-    await dataService.addFile(fileName.trim());
+    await dataService.anki_addFile(fileName.trim());
     rerenderAnki();
     dom.editor.focus();
 }
@@ -54,16 +56,16 @@ async function handleNewFile() {
 async function handleNewFolder() {
     const folderName = prompt("请输入新目录的名称：", "新目录");
     if (folderName === null) return;
-    await dataService.addFolder(folderName.trim());
+    await dataService.anki_addFolder(folderName.trim());
     rerenderAnki();
 }
 
 async function handleSave() {
-    const saved = await dataService.saveCurrentSessionContent(dom.editor.value);
+    const saved = await dataService.anki_saveCurrentSessionContent(dom.editor.value);
     if (saved) {
         dom.saveBtn.innerHTML = '<i class="fas fa-check"></i> 已保存';
-        setTimeout(() => dom.saveBtn.innerHTML = '<i class="fas fa-save"></i> 保存', 2000);
-        rerenderAnki();
+        setTimeout(() => dom.saveBtn.innerHTML = '<i class="fas fa-save"></i>', 2000);
+        // Note: rerenderAnki() is now called from saveCurrentSessionContent in dataService
     }
 }
 
@@ -88,24 +90,16 @@ function handleSelection(event, checkbox) {
     lastCheckedIndex = currentIndex;
 
     // 更新“全选”复选框的状态
-    const allSelected = allCheckboxes.every(cb => cb.checked);
+    const allSelected = allCheckboxes.length > 0 && allCheckboxes.every(cb => cb.checked);
     const someSelected = allCheckboxes.some(cb => cb.checked);
-    if (allSelected && allCheckboxes.length > 0) {
-        dom.selectAllCheckbox.checked = true;
-        dom.selectAllCheckbox.indeterminate = false;
-    } else if (someSelected) {
-        dom.selectAllCheckbox.checked = false;
-        dom.selectAllCheckbox.indeterminate = true; // “部分选中”状态
-    } else {
-        dom.selectAllCheckbox.checked = false;
-        dom.selectAllCheckbox.indeterminate = false;
-    }
+    dom.selectAllCheckbox.checked = allSelected;
+    dom.selectAllCheckbox.indeterminate = !allSelected && someSelected;
 }
 
 
 // [REWRITTEN] 重写会话列表的点击处理函数，以支持多选
 async function handleSessionListClick(e) {
-    const item = e.target.closest('.session-item');
+    const item = e.target.closest('.session-item, .session-item-details summary');
     if (!item) return;
 
     // --- 1. 检查点击目标，区分“选择”与“导航” ---
@@ -116,19 +110,18 @@ async function handleSessionListClick(e) {
     }
 
     const action = e.target.closest('.actions span');
-
     if (action) {
         e.stopPropagation();
-        const { id, type } = item.dataset;
+        const { id, type } = item.closest('.session-item').dataset;
         if (action.classList.contains('delete-btn')) {
             if (confirm(`确定删除此 ${type === 'file' ? '文件' : '目录'}?`)) {
-                await dataService.removeItems([{ id, type }]);
+                await dataService.anki_removeItems([{ id, type }]);
                 rerenderAnki();
             }
         } else if (action.classList.contains('edit-btn')) {
              const newName = prompt('输入新名称:', item.querySelector('.item-name').textContent);
              if (newName && newName.trim()) {
-                 await dataService.updateItemName(id, newName.trim(), type);
+                 await dataService.anki_updateItemName(id, newName.trim(), type);
                  rerenderAnki();
              }
         } else if (action.classList.contains('move-btn')) {
@@ -138,43 +131,25 @@ async function handleSessionListClick(e) {
         return;
     }
 
-    // --- 2. 如果代码执行到这里，说明是导航点击 ---
-    // 重置多选状态，因为即将发生导航
-    lastCheckedIndex = -1; 
-    
+    resetUIStateOnNavigate();
     const { id, type, parent } = item.dataset;
 
-    // 自动保存逻辑
-    const clickedFileId = type === 'file' ? id : (item.classList.contains('subsession') ? parent : null);
-
-    // 2. 如果当前有打开的文件(appState.currentSessionId不为null),
-    //    并且用户点击的不是当前文件自身或其子项 (即 clickedFileId !== appState.currentSessionId),
-    //    则说明用户正在切换会话, 此时保存当前编辑器的内容。
-    if (appState.currentSessionId && clickedFileId !== appState.currentSessionId) {
-        await dataService.saveCurrentSessionContent(dom.editor.value);
-    }
-    // --- 自动保存逻辑结束 ---
-
-    if (type === 'file') {
-        dataService.selectSession(id);
-    } else if (type === 'folder') {
-        dataService.selectFolder(id);
-    } else if (item.classList.contains('subsession')) {
-        dataService.selectSubsession(parent, id);
+    if (appState.currentSessionId && id !== appState.currentSessionId) {
+        await dataService.anki_saveCurrentSessionContent(dom.editor.value);
     }
 
-    currentClozeIndex = -1; // [新增] 重置
+    if (type === 'file') dataService.anki_selectSession(id);
+    else if (type === 'folder') dataService.anki_selectFolder(id);
+    else if (type === 'subsession') dataService.anki_selectSubsession(parent, id);
 
     rerenderAnki();
 }
 
 async function handleConfirmMove() {
     if (appState.selectedMoveTarget !== undefined && appState.movingItems.length > 0) {
-        await dataService.moveItems(appState.movingItems, appState.selectedMoveTarget);
+        await dataService.anki_moveItems(appState.movingItems, appState.selectedMoveTarget);
         closeModal();
         rerenderAnki();
-    } else {
-        alert('请选择一个目标目录。');
     }
 }
 
@@ -183,7 +158,7 @@ async function handleDeleteSelected() {
         .map(cb => ({ id: cb.dataset.id, type: cb.dataset.type }));
     if (selected.length === 0) return alert('请先选择要删除的项目。');
     if (confirm(`确定要删除选中的 ${selected.length} 个项目吗？`)) {
-        await dataService.removeItems(selected);
+        await dataService.anki_removeItems(selected);
         dom.selectAllCheckbox.checked = false;
         rerenderAnki();
     }
@@ -192,12 +167,8 @@ async function handleDeleteSelected() {
 function handleEditorInput() {
     clearTimeout(window.previewDebounce);
     window.previewDebounce = setTimeout(updatePreview, 300);
-
-    // [MODIFIED] Debounce for saving undo state
     clearTimeout(undoDebounceTimer);
-    undoDebounceTimer = setTimeout(() => {
-        saveEditorStateForUndo();
-    }, 500); // Save state after 500ms of inactivity
+    undoDebounceTimer = setTimeout(saveEditorStateForUndo, 500);
 }
 
 async function handleOpenFile(e) {
@@ -234,7 +205,7 @@ async function handleOpenFile(e) {
                 ? originalName.substring(0, lastDotIndex)
                 : originalName;
 
-            await dataService.addFile(nameWithoutExtension, fileData.content);
+            await dataService.anki_addFile(nameWithoutExtension, fileData.content);
         }
 
         // 所有文件都添加完毕后，刷新一次UI
@@ -307,6 +278,8 @@ function handleAudioPrompt() {
 
     // If cursor is not in a cloze, ignore the click (Requirement 1)
     if (!targetCloze) {
+        // 如果光标不在任何 Cloze 中，则执行简单的包裹操作
+        wrapSelection('--', '--^^audio:TEXT^^');
         return;
     }
 
@@ -444,46 +417,20 @@ function handlePrintPreview() {
     // 创建一个新窗口用于打印
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
-        <!DOCTYPE html>
-        <html lang="zh-CN">
-        <head>
-            <meta charset="UTF-8">
-            <title>打印预览</title>
-            <!-- 重新链接所有必要的样式表以确保打印视图的正确性 -->
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-            <link rel="stylesheet" href="./styles.css">
-            <style>
-                /* 打印专用样式 */
-                @media print {
-                    body { margin: 20px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                    .cloze-actions, .media-icon { display: none !important; }
-                    .cloze.hidden .cloze-content, .cloze .cloze-content { display: inline !important; visibility: visible !important; color: black !important; }
-                    .cloze .placeholder { display: none !important; }
-                    .cloze { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                }
-                body { font-family: sans-serif; }
-            </style>
-        </head>
-        <body>
-            <div class="preview" style="display: block !important;">${previewContent}</div>
-            <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-            <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-            <script>
-                // 设置MathJax，在渲染完成后自动触发打印并关闭窗口
-                window.MathJax = {
-                    startup: {
-                        pageReady: () => {
-                            return window.MathJax.startup.defaultPageReady().then(() => {
-                                console.log('MathJax has finished rendering. Triggering print.');
-                                window.print();
-                                window.close();
-                            });
-                        }
-                    }
-                };
-            </script>
-        </body>
-        </html>
+        <!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>打印预览</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="./styles.css">
+        <style>
+            @media print { body { margin: 20px; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .cloze-actions, .media-icon { display: none !important; } .cloze.hidden .cloze-content, .cloze .cloze-content { display: inline !important; visibility: visible !important; color: black !important; } .cloze .placeholder { display: none !important; } .cloze { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+            body { font-family: sans-serif; }
+        </style></head><body>
+        <div class="preview" style="display: block !important;">${previewContent}</div>
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script>
+            window.MathJax = { startup: { pageReady: () => { return window.MathJax.startup.defaultPageReady().then(() => { window.print(); window.close(); }); } } };
+        </script>
+        </body></html>
     `);
     printWindow.document.close(); // 必须调用 close() 来结束写入，这会触发页面加载
 }
@@ -532,7 +479,6 @@ function toggleEditPreviewMode() {
         // --- 从预览切换到编辑模式 ---
         panel.classList.remove('preview-active');
         dom.toggleEditPreviewBtn.innerHTML = '<i class="fas fa-book-open"></i> Preview';
-        dom.toggleEditPreviewBtn.title = "切换到预览";
         dom.editModeDot.classList.add('active');
         dom.previewModeDot.classList.remove('active');
         
@@ -552,30 +498,21 @@ function toggleEditPreviewMode() {
     } else {
         // --- 从编辑切换到预览模式 ---
         handleSave(); // 切换前保存
-        updatePreview(); // 更新预览内容
-        
-        // 使用 requestAnimationFrame 等待DOM更新，特别是内容渲染后
-        requestAnimationFrame(() => {
-            const preview = dom.preview;
-            // 应用保存的滚动比例
-            if (appState.editorScrollRatio !== undefined && (preview.scrollHeight > preview.clientHeight)) {
-                preview.scrollTop = appState.editorScrollRatio * (preview.scrollHeight - preview.clientHeight);
-            }
+        updatePreview().then(() => {
+            requestAnimationFrame(() => {
+                const preview = dom.preview;
+                if (appState.editorScrollRatio !== undefined && (preview.scrollHeight > preview.clientHeight)) {
+                    preview.scrollTop = appState.editorScrollRatio * (preview.scrollHeight - preview.clientHeight);
+                }
+            });
         });
-
         panel.classList.add('preview-active');
         dom.toggleEditPreviewBtn.innerHTML = '<i class="fas fa-edit"></i>';
-        dom.toggleEditPreviewBtn.title = "切换到编辑模式";
         dom.editModeDot.classList.remove('active');
         dom.previewModeDot.classList.add('active');
         
         // [MODIFIED] Enable print button in preview mode
         dom.printPreviewBtn.disabled = false;
-        
-        // 切换到预览模式时自动保存
-        handleSave();
-        // 确保预览内容是最新的
-        updatePreview();
     }
 }
 
@@ -602,55 +539,58 @@ function populateCustomStudyFilters() {
 
 // [NEW] 设置复习相关的UI事件
 function setupReviewUIEventListeners() {
-    const reviewOptionsBtn = document.getElementById('reviewOptionsBtn');
-    const reviewDropdownMenu = document.getElementById('reviewDropdownMenu');
-    const customStudyBtn = document.getElementById('customStudyBtn');
-    const customStudyModal = document.getElementById('customStudyModal');
-    const customStudyCloseBtn = document.getElementById('customStudyCloseBtn');
-    const customStudyCancelBtn = document.getElementById('customStudyCancelBtn');
-    const customStudyForm = document.getElementById('customStudyForm');
-
     // 自动复习按钮
-    document.getElementById('startReviewBtn').addEventListener('click', () => startReviewSession());
+    if (dom.startReviewBtn) {
+        dom.startReviewBtn.addEventListener('click', () => startReviewSession());
+    }
 
     // 下拉菜单逻辑
-    reviewOptionsBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        reviewDropdownMenu.style.display = reviewDropdownMenu.style.display === 'block' ? 'none' : 'block';
-    });
+    if (dom.reviewOptionsBtn && dom.reviewDropdownMenu) {
+        dom.reviewOptionsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dom.reviewDropdownMenu.style.display = dom.reviewDropdownMenu.style.display === 'block' ? 'none' : 'block';
+        });
 
-    document.addEventListener('click', (e) => {
-        const reviewGroup = document.querySelector('.review-btn-group');
-        if (reviewGroup && !reviewGroup.contains(e.target)) {
-            reviewDropdownMenu.style.display = 'none';
-        }
-    });
+        // 点击页面其他地方关闭下拉菜单
+        document.addEventListener('click', (e) => {
+            const reviewGroup = dom.reviewOptionsBtn.parentElement; // More robust way to find parent
+            if (reviewGroup && !reviewGroup.contains(e.target)) {
+                dom.reviewDropdownMenu.style.display = 'none';
+            }
+        });
+    }
 
-    // 打开模态框
-    customStudyBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        reviewDropdownMenu.style.display = 'none';
-        populateCustomStudyFilters();
-        customStudyModal.style.display = 'flex';
-    });
+    // 打开自定义复习模态框
+    if (dom.customStudyBtn && dom.customStudyModal) {
+        dom.customStudyBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (dom.reviewDropdownMenu) dom.reviewDropdownMenu.style.display = 'none';
+            populateCustomStudyFilters(); // This function is ok
+            dom.customStudyModal.style.display = 'flex';
+        });
+    }
 
-    // 关闭模态框
-    const closeModal = () => customStudyModal.style.display = 'none';
-    customStudyCloseBtn.addEventListener('click', closeModal);
-    customStudyCancelBtn.addEventListener('click', closeModal);
+    // 关闭模态框的通用函数
+    const closeModal = () => {
+        if (dom.customStudyModal) dom.customStudyModal.style.display = 'none';
+    };
+    if (dom.customStudyCloseBtn) dom.customStudyCloseBtn.addEventListener('click', closeModal);
+    if (dom.customStudyCancelBtn) dom.customStudyCancelBtn.addEventListener('click', closeModal);
 
     // 提交自定义复习表单
-    customStudyForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const filters = {
-            fileOrFolder: document.getElementById('filterByFile').value,
-            cardStates: Array.from(document.querySelectorAll('input[name="cardState"]:checked')).map(cb => cb.value),
-            lastReview: document.getElementById('filterByLastReview').value,
-            maxCards: parseInt(document.getElementById('maxCards').value, 10),
-        };
-        closeModal();
-        startReviewSession(filters);
-    });
+    if (dom.customStudyForm) {
+        dom.customStudyForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const filters = {
+                fileOrFolder: dom.filterByFile.value,
+                cardStates: Array.from(document.querySelectorAll('input[name="anki_cardState"]:checked')).map(cb => cb.value),
+                lastReview: dom.filterByLastReview.value,
+                maxCards: parseInt(dom.maxCards.value, 10),
+            };
+            closeModal();
+            startReviewSession(filters);
+        });
+    }
 }
 
 // [新增] Cloze 导航函数
@@ -660,9 +600,7 @@ function navigateCloze(direction) {
 
     // 移除旧的高亮
     const currentActive = dom.preview.querySelector('.cloze-nav-active');
-    if (currentActive) {
-        currentActive.classList.remove('cloze-nav-active');
-    }
+    if (currentActive) currentActive.classList.remove('cloze-nav-active');
 
     // 计算新索引 (循环)
     currentClozeIndex = (currentClozeIndex + direction + clozeElements.length) % clozeElements.length;
@@ -682,8 +620,12 @@ export function setupAnkiEventListeners() {
     dom.sessionList.addEventListener('click', handleSessionListClick);
     dom.deleteSelectedBtn.addEventListener('click', handleDeleteSelected);
     dom.editor.addEventListener('input', handleEditorInput);
-    dom.openFileBtn.addEventListener('click', () => dom.fileInput.click());
-    dom.fileInput.addEventListener('change', handleOpenFile);
+    dom.editor.addEventListener('scroll', handleEditorScroll);
+    dom.preview.addEventListener('scroll', handlePreviewScroll);
+    
+    // Open file is a bit different, it doesn't need a prefix as it's a global file input
+    dom.openFileBtn.addEventListener('click', () => document.getElementById('anki_fileInput')?.click()); // Assuming you add this ID
+    document.getElementById('anki_fileInput')?.addEventListener('change', handleOpenFile);
 
     // [MODIFIED] Add event listener for the print button
     dom.printPreviewBtn.addEventListener('click', handlePrintPreview);
@@ -710,7 +652,11 @@ export function setupAnkiEventListeners() {
     });
 
     dom.toggleEditorBtn.addEventListener('click', handleToggleEditor);
+
+    // [FIXED] 恢复了旧代码的智能功能，而不是简单的文本插入
     dom.clozeBtn.addEventListener('click', handleClozeButtonClick);
+    dom.audioBtn.addEventListener('click', handleAudioPrompt);
+
     dom.boldBtn.addEventListener('click', () => wrapSelection('**'));
     dom.italicBtn.addEventListener('click', () => wrapSelection('*'));
     // [MODIFIED] 为新按钮添加事件监听器
@@ -718,10 +664,6 @@ export function setupAnkiEventListeners() {
     dom.codeBtn.addEventListener('click', () => wrapSelection('`'));
     dom.linkBtn.addEventListener('click', () => wrapSelection('[', `](${prompt('URL:', 'https://')})`));
     
-    // [MODIFIED] Add event listener for the new audio button functionality
-    dom.audioBtn.addEventListener('click', handleAudioPrompt); // <--- 在这里添加这一行
-
-    // [MODIFIED] 绑定新的滚动事件监听器
     dom.editor.addEventListener('scroll', handleEditorScroll);
     dom.preview.addEventListener('scroll', handlePreviewScroll);
 
@@ -745,15 +687,12 @@ export function setupAnkiEventListeners() {
     dom.toggleVisibilityClozeBtn.addEventListener('click', toggleAllClozeVisibility);
     dom.invertClozeBtn.addEventListener('click', invertAllCloze);
 
-    dom.playBtn.addEventListener('click', resumeAudio);
-    dom.pauseBtn.addEventListener('click', pauseAudio);
-    dom.stopBtn.addEventListener('click', stopAudio);
+    dom.playBtn?.addEventListener('click', resumeAudio);
+    dom.pauseBtn?.addEventListener('click', pauseAudio);
+    dom.stopBtn?.addEventListener('click', stopAudio);
 
-    // [新增] 为 Cloze 导航按钮绑定事件
-    const clozeNavUpBtn = document.getElementById('clozeNavUpBtn');
-    const clozeNavDownBtn = document.getElementById('clozeNavDownBtn');
-    if (clozeNavUpBtn) clozeNavUpBtn.addEventListener('click', () => navigateCloze(-1));
-    if (clozeNavDownBtn) clozeNavDownBtn.addEventListener('click', () => navigateCloze(1));
+    dom.clozeNavUpBtn?.addEventListener('click', () => navigateCloze(-1));
+    dom.clozeNavDownBtn?.addEventListener('click', () => navigateCloze(1));
 
         // [NEW] Add keydown event listener for Undo/Redo
     dom.editor.addEventListener('keydown', (e) => {
@@ -773,17 +712,19 @@ export function setupAnkiEventListeners() {
             handleSave();
         }
     });
+    
+    // 这部分在新旧代码中都存在，但为了完整性在此处确认
+    setupReviewUIEventListeners(); // 调用 review UI 事件设置
 
-    // [新增] 为统计按钮绑定事件
-    document.getElementById('showStatsBtn').addEventListener('click', (e) => {
+    // [FIXED] 同样修复统计按钮的事件绑定
+    dom.showStatsBtn?.addEventListener('click', (e) => {
         e.preventDefault();
         statsUI.openStatsModal();
-        // 关闭下拉菜单
-        document.getElementById('reviewDropdownMenu').style.display = 'none';
+        if (dom.reviewDropdownMenu) {
+            dom.reviewDropdownMenu.style.display = 'none';
+        }
     });
 
     setupModalEventListeners(handleConfirmMove);
-    setupReviewUIEventListeners();
-    // [新增] 设置统计模态框的事件监听
     statsUI.setupStatsModalEventListeners();
 }

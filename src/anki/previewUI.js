@@ -90,7 +90,7 @@ function processClozeElementsInNode(node) {
             }
             
             // [MODIFIED] 将计算好的 clozeId 传递给数据服务
-            const clozeState = dataService.getOrCreateClozeState(fileId, clozeContent, clozeId);
+            const clozeState = dataService.anki_getOrCreateClozeState(fileId, clozeContent, clozeId);
 
             const clozeSpan = document.createElement('span');
             clozeSpan.className = `cloze hidden ${getClozeColorClassByState(clozeState)}`;
@@ -275,9 +275,9 @@ function addClozeEventListeners() {
             clearTimeout(cloze.closeTimer);
 
             // [MODIFIED] 调用更新后的 dataService 函数，传入 clozeId
-            dataService.updateClozeState(fileId, clozeContent, rating, clozeId);
+            await dataService.anki_updateClozeState(fileId, clozeContent, rating, clozeId);
 
-            const newState = dataService.getOrCreateClozeState(fileId, clozeContent, clozeId);
+            const newState = dataService.anki_getOrCreateClozeState(fileId, clozeContent, clozeId);
             const newColorClass = getClozeColorClassByState(newState);
 
             // 步骤 3: 直接操作DOM来更新UI，而不是完全重绘
@@ -293,7 +293,7 @@ function addClozeEventListeners() {
 
             // d. 根据评分决定卡片的可见性
             if (rating === 3) { // 如果是 "简单"
-                await dataService.recordReview(fileId);
+                await dataService.anki_recordReview(fileId);
 
                 // 保持卡片打开，并应用 'easy-open' 样式
                 cloze.classList.remove('hidden', 'permanent-view');
@@ -447,7 +447,7 @@ function addClozeEventListeners() {
         if (contentChanged) {
             // 如果需要，执行统计
             if (shouldRecordReview) {
-                await dataService.recordReview(appState.currentSessionId);
+                await dataService.anki_recordReview(appState.currentSessionId);
             }
 
             // 更新编辑器内容并保存
@@ -457,7 +457,7 @@ function addClozeEventListeners() {
             dom.editor.setSelectionRange(cursorPos, cursorPos);
           
             // 保存并触发UI更新
-            await dataService.saveCurrentSessionContent(newEditorContent);
+            await dataService.anki_saveCurrentSessionContent(newEditorContent);
             await updatePreview();
             dom.editor.dispatchEvent(new Event('input', { bubbles: true }));
         }

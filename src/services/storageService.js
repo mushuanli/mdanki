@@ -1,18 +1,23 @@
 // src/services/storageService.js
 import { db } from '../common/db.js';
 
+// ===================================================================
+//                        Anki 模块存储服务
+// ===================================================================
+
 /**
- * Loads all core data collections from the database.
- * This is the primary function for fetching data on app startup.
- * @returns {Promise<object>} An object containing the data collections.
+ * [重构] 加载 Anki 模块核心数据和全局持久化状态。
+ * 这是应用启动时的关键数据加载函数。
+ * @returns {Promise<object>} 包含 anki 数据的对象。
  */
-export async function loadAllData() {
-    // [修正] 不再加载 clozeAccessTimes，而是加载 clozeStates
-    const [sessions, folders, clozeStates, appStateValues] = await Promise.all([
-        db.sessions.toArray(),
-        db.folders.toArray(),
-        db.clozeStates.toArray(), // <--- 修改点
-        db.appState.toArray(),
+export async function loadAnkiData() {
+    // [修正] 为每个Promise添加.catch，以提高健壮性并提供更详细的错误日志
+    const [sessions, folders, clozeStates, reviewStats, appStateValues] = await Promise.all([
+        db.anki_sessions.toArray().catch(e => { console.error('Failed to load anki_sessions', e); return []; }),
+        db.anki_folders.toArray().catch(e => { console.error('Failed to load anki_folders', e); return []; }),
+        db.anki_clozeStates.toArray().catch(e => { console.error('Failed to load anki_clozeStates', e); return []; }),
+        db.anki_reviewStats.toArray().catch(e => { console.error('Failed to load anki_reviewStats', e); return []; }), // [修正] 已添加 reviewStats 加载
+        db.global_appState.toArray().catch(e => { console.error('Failed to load global_appState', e); return []; }),
     ]);
 
     // [修正] 将 clozeStates 数组转换为以 id 为 key 的对象
@@ -27,219 +32,227 @@ export async function loadAllData() {
     }, {});
 
     return {
-        sessions: sessions || [],
-        folders: folders || [],
-        clozeStates: reconstructedClozeStates || {}, // <--- 修改点
-        persistentAppState: reconstructedAppState || {},
+        sessions,
+        folders,
+        clozeStates: reconstructedClozeStates,
+        reviewStats: reviewStats || [], // [修正] 已在返回对象中包含 reviewStats
+        persistentAppState: reconstructedAppState,
     };
 }
 
-// --- [新增] 复习统计相关的数据服务 ---
+/**
+ * [重构] 保存 Anki 模块核心数据和全局持久化状态。
+ * @param {object} data - 包含要保存的 anki 数据的对象。
+ */
+export async function saveAnkiData({ sessions, folders, clozeStates, persistentAppState }) {
+    const tablesToUpdate = [db.anki_sessions, db.anki_folders, db.anki_clozeStates, db.global_appState];
+
+    await db.transaction('rw', tablesToUpdate, async () => {
+        const clozeDataForDB = Object.values(clozeStates);
+        const appStateDataForDB = Object.entries(persistentAppState).map(([key, value]) => ({ key, value }));
+
+        const existingSessionIds = new Set(sessions.map(s => s.id));
+        const existingFolderIds = new Set(folders.map(f => f.id));
+        const existingClozeIds = new Set(Object.keys(clozeStates));
+        const existingAppStateKeys = new Set(Object.keys(persistentAppState));
+
+        // 清理不再存在的数据
+        await Promise.all([
+            db.anki_sessions.where('id').noneOf(Array.from(existingSessionIds)).delete(),
+            db.anki_folders.where('id').noneOf(Array.from(existingFolderIds)).delete(),
+            db.anki_clozeStates.where('id').noneOf(Array.from(existingClozeIds)).delete(),
+            db.global_appState.where('key').noneOf(Array.from(existingAppStateKeys)).delete(),
+        ]);
+        
+        // 批量写入新数据
+        await Promise.all([
+            db.anki_sessions.bulkPut(sessions),
+            db.anki_folders.bulkPut(folders),
+            db.anki_clozeStates.bulkPut(clozeDataForDB),
+            db.global_appState.bulkPut(appStateDataForDB),
+        ]);
+    });
+}
 
 /**
- * 原子性地增加指定日期和目录的复习次数
- * @param {string} date - 'YYYY-MM-DD' 格式的日期
- * @param {string} folderId - 目录ID，或 'root'
+ * [重构] Anki 复习统计 - 原子性地增加复习次数。
+ * @param {string} date - 'YYYY-MM-DD'
+ * @param {string} folderId 
  */
-export async function incrementReviewCount(date, folderId) {
+export async function anki_incrementReviewCount(date, folderId) {
     const id = `${date}:${folderId || 'root'}`;
     try {
-        // 使用事务确保操作的原子性
-        await db.transaction('rw', db.reviewStats, async () => {
-            const stat = await db.reviewStats.get(id);
+        await db.transaction('rw', db.anki_reviewStats, async () => {
+            const stat = await db.anki_reviewStats.get(id);
             if (stat) {
-                // 如果存在，则数量+1
-                await db.reviewStats.update(id, { count: stat.count + 1 });
+                await db.anki_reviewStats.update(id, { count: stat.count + 1 });
             } else {
-                // 如果不存在，则创建新纪录
-                await db.reviewStats.add({
-                    id: id,
-                    date: date,
-                    folderId: folderId || 'root',
-                    count: 1
-                });
+                await db.anki_reviewStats.add({ id, date, folderId: folderId || 'root', count: 1 });
             }
         });
     } catch (error) {
-        console.error(`Failed to increment review count for ${id}:`, error);
+        console.error(`[Storage/Anki] Failed to increment review count for ${id}:`, error);
     }
 }
 
 /**
- * 获取指定日期范围内的所有复习统计数据
- * @param {string} startDate - 'YYYY-MM-DD' 格式的开始日期
- * @param {string} endDate - 'YYYY-MM-DD' 格式的结束日期
- * @returns {Promise<Array<object>>}
+ * [重构] Anki 复习统计 - 获取指定日期范围的数据。
+ * @param {string} startDate - 'YYYY-MM-DD'
+ * @param {string} endDate - 'YYYY-MM-DD'
+ * @returns {Promise<Array>}
  */
-export async function getStatsForDateRange(startDate, endDate) {
+export async function anki_getStatsForDateRange(startDate, endDate) {
     try {
-        return await db.reviewStats
-            .where('date')
-            .between(startDate, endDate, true, true) // 包含开始和结束日期
-            .toArray();
+        return await db.anki_reviewStats.where('date').between(startDate, endDate, true, true).toArray();
     } catch (error) {
-        console.error("Failed to get stats for date range:", error);
+        console.error("[Storage/Anki] Failed to get stats for date range:", error);
         return [];
     }
 }
 
 /**
- * 获取今天所有目录的复习总数
+ * [重构] Anki 复习统计 - 获取今日总数。
  * @returns {Promise<number>}
  */
-export async function getTodaysTotalCount() {
-    const today = new Date().toISOString().slice(0, 10);
+export async function anki_getTodaysTotalCount() {
     try {
-        const stats = await db.reviewStats.where('date').equals(today).toArray();
+        const today = new Date().toISOString().slice(0, 10);
+        const stats = await db.anki_reviewStats.where('date').equals(today).toArray();
         return stats.reduce((total, current) => total + current.count, 0);
     } catch (error) {
-        console.error("Failed to get today's total count:", error);
+        console.error("[Storage/Anki] Failed to get today's total count:", error);
         return 0;
     }
 }
 
-/**
- * Persists all core data collections to the database.
- * This function uses a transaction to ensure all writes succeed or fail together,
- * maintaining data integrity.
- * @param {object} data - An object containing arrays and objects to be saved.
- * @param {Array<object>} data.sessions - The array of session objects.
- * @param {Array<object>} data.folders - The array of folder objects.
- * @param {object} data.clozeAccessTimes - The cloze access times object.
- * @param {object} data.persistentAppState - An object with simple key-value state.
- */
-export async function saveAllData({ sessions, folders, clozeStates, persistentAppState }) {
-    // [修正] 更新事务中要操作的表
-    const tablesToUpdate = [db.sessions, db.folders, db.clozeStates, db.appState];
-
-    await db.transaction('rw', tablesToUpdate, async () => {
-        // [修正] 准备 clozeStates 数据
-        // clozeStates 在 appState 中已经是对象了，我们需要将其转换为数组以进行 bulkPut
-        const clozeDataForDB = Object.values(clozeStates);
-        const appStateDataForDB = Object.entries(persistentAppState).map(([key, value]) => ({ key, value }));
-
-        // [修正] 获取已存在的 clozeStates 的 ID
-        const existingSessionIds = new Set(sessions.map(s => s.id));
-        const existingFolderIds = new Set(folders.map(f => f.id));
-        const existingClozeIds = new Set(Object.keys(clozeStates)); // <--- 修改点
-        const existingAppStateKeys = new Set(Object.keys(persistentAppState));
-
-        // [修正] 删除不再存在的 clozeStates
-        await Promise.all([
-            db.sessions.where('id').noneOf(Array.from(existingSessionIds)).delete(),
-            db.folders.where('id').noneOf(Array.from(existingFolderIds)).delete(),
-            db.clozeStates.where('id').noneOf(Array.from(existingClozeIds)).delete(), // <--- 修改点
-            db.appState.where('key').noneOf(Array.from(existingAppStateKeys)).delete(),
-        ]);
-        
-        // [修正] 批量保存 clozeStates
-        await Promise.all([
-            db.sessions.bulkPut(sessions),
-            db.folders.bulkPut(folders),
-            db.clozeStates.bulkPut(clozeDataForDB), // <--- 修改点
-            db.appState.bulkPut(appStateDataForDB),
-        ]);
-    });
-}
-
+// ===================================================================
+//                        Agent 模块存储服务
+// ===================================================================
 
 /**
- * [新增] 加载所有设置相关的数据
+ * [重构] 加载 Agent 模块的所有数据。
+ * @returns {Promise<object>}
  */
-export async function loadSettingsData() {
-    const [apiConfigs, agents, topics, history] = await Promise.all([ // [重构] prompts -> agents
-        db.apiConfigs.toArray(),
-        db.agents.toArray(), // [重构]
-        db.topics.toArray(),
-        db.history.toArray(),
-    ]);
-
-    return {
-        apiConfigs: apiConfigs || [],
-        agents: agents || [], // [重构]
-        topics: topics || [],
-        history: history || [],
-    };
+export async function loadAgentData() {
+    try {
+        const [apiConfigs, agents, topics, history] = await Promise.all([
+            db.agent_apiConfigs.toArray(),
+            db.agent_agents.toArray(),
+            db.agent_topics.toArray(),
+            db.agent_history.toArray(),
+        ]);
+        return { apiConfigs, agents, topics, history };
+    } catch (error) {
+        console.error("[Storage/Agent] Failed to load agent data:", error);
+        return { apiConfigs: [], agents: [], topics: [], history: [] };
+    }
 }
 
 /**
- * [新增] 保存所有设置相关的数据
+ * [重构] 保存 Agent 模块的所有数据。
+ * 这个函数采用“先删除后添加”的策略，以原子事务的方式确保数据一致性。
+ * 它会删除数据库中存在但当前 appState 中不存在的记录，然后批量更新或插入所有当前记录。
+ * @param {object} data - 包含 Agent 模块所有数据的对象。
+ * @param {Array<object>} data.apiConfigs - 所有 API 配置。
+ * @param {Array<object>} data.agents - 所有 Agent (角色)。
+ * @param {Array<object>} data.topics - 所有聊天主题。
+ * @param {Array<object>} data.history - 所有历史消息。
  */
-export async function saveSettingsData({ apiConfigs, agents, topics, history }) {
-     await db.transaction('rw', db.apiConfigs, db.agents, db.topics, db.history, async () => {
+
+export async function saveAgentData({ apiConfigs, agents, topics, history }) {
+    // 定义本次事务需要读写的所有相关表
+    const tables = [
+        db.agent_apiConfigs, 
+        db.agent_agents, 
+        db.agent_topics, 
+        db.agent_history
+    ];
+
+    // 使用 Dexie 的事务 (transaction) 来保证所有操作要么全部成功，要么全部失败。
+    await db.transaction('rw', tables, async () => {
+        // --- 步骤 1: 准备数据 ---
+        // 从当前的应用状态 (传入的参数) 中，提取所有记录的ID，放入Set中以便快速查找。
         const existingApiConfigIds = new Set(apiConfigs.map(c => c.id));
         const existingAgentIds = new Set(agents.map(p => p.id));
         const existingTopicIds = new Set(topics.map(t => t.id));
         const existingHistoryIds = new Set(history.map(h => h.id));
 
+        // --- 步骤 2: 清理过时数据 ---
+        // 并行执行删除操作，提高效率。
+        // Dexie 的 .where('id').noneOf(...) 方法会高效地找出并删除那些在数据库中存在，
+        // 但在当前 `existing...Ids` Set 中不存在的记录。
         await Promise.all([
-            db.apiConfigs.where('id').noneOf(Array.from(existingApiConfigIds)).delete(),
-            db.agents.where('id').noneOf(Array.from(existingAgentIds)).delete(),
-            db.topics.where('id').noneOf(Array.from(existingTopicIds)).delete(),
-            db.history.where('id').noneOf(Array.from(existingHistoryIds)).delete(),
+            db.agent_apiConfigs.where('id').noneOf(Array.from(existingApiConfigIds)).delete(),
+            db.agent_agents.where('id').noneOf(Array.from(existingAgentIds)).delete(),
+            db.agent_topics.where('id').noneOf(Array.from(existingTopicIds)).delete(),
+            db.agent_history.where('id').noneOf(Array.from(existingHistoryIds)).delete(),
         ]);
         
+        // --- 步骤 3: 批量写入新数据 ---
+        // 再次并行执行写入操作。
+        // Dexie 的 .bulkPut() 方法会智能地处理插入和更新：
+        // - 如果记录的ID已存在，它会更新该记录。
+        // - 如果记录的ID不存在，它会插入新记录。
         await Promise.all([
-            db.apiConfigs.bulkPut(apiConfigs),
-            db.agents.bulkPut(agents),
-            db.topics.bulkPut(topics),
-            db.history.bulkPut(history),
+            db.agent_apiConfigs.bulkPut(apiConfigs),
+            db.agent_agents.bulkPut(agents),
+            db.agent_topics.bulkPut(topics),
+            db.agent_history.bulkPut(history),
         ]);
     });
 }
 
-// --- [新增] 错题集相关的数据服务 ---
+// ===================================================================
+//                   Task (原 Mistakes) 模块存储服务
+// ===================================================================
 
 /**
- * 从 IndexedDB 加载所有错题
- * @returns {Promise<Array<object>>}
+ * [重构] 加载所有 Tasks。
+ * @returns {Promise<Array>}
  */
-export async function loadAllMistakes() {
+export async function loadAllTasks() {
+    // [修正] 恢复 try...catch 保护
     try {
-        // 确保在查询前数据库已打开
-        if (!db.isOpen()) {
-            await db.open();
-        }
-        return await db.mistakes.toArray();
+        if (!db.isOpen()) await db.open();
+        return await db.task_tasks.toArray();
     } catch (error) {
-        console.error("Failed to load mistakes from DB:", error);
+        console.error("[Storage/Task] Failed to load tasks from DB:", error);
         return [];
     }
 }
 
 /**
- * 将错题批量保存到 IndexedDB
- * @param {Array<object>} mistakes - 要保存的错题数组
+ * [重构] 批量保存 Tasks。
+ * @param {Array<object>} tasks 
  */
-export async function saveAllMistakes(mistakes) {
+export async function saveAllTasks(tasks) {
     try {
-        await db.mistakes.bulkPut(mistakes);
-        console.log("Mistakes saved successfully.");
+        await db.task_tasks.bulkPut(tasks);
     } catch (error) {
-        console.error("Failed to save mistakes to DB:", error);
+        console.error("[Storage/Task] Failed to save tasks to DB:", error);
     }
 }
 
 /**
- * 更新单个错题（例如，在复习后）
- * @param {object} mistake - 更新后的错题对象
+ * [重构] 更新单个 Task。
+ * @param {object} task 
  */
-export async function updateMistake(mistake) {
+export async function updateTask(task) {
     try {
-        await db.mistakes.put(mistake);
+        await db.task_tasks.put(task);
     } catch (error) {
-        console.error(`Failed to update mistake ${mistake.uuid}:`, error);
+        console.error(`[Storage/Task] Failed to update task ${task.uuid}:`, error);
     }
 }
 
 /**
- * 根据ID删除错题
- * @param {string[]} mistakeUuids - 要删除的错题UUID数组
+ * [重构] 根据 UUID 删除多个 Tasks。
+ * @param {string[]} taskUuids 
  */
-export async function deleteMistakes(mistakeUuids) {
+export async function deleteTasks(taskUuids) {
     try {
-        await db.mistakes.bulkDelete(mistakeUuids);
+        await db.task_tasks.bulkDelete(taskUuids);
     } catch(error) {
-        console.error("Failed to delete mistakes:", error);
+        console.error("[Storage/Task] Failed to delete tasks:", error);
     }
 }

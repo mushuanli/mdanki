@@ -60,7 +60,7 @@ export async function openStatsModal() {
         renderChart({ labels: [], datasets: [] }); // 清空旧图表
         
         // 异步获取数据并渲染
-        const chartData = await dataService.getReviewStatsForChart();
+        const chartData = await dataService.anki_getReviewStatsForChart();
         renderChart(chartData);
     }
 }

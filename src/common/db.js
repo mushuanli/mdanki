@@ -7,35 +7,31 @@ export const db = new Dexie(DB_NAME);
 /**
  * 定义数据库 schema。
  * 每次修改此处的 `stores` 对象，都必须在 config.js 中增加 DB_VERSION 的值。
+ * 
+ * --- [重构日志 v3] ---
+ * 1. 为所有表添加了模块前缀 (anki_, task_, agent_, global_) 以实现高内聚。
+ * 2. 将 'mistakes' 模块重命名为 'task'，对应的表为 'task_tasks'。
+ * 3. 明确了所有表的主键和索引。
  */
 db.version(DB_VERSION).stores({
-    // [修正] 将 'id' 定义为唯一主键 (&id)，以匹配 generateId() 的行为。
-    folders: '&id, name, folderId',
-    sessions: '&id, name, folderId, createdAt, lastActive',
+    // --- Anki 模块表 ---
+    anki_folders: '&id, name, folderId',
+    anki_sessions: '&id, name, folderId, createdAt, lastActive',
+        // [新增] clozeStates 表，用于存储卡片的SRS状态。主键是 'id'。
+    anki_clozeStates: '&id, fileId, state, due',
+    anki_reviewStats: '&id, date, folderId',
 
-    // [新增] clozeStates 表，用于存储卡片的SRS状态。主键是 'id'。
-    clozeStates: '&id, fileId, state, due',
+    // --- Task (原 Mistakes) 模块表 ---
+    // &uuid: 主键
+    // subject, *tags, analysis.reason_for_error, review.due: 索引
+    task_tasks: '&uuid, subject, *tags, analysis.reason_for_error, review.due',
     
-    // appState 用于存储简单的、非集合类的持久化状态。
-    appState: '&key',
-    // &uuid: 主键，保证唯一性
-    // subject: 按科目索引
-    // *tags: 多值索引，用于标签筛选
-    // analysis.reason_for_error: 按错误原因索引
-    // review.due: 按复习到期时间索引，用于排序和查询
-    mistakes: '&uuid, subject, *tags, analysis.reason_for_error, review.due',
-    reviewStats: '&id, date, folderId',
-
-    // [废弃] 旧的 Agent 表
-    // agents: '&id, &name',
-    // topics: '&id, agentId, createdAt',
-    // history: '&id, topicId, timestamp',
-
-    // [新增] 新的配置表
-    apiConfigs: '&id, name', // API 配置
-    agents: '&id, name',      // 角色配置 (以前的 Agent)
-
-    // [修改] history 和 topics 表现在关联到 promptId
-    topics: '&id, agentId, createdAt',
-    history: '&id, topicId, timestamp, agentId',
+    // --- Agent 模块表 ---
+    agent_apiConfigs: '&id, name',
+    agent_agents: '&id, name',
+    agent_topics: '&id, agentId, createdAt',
+    agent_history: '&id, topicId, timestamp, agentId',
+    
+    // --- Global/App 状态表 ---
+    global_appState: '&key',
 });

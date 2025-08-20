@@ -2,6 +2,7 @@
 
 import { setupAgentEventListeners } from './agent_events.js';
 import { renderAgentView } from './agent_ui.js';
+import * as dataService from '../services/dataService.js';
 
 /**
  * Initializes the entire AI Agent feature.
