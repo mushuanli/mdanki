@@ -25,7 +25,7 @@ function getClozeColorClassByState(clozeState) {
     }
     // 对于已到期的卡片
     if (clozeState.lastReview && (now - clozeState.lastReview < 15 * 60 * 1000) && clozeState.interval === 0) {
-        return 'cloze-10m'; // 10分钟内需要复习的卡片
+        return 'cloze-10m'; // 10分钟内需要待办的卡片
     }
     return 'cloze-28plus'; // 默认到期颜色
 }
@@ -47,7 +47,7 @@ function highlightDuplicateLocators() {
         if (elements.length > 1) {
             elements.forEach(el => {
                 el.classList.add('cloze-error-duplicate');
-                el.title = `错误：定位符 "[${locator}]" 在此文件中重复！这可能导致复习状态错乱。`;
+                el.title = `错误：定位符 "[${locator}]" 在此文件中重复！这可能导致待办状态错乱。`;
             });
         }
     }
@@ -250,7 +250,7 @@ function formatDateToSubscript(date) {
 }
 
 function addClozeEventListeners() {
-    // --- 1. 单击事件监听器 (用于复习) ---
+    // --- 1. 单击事件监听器 (用于待办) ---
     // [修改] 将事件处理器设为 async
     dom.preview.addEventListener('click', async (e) => {
         const cloze = e.target.closest('.cloze');

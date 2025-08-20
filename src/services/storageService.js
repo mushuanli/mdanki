@@ -75,7 +75,7 @@ export async function saveAnkiData({ sessions, folders, clozeStates, persistentA
 }
 
 /**
- * [重构] Anki 复习统计 - 原子性地增加复习次数。
+ * [重构] Anki 待办统计 - 原子性地增加待办次数。
  * @param {string} date - 'YYYY-MM-DD'
  * @param {string} folderId 
  */
@@ -96,7 +96,7 @@ export async function anki_incrementReviewCount(date, folderId) {
 }
 
 /**
- * [重构] Anki 复习统计 - 获取指定日期范围的数据。
+ * [重构] Anki 待办统计 - 获取指定日期范围的数据。
  * @param {string} startDate - 'YYYY-MM-DD'
  * @param {string} endDate - 'YYYY-MM-DD'
  * @returns {Promise<Array>}
@@ -111,7 +111,7 @@ export async function anki_getStatsForDateRange(startDate, endDate) {
 }
 
 /**
- * [重构] Anki 复习统计 - 获取今日总数。
+ * [重构] Anki 待办统计 - 获取今日总数。
  * @returns {Promise<number>}
  */
 export async function anki_getTodaysTotalCount() {

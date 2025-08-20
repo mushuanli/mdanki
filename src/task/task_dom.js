@@ -39,5 +39,5 @@ export const loadYamlBtn = $id('task_loadYamlBtn');
 export const yamlFileInput = $id('task_yamlFileInput');
 export const newFileBtn = $id('task_newFileBtn');
 
-// 复习相关按钮
+// 待办相关按钮
 export const startReviewBtn = $id('task_startReviewBtn');

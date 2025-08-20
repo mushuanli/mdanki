@@ -298,11 +298,11 @@ export async function anki_updateClozeState(fileId, clozeContent, rating, clozeI
     await persistAnkiState();
 }
 
-// --- [新增] 复习统计相关业务逻辑 ---
+// --- [新增] 待办统计相关业务逻辑 ---
 
 /**
- * 记录一次复习完成事件
- * @param {string} fileId - 被复习的卡片所在的文件ID
+ * 记录一次待办完成事件
+ * @param {string} fileId - 被待办的卡片所在的文件ID
  */
 export async function anki_recordReview(fileId) {
     if (!fileId) return;
@@ -315,7 +315,7 @@ export async function anki_recordReview(fileId) {
 }
 
 /**
- * 更新导航栏中的今日复习计数
+ * 更新导航栏中的今日待办计数
  */
 export async function anki_updateTodaysReviewCountUI() {
     const count = await storage.anki_getTodaysTotalCount();
@@ -326,7 +326,7 @@ export async function anki_updateTodaysReviewCountUI() {
 }
 
 /**
- * 获取并格式化近30天的复习数据以供图表使用
+ * 获取并格式化近30天的待办数据以供图表使用
  * @returns {Promise<object>} - 返回 { labels: string[], datasets: object[] }
  */
 export async function anki_getReviewStatsForChart() {

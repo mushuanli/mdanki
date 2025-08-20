@@ -93,10 +93,10 @@
                             <div class="panel-title"><i class="fas fa-edit"></i> Anki 编辑器</div>
                             <div class="panel-actions">
                                 <div class="review-btn-group">
-                                    <button id="anki_startReviewBtn" class="panel-btn panel-btn-text"><i class="fas fa-play-circle"></i> 复习 (<span id="anki_reviewCount">0</span>)</button>
+                                    <button id="anki_startReviewBtn" class="panel-btn panel-btn-text"><i class="fas fa-play-circle"></i> 待办 (<span id="anki_reviewCount">0</span>)</button>
                                     <button id="anki_reviewOptionsBtn" class="panel-btn dropdown-toggle"><i class="fas fa-chevron-down"></i></button>
                                     <div id="anki_reviewDropdownMenu" class="dropdown-menu" style="display: none;">
-                                        <a href="#" id="anki_customStudyBtn"><i class="fas fa-wrench"></i> 自定义复习...</a>
+                                        <a href="#" id="anki_customStudyBtn"><i class="fas fa-wrench"></i> 自定义待办...</a>
                                         <a href="#" id="anki_showStatsBtn"><i class="fas fa-chart-line"></i> 统计</a>
                                     </div>
                                 </div>
@@ -155,7 +155,7 @@
                         <div class="filter-group" data-type="reasons">
                             <div class="tag-list" id="task_reasonFilterContainer"></div>
                         </div>
-                        <div class="list-header"><i class="fas fa-list-ul"></i> 待复习列表</div>
+                        <div class="list-header"><i class="fas fa-list-ul"></i> 待待办列表</div>
                         <ul class="session-list" id="task_list"></ul>
                         <div class="pagination" id="task_paginationContainer"></div>
                     </div>
@@ -182,7 +182,7 @@
                             <div class="panel-title"><i class="fas fa-eye"></i> 任务预览</div>
                             <div class="panel-actions">
                                 <div class="review-btn-group">
-                                    <button id="task_startReviewBtn" class="panel-btn panel-btn-text"><i class="fas fa-play-circle"></i> 开始复习</button>
+                                    <button id="task_startReviewBtn" class="panel-btn panel-btn-text"><i class="fas fa-play-circle"></i> 开始待办</button>
                                 </div>
                             </div>
                         </div>
@@ -282,11 +282,11 @@
         </div>
     </div>
 
-    <!-- Anki 模块的自定义复习模态框 -->
+    <!-- Anki 模块的自定义待办模态框 -->
     <div class="modal-overlay" id="anki_customStudyModal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>自定义复习</h2>
+                <h2>自定义待办</h2>
                 <button class="modal-close" id="anki_customStudyCloseBtn">×</button>
             </div>
             <div class="modal-body">
@@ -297,20 +297,20 @@
                         <div class="form-checkbox-group">
                             <label><input type="checkbox" name="cardState" value="new" checked> 新卡片</label>
                             <label><input type="checkbox" name="cardState" value="learning" checked> 学习中</label>
-                            <label><input type="checkbox" name="cardState" value="review" checked> 复习中</label>
+                            <label><input type="checkbox" name="cardState" value="review" checked> 待办中</label>
                             <!-- [恢复] 增加了 "重学中" 选项 -->
                             <label><input type="checkbox" name="cardState" value="relearning" checked> 重学中</label>
                         </div>
                     </div>
-                    <!-- [恢复] 增加了 "按最后一次复习时间筛选" 的完整功能块 -->
+                    <!-- [恢复] 增加了 "按最后一次待办时间筛选" 的完整功能块 -->
                     <div class="form-group">
-                        <label for="anki_filterByLastReview">按最后一次复习时间筛选:</label>
+                        <label for="anki_filterByLastReview">按最后一次待办时间筛选:</label>
                         <select id="anki_filterByLastReview" class="form-control">
                             <option value="any">任何时间</option>
                             <option value="last7days">最近7天内</option>
                             <option value="last30days">最近30天内</option>
-                            <option value="over30days">超过30天未复习</option>
-                            <option value="never">从未复习过 (新卡片)</option>
+                            <option value="over30days">超过30天未待办</option>
+                            <option value="never">从未待办过 (新卡片)</option>
                         </select>
                     </div>
                     <div class="form-group"><label for="anki_maxCards">最大卡片数量:</label><input type="number" id="anki_maxCards" class="form-control" value="50" min="1"></div>
@@ -326,8 +326,8 @@
     <!-- Anki 模块的统计模态框 -->
     <div class="modal-overlay" id="anki_statsModal" style="display: none;">
         <div class="modal-content large">
-            <div class="modal-header"><h2>复习统计</h2><button class="modal-close" id="anki_statsModalCloseBtn">×</button></div>
-            <div class="modal-body"><p>近30天每日复习卡片数量</p><div class="chart-container"><canvas id="anki_statsChart"></canvas></div></div>
+            <div class="modal-header"><h2>待办统计</h2><button class="modal-close" id="anki_statsModalCloseBtn">×</button></div>
+            <div class="modal-body"><p>近30天每日待办卡片数量</p><div class="chart-container"><canvas id="anki_statsChart"></canvas></div></div>
         </div>
     </div>
     

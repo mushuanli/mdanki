@@ -33,7 +33,7 @@ export class TaskStatistics {
 
         return `
             <div class="stats-card">
-                <div class="stats-card-header"><i class="fas fa-chart-line"></i> 复习状态</div>
+                <div class="stats-card-header"><i class="fas fa-chart-line"></i> 待办状态</div>
                 <div class="stats-card-body">
                     <div class="stat-item"><span class="stat-value overdue">${stats.overdue}</span><span class="stat-label">已过期</span></div>
                     <div class="stat-item"><span class="stat-value today">${stats.dueToday}</span><span class="stat-label">今日到期</span></div>
@@ -41,11 +41,11 @@ export class TaskStatistics {
                 </div>
             </div>
             <div class="stats-card">
-                <div class="stats-card-header"><i class="fas fa-book"></i> 科目分布</div>
+                <div class="stats-card-header"><i class="fas fa-book"></i> 任务分布</div>
                 <div class="stats-card-body list-style">${renderList(topSubjects)}</div>
             </div>
             <div class="stats-card">
-                <div class="stats-card-header"><i class="fas fa-diagnoses"></i> 主要错误原因</div>
+                <div class="stats-card-header"><i class="fas fa-diagnoses"></i> 主要任务状态</div>
                 <div class="stats-card-body list-style">${renderList(topReasons)}</div>
             </div>
         `;

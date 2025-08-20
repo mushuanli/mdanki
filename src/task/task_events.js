@@ -30,7 +30,7 @@ export class TaskEvents {
         dom.listContainer?.addEventListener('click', this._handleListClick.bind(this));
         dom.previewContainer?.addEventListener('click', this._handlePreviewClick.bind(this));
         dom.paginationContainer?.addEventListener('click', this._handlePaginationClick.bind(this));
-        dom.startReviewBtn?.addEventListener('click', () => alert('任务复习功能待实现！'));
+        dom.startReviewBtn?.addEventListener('click', () => alert('任务待办功能待实现！'));
         this.refreshView();
     }
 

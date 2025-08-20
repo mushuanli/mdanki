@@ -516,7 +516,7 @@ function toggleEditPreviewMode() {
     }
 }
 
-// [NEW] 填充自定义复习模态框的筛选器
+// [NEW] 填充自定义待办模态框的筛选器
 function populateCustomStudyFilters() {
     const { sessions, folders } = appState;
     const filterSelect = document.getElementById('filterByFile');
@@ -537,9 +537,9 @@ function populateCustomStudyFilters() {
     });
 }
 
-// [NEW] 设置复习相关的UI事件
+// [NEW] 设置待办相关的UI事件
 function setupReviewUIEventListeners() {
-    // 自动复习按钮
+    // 自动待办按钮
     if (dom.startReviewBtn) {
         dom.startReviewBtn.addEventListener('click', () => startReviewSession());
     }
@@ -560,7 +560,7 @@ function setupReviewUIEventListeners() {
         });
     }
 
-    // 打开自定义复习模态框
+    // 打开自定义待办模态框
     if (dom.customStudyBtn && dom.customStudyModal) {
         dom.customStudyBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -577,7 +577,7 @@ function setupReviewUIEventListeners() {
     if (dom.customStudyCloseBtn) dom.customStudyCloseBtn.addEventListener('click', closeModal);
     if (dom.customStudyCancelBtn) dom.customStudyCancelBtn.addEventListener('click', closeModal);
 
-    // 提交自定义复习表单
+    // 提交自定义待办表单
     if (dom.customStudyForm) {
         dom.customStudyForm.addEventListener('submit', (e) => {
             e.preventDefault();

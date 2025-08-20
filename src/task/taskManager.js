@@ -119,7 +119,7 @@ export class TaskManager {
     }
     
     /**
-     * 更新任务的复习状态。
+     * 更新任务的待办状态。
      * @param {string} taskId 
      * @param {number} rating - 0:Again, 1:Hard, 2:Good, 3:Easy
      * @returns {object|null} - 更新后的任务。

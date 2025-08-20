@@ -8,8 +8,8 @@ import * as dom from './task_dom.js';
  */
 export class TaskUI {
     renderFilters(taxonomy, currentSubject) {
-        // 渲染科目
-        dom.subjectFilter.innerHTML = '<option value="all">所有科目</option>';
+        // 渲染任务
+        dom.subjectFilter.innerHTML = '<option value="all">所有任务</option>';
         Object.keys(taxonomy).sort().forEach(subject => {
             const option = new Option(subject, subject);
             option.selected = subject === currentSubject;
@@ -18,8 +18,8 @@ export class TaskUI {
 
         // 渲染标签和原因
         const subjectData = taxonomy[currentSubject] || { tags: new Set(), reasons: new Set() };
-        this._renderFilterAccordion(dom.tagFilterContainer, '知识点标签', Array.from(subjectData.tags).sort());
-        this._renderFilterAccordion(dom.reasonFilterContainer, '错误原因', Array.from(subjectData.reasons).sort());
+        this._renderFilterAccordion(dom.tagFilterContainer, '标签类型', Array.from(subjectData.tags).sort());
+        this._renderFilterAccordion(dom.reasonFilterContainer, '任务状态', Array.from(subjectData.reasons).sort());
     }
 
     _renderFilterAccordion(container, title, items) {

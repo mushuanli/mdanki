@@ -6,7 +6,7 @@ let reviewQueue = [];
 let currentReviewIndex = -1;
 
 /**
- * [MODIFIED] 启动复习会话，支持自动和自定义模式
+ * [MODIFIED] 启动待办会话，支持自动和自定义模式
  * @param {object} [filters=null] - 自定义筛选条件，为 null 则为自动模式
  */
 export function startReviewSession(filters = null) {
@@ -14,7 +14,7 @@ export function startReviewSession(filters = null) {
     let filteredCloze;
 
     if (filters) {
-        // --- 手动自定义复习模式 ---
+        // --- 手动自定义待办模式 ---
         console.log("Starting custom study with filters:", filters);
         filteredCloze = allClozeStates.filter(cs => {
             // 1. 文件/目录筛选
@@ -33,7 +33,7 @@ export function startReviewSession(filters = null) {
             // 2. 卡片状态筛选
             if (!filters.cardStates.includes(cs.state)) return false;
 
-            // 3. 最后复习时间筛选
+            // 3. 最后待办时间筛选
             const now = Date.now();
             const lastReview = cs.lastReview || 0;
             const daysSinceReview = (now - lastReview) / (1000 * 60 * 60 * 24);
@@ -52,14 +52,14 @@ export function startReviewSession(filters = null) {
         reviewQueue = filteredCloze.slice(0, filters.maxCards);
 
     } else {
-        // --- 自动复习模式 (原有逻辑) ---
+        // --- 自动待办模式 (原有逻辑) ---
         console.log("Starting automatic review.");
         reviewQueue = allClozeStates
             .filter(cs => cs.due <= Date.now())
             .sort((a, b) => a.due - b.due);
     }
 
-    // 更新全局复习计数器 (这应该在每次状态变化时更新)
+    // 更新全局待办计数器 (这应该在每次状态变化时更新)
     // document.getElementById('reviewCount').textContent = reviewQueue.length;
 
     if (reviewQueue.length === 0) {
@@ -75,7 +75,7 @@ export function startReviewSession(filters = null) {
 // (为确保可访问性，将它们移到 reviewSession.js 中)
 export function showNextReviewCard() {
     if (currentReviewIndex >= reviewQueue.length) {
-        alert("复习会话结束！");
+        alert("待办会话结束！");
         reviewQueue = [];
         currentReviewIndex = -1;
         // 可以在这里 rerender 一次，清除高亮等

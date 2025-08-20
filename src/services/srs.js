@@ -5,8 +5,8 @@ const AGAIN_INTERVAL = 10 * 60 * 1000; // 10分钟，单位毫秒
 const INITIAL_EASE_FACTOR = 2.5; // Anki 默认简易度 250%
 
 /**
- * 计算下一次复习的状态
- * @param {object} currentState - 当前的复习状态 { interval, easeFactor, state }
+ * 计算下一次待办的状态
+ * @param {object} currentState - 当前的待办状态 { interval, easeFactor, state }
  * @param {number} rating - 用户评分 (0: Again, 1: Hard, 2: Good, 3: Easy)
  * @returns {object} - 更新后的状态 { due, interval, easeFactor, state }
  */
@@ -29,7 +29,7 @@ export function calculateNextReview(currentState, rating) {
         }
     }
 
-    // 对于正在复习的卡片 (state === 'review')
+    // 对于正在待办的卡片 (state === 'review')
     switch (rating) {
         case 0: // Again (Lapse)
             easeFactor = Math.max(1.3, easeFactor - 0.2);
