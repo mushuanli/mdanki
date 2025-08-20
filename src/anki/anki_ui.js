@@ -1,5 +1,5 @@
 //src/anki/anki_ui.js
-import * as dom from './anki_dom.js';
+import { dom } from './anki_dom.js'; // [修正] 统一 import 风格
 import * as dataService from '../services/dataService.js';
 import { renderSessionList } from './sessionListUI.js';
 import { renderBreadcrumbs } from './breadcrumbsUI.js';

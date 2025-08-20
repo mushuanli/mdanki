@@ -1,6 +1,6 @@
 // src/task/task_events.js
 
-import * as dom from './task_dom.js';
+import { DomElements } from './task_dom.js';
 
 /**
  * [重构后] Task 模块的事件处理器。
@@ -10,33 +10,38 @@ export class TaskEvents {
         this.manager = manager;
         this.ui = ui;
         this.stats = stats;
+        
+        // 在构造函数中实例化 DOM 元素类
+        this.dom = new DomElements(); 
+        
         this.filters = { subject: 'all', tags: [], reasons: [] };
         this.currentPage = 1;
         this.pageSize = 5;
     }
 
     init() {
-        dom.newFileBtn?.addEventListener('click', this._handleNewFile.bind(this));
-        dom.toggleSessionBtn?.addEventListener('click', this._handleToggleSidebar.bind(this));
-        dom.saveBtn?.addEventListener('click', this._handleSave.bind(this));
-        dom.exportBtn?.addEventListener('click', this._handleExport.bind(this));
-        dom.collapseBtn?.addEventListener('click', this._handleCollapseEditor.bind(this));
-        dom.refreshBtn?.addEventListener('click', this.refreshView.bind(this));
-        dom.loadYamlBtn?.addEventListener('click', () => dom.yamlFileInput.click());
-        dom.yamlFileInput?.addEventListener('change', this._handleFileLoad.bind(this));
-        dom.subjectFilter?.addEventListener('change', this._handleSubjectChange.bind(this));
-        dom.tagFilterContainer?.addEventListener('click', this._handleFilterClick.bind(this, 'tags'));
-        dom.reasonFilterContainer?.addEventListener('click', this._handleFilterClick.bind(this, 'reasons'));
-        dom.listContainer?.addEventListener('click', this._handleListClick.bind(this));
-        dom.previewContainer?.addEventListener('click', this._handlePreviewClick.bind(this));
-        dom.paginationContainer?.addEventListener('click', this._handlePaginationClick.bind(this));
-        dom.startReviewBtn?.addEventListener('click', () => alert('任务待办功能待实现！'));
+        // 所有对 dom 的引用都改为 this.dom
+        this.dom.newFileBtn?.addEventListener('click', this._handleNewFile.bind(this));
+        this.dom.toggleSessionBtn?.addEventListener('click', this._handleToggleSidebar.bind(this));
+        this.dom.saveBtn?.addEventListener('click', this._handleSave.bind(this));
+        this.dom.exportBtn?.addEventListener('click', this._handleExport.bind(this));
+        this.dom.collapseBtn?.addEventListener('click', this._handleCollapseEditor.bind(this));
+        this.dom.refreshBtn?.addEventListener('click', this.refreshView.bind(this));
+        this.dom.loadYamlBtn?.addEventListener('click', () => this.dom.yamlFileInput.click());
+        this.dom.yamlFileInput?.addEventListener('change', this._handleFileLoad.bind(this));
+        this.dom.subjectFilter?.addEventListener('change', this._handleSubjectChange.bind(this));
+        this.dom.tagFilterContainer?.addEventListener('click', this._handleFilterClick.bind(this, 'tags'));
+        this.dom.reasonFilterContainer?.addEventListener('click', this._handleFilterClick.bind(this, 'reasons'));
+        this.dom.listContainer?.addEventListener('click', this._handleListClick.bind(this));
+        this.dom.previewContainer?.addEventListener('click', this._handlePreviewClick.bind(this));
+        this.dom.paginationContainer?.addEventListener('click', this._handlePaginationClick.bind(this));
+        this.dom.startReviewBtn?.addEventListener('click', () => alert('任务待办功能待实现！'));
         this.refreshView();
     }
 
     async refreshView() {
         const statsHtml = this.stats.getDashboardHtml(this.manager.tasks);
-        dom.statsDashboard.innerHTML = statsHtml;
+        this.dom.statsDashboard.innerHTML = statsHtml;
 
         const allFiltered = this.manager.getFilteredTasks(this.filters);
         const start = (this.currentPage - 1) * this.pageSize;
@@ -48,7 +53,7 @@ export class TaskEvents {
     }
 
     _handleToggleSidebar() {
-        dom.sidebar.classList.toggle('collapsed');
+        this.dom.sidebar.classList.toggle('collapsed');
     }
 
     _handleNewFile() {
@@ -93,15 +98,15 @@ tasks:
       tags: ["简易", "二次函数", "定义"]
 `.trim();
 
-        dom.yamlEditor.value = yamlTemplate;
-        dom.yamlEditor.focus();
+        this.dom.yamlEditor.value = yamlTemplate;
+        this.dom.yamlEditor.focus();
     }
 
     async _handleSave() {
-        const result = await this.manager.loadFromYAML(dom.yamlEditor.value);
+        const result = await this.manager.loadFromYAML(this.dom.yamlEditor.value);
         if (result.success) {
-            dom.saveBtn.innerHTML = '<i class="fas fa-check"></i> 已保存';
-            setTimeout(() => dom.saveBtn.innerHTML = '<i class="fas fa-save"></i>', 2000);
+            this.dom.saveBtn.innerHTML = '<i class="fas fa-check"></i> 已保存';
+            setTimeout(() => this.dom.saveBtn.innerHTML = '<i class="fas fa-save"></i>', 2000);
             this.ui.renderFilters(this.manager.getTaxonomy(), this.filters.subject);
             this.refreshView();
         } else {
@@ -110,7 +115,7 @@ tasks:
     }
 
     _handleExport() {
-        const blob = new Blob([dom.yamlEditor.value], { type: 'text/yaml;charset=utf-8' });
+        const blob = new Blob([this.dom.yamlEditor.value], { type: 'text/yaml;charset=utf-8' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.download = 'task-export.yml';
@@ -119,17 +124,17 @@ tasks:
     }
 
     _handleCollapseEditor() {
-        dom.editorPanel.classList.toggle('collapsed');
-        const icon = dom.collapseBtn.querySelector('i');
-        icon.className = dom.editorPanel.classList.contains('collapsed') ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
-        if (dom.editorPanel.classList.contains('collapsed')) this._handleSave();
+        this.dom.editorPanel.classList.toggle('collapsed');
+        const icon = this.dom.collapseBtn.querySelector('i');
+        icon.className = this.dom.editorPanel.classList.contains('collapsed') ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+        if (this.dom.editorPanel.classList.contains('collapsed')) this._handleSave();
     }
 
     async _handleFileLoad(e) {
         const file = e.target.files[0];
         if (!file) return;
         const text = await file.text();
-        dom.yamlEditor.value = text;
+        this.dom.yamlEditor.value = text;
         await this._handleSave();
         e.target.value = '';
     }
@@ -147,7 +152,7 @@ tasks:
         const target = e.target.closest('.tag');
         if (!target) return;
         target.classList.toggle('active');
-        const container = type === 'tags' ? dom.tagFilterContainer : dom.reasonFilterContainer;
+        const container = type === 'tags' ? this.dom.tagFilterContainer : this.dom.reasonFilterContainer; // <- 修改点
         this.filters[type] = Array.from(container.querySelectorAll('.tag.active')).map(el => el.dataset.value);
         this.currentPage = 1;
         this.refreshView();
@@ -158,7 +163,7 @@ tasks:
         if (!item) return;
         const taskId = item.dataset.id;
         this.ui.setActiveListItem(taskId);
-        const card = dom.previewContainer.querySelector(`.task-card[data-id="${taskId}"]`);
+        const card = this.dom.previewContainer.querySelector(`.task-card[data-id="${taskId}"]`); // <- 修改点
         if (card) {
             card.scrollIntoView({ behavior: 'smooth', block: 'center' });
             // [恢复] 调用 UI 方法来给卡片添加临时高亮

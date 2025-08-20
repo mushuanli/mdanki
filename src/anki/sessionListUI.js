@@ -1,5 +1,5 @@
 // src/ui/sessionListUI.js
-import * as dom from './anki_dom.js';
+import { dom } from '../anki/anki_dom.js'; // [修正] 统一 import 风格和路径
 import { appState } from '../common/state.js';
 import { escapeHTML } from '../common/utils.js';
 

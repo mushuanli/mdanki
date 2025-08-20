@@ -1,16 +1,23 @@
 // src/anki/anki_events.js
-import * as dom from './anki_dom.js';
+
 import { appState, setState } from '../common/state.js';
 import * as dataService from '../services/dataService.js';
 import { updatePreview, toggleAllClozeVisibility, invertAllCloze } from './previewUI.js';
 import * as statsUI from './statsUI.js';
 
-// [MODIFIED] 导入新的 reviewSession 模块
+// [修改] 只导入 startReviewSession
 import { startReviewSession } from './reviewSession.js'; 
+import * as clozeManager from './clozeManager.js';
 
 import { openMoveModal, closeModal, setupModalEventListeners } from './modalUI.js';
 import { stopAudio, resumeAudio, pauseAudio } from './audioUI.js';
 import { rerenderAnki } from './anki_ui.js';
+import { dom } from './anki_dom.js'; // [修正] 添加缺失的 import
+
+// [新增] 导入事件总线
+import { bus } from '../common/eventBus.js'; 
+// [新增] 导入新的UI控制器
+import * as uiController from './uiController.js';
 
 let undoDebounceTimer = null;
 const MAX_HISTORY_SIZE = 100; // Limit the history size to prevent memory issues
@@ -18,8 +25,6 @@ const MAX_HISTORY_SIZE = 100; // Limit the history size to prevent memory issues
 // [NEW] 用于跟踪 Shift-Click 多选操作的最后一个复选框索引
 let lastCheckedIndex = -1;
 
-// [新增] 用于 Cloze 导航的模块级变量
-let currentClozeIndex = -1;
 
 // --- Exported Navigation Handlers ---
 export function anki_goBack() {
@@ -179,10 +184,7 @@ async function handleOpenFile(e) {
     const readFile = (file) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            reader.onload = (event) => {
-                // 解析成功后，返回文件名和内容
-                resolve({ name: file.name, content: event.target.result });
-            };
+            reader.onload = (event) => resolve({ name: file.name, content: event.target.result });
             reader.onerror = (error) => reject(error);
             reader.readAsText(file);
         });
@@ -196,15 +198,7 @@ async function handleOpenFile(e) {
         for (const fileData of allFilesData) {
             const originalName = fileData.name;
             const lastDotIndex = originalName.lastIndexOf('.');
-
-            // 判断条件 lastDotIndex > 0 可以：
-            // 1. 处理 "file.txt" (lastDotIndex > 0) -> "file"
-            // 2. 忽略 "filename" (没有扩展名, lastDotIndex = -1) -> "filename"
-            // 3. 忽略 ".bashrc" (以点开头, lastDotIndex = 0) -> ".bashrc"
-            const nameWithoutExtension = (lastDotIndex > 0)
-                ? originalName.substring(0, lastDotIndex)
-                : originalName;
-
+            const nameWithoutExtension = (lastDotIndex > 0) ? originalName.substring(0, lastDotIndex) : originalName;
             await dataService.anki_addFile(nameWithoutExtension, fileData.content);
         }
 
@@ -267,11 +261,7 @@ function handleAudioPrompt() {
         const startIndex = match.index;
         const endIndex = startIndex + match[0].length;
         if (cursorPos >= startIndex && cursorPos <= endIndex) {
-            targetCloze = {
-                content: match[0],
-                start: startIndex,
-                end: endIndex
-            };
+            targetCloze = { content: match[0], start: startIndex, end: endIndex };
             break;
         }
     }
@@ -298,28 +288,11 @@ function handleAudioPrompt() {
     const defaultPrompt = existingAudio || clozeText;
 
     const newAudioText = prompt("请输入或编辑Cloze的音频提示文本:", defaultPrompt);
-
-    // If user cancels, do nothing
-    if (newAudioText === null) {
-        return;
-    }
-    saveEditorStateForUndo(); // <<< 添加这一行
-
-    // 4. Update audio content on confirmation
+    if (newAudioText === null) return;
+    saveEditorStateForUndo();
     const trimmedNewAudio = newAudioText.trim();
-    let replacementString;
-
-    if (trimmedNewAudio) {
-        replacementString = `--${locatorPart}${clozeText}--^^audio:${trimmedNewAudio}^^`;
-    } else {
-        replacementString = `--${locatorPart}${clozeText}--`;
-    }
-
-    // Replace the old cloze string with the new one in the editor
-    const newEditorValue = text.substring(0, targetCloze.start) + replacementString + text.substring(targetCloze.end);
-    editor.value = newEditorValue;
-
-    // Trigger preview update and save the changes
+    let replacementString = trimmedNewAudio ? `--${locatorPart}${clozeText}--^^audio:${trimmedNewAudio}^^` : `--${locatorPart}${clozeText}--`;
+    editor.value = text.substring(0, targetCloze.start) + replacementString + text.substring(targetCloze.end);
     handleEditorInput();
     handleSave();
     editor.focus();
@@ -351,17 +324,8 @@ function saveEditorStateForUndo() {
     if (lastState === currentContent) return;
 
     const newUndoStack = [...appState.undoStack, currentContent];
-
-    // Limit the size of the undo stack
-    if (newUndoStack.length > MAX_HISTORY_SIZE) {
-        newUndoStack.shift();
-    }
-    
-    // A new action invalidates the redo stack
-    setState({
-        undoStack: newUndoStack,
-        redoStack: []
-    });
+    if (newUndoStack.length > MAX_HISTORY_SIZE) newUndoStack.shift();
+    setState({ undoStack: newUndoStack, redoStack: [] });
 }
 
 /**
@@ -377,12 +341,7 @@ function handleUndo() {
     const newRedoStack = [dom.editor.value, ...appState.redoStack];
 
     dom.editor.value = lastState;
-    setState({
-        undoStack: newUndoStack,
-        redoStack: newRedoStack
-    });
-    
-    // Update the preview to reflect the change
+    setState({ undoStack: newUndoStack, redoStack: newRedoStack });
     handleEditorInput();
 }
 
@@ -399,12 +358,7 @@ function handleRedo() {
     const newUndoStack = [...appState.undoStack, dom.editor.value];
 
     dom.editor.value = nextState;
-    setState({
-        undoStack: newUndoStack,
-        redoStack: newRedoStack
-    });
-
-    // Update the preview to reflect the change
+    setState({ undoStack: newUndoStack, redoStack: newRedoStack });
     handleEditorInput();
 }
 
@@ -420,16 +374,11 @@ function handlePrintPreview() {
         <!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>打印预览</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <link rel="stylesheet" href="./styles.css">
-        <style>
-            @media print { body { margin: 20px; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .cloze-actions, .media-icon { display: none !important; } .cloze.hidden .cloze-content, .cloze .cloze-content { display: inline !important; visibility: visible !important; color: black !important; } .cloze .placeholder { display: none !important; } .cloze { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
-            body { font-family: sans-serif; }
-        </style></head><body>
+        <style> @media print { body { margin: 20px; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .cloze-actions, .media-icon { display: none !important; } .cloze.hidden .cloze-content, .cloze .cloze-content { display: inline !important; visibility: visible !important; color: black !important; } .cloze .placeholder { display: none !important; } .cloze { -webkit-print-color-adjust: exact; print-color-adjust: exact; } } body { font-family: sans-serif; } </style></head><body>
         <div class="preview" style="display: block !important;">${previewContent}</div>
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
         <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-        <script>
-            window.MathJax = { startup: { pageReady: () => { return window.MathJax.startup.defaultPageReady().then(() => { window.print(); window.close(); }); } } };
-        </script>
+        <script> window.MathJax = { startup: { pageReady: () => { return window.MathJax.startup.defaultPageReady().then(() => { window.print(); window.close(); }); } } }; </script>
         </body></html>
     `);
     printWindow.document.close(); // 必须调用 close() 来结束写入，这会触发页面加载
@@ -468,59 +417,45 @@ function handlePreviewScroll() {
     }
 }
 
-/**
- * [重写] 切换编辑/预览模式，并同步滚动位置。
- */
-function toggleEditPreviewMode() {
-    const panel = dom.editorPreviewPanel;
-    const isPreviewMode = panel.classList.contains('preview-active');
-    
-    if (isPreviewMode) {
-        // --- 从预览切换到编辑模式 ---
-        panel.classList.remove('preview-active');
-        dom.toggleEditPreviewBtn.innerHTML = '<i class="fas fa-book-open"></i> Preview';
-        dom.editModeDot.classList.add('active');
-        dom.previewModeDot.classList.remove('active');
-        
-        // [MODIFIED] Disable print button in edit mode
-        dom.printPreviewBtn.disabled = true;
-        
-        // 使用 requestAnimationFrame 确保编辑器在DOM中可见并且其尺寸已计算
-        requestAnimationFrame(() => {
-            const editor = dom.editor;
-            // 应用保存的滚动比例
-            if (appState.editorScrollRatio !== undefined && (editor.scrollHeight > editor.clientHeight)) {
-                editor.scrollTop = appState.editorScrollRatio * (editor.scrollHeight - editor.clientHeight);
-            }
-        });
-        dom.editor.focus(); // 将焦点设置回编辑器
-
-    } else {
-        // --- 从编辑切换到预览模式 ---
-        handleSave(); // 切换前保存
-        updatePreview().then(() => {
-            requestAnimationFrame(() => {
-                const preview = dom.preview;
-                if (appState.editorScrollRatio !== undefined && (preview.scrollHeight > preview.clientHeight)) {
-                    preview.scrollTop = appState.editorScrollRatio * (preview.scrollHeight - preview.clientHeight);
-                }
-            });
-        });
-        panel.classList.add('preview-active');
-        dom.toggleEditPreviewBtn.innerHTML = '<i class="fas fa-edit"></i>';
-        dom.editModeDot.classList.remove('active');
-        dom.previewModeDot.classList.add('active');
-        
-        // [MODIFIED] Enable print button in preview mode
-        dom.printPreviewBtn.disabled = false;
-    }
-}
 
 // [NEW] 填充自定义待办模态框的筛选器
 function populateCustomStudyFilters() {
-    const { sessions, folders } = appState;
-    const filterSelect = document.getElementById('filterByFile');
-    filterSelect.innerHTML = '<option value="all">所有文件</option>';
+    const { sessions, folders, currentSessionId, currentFolderId } = appState;
+    const filterSelect = dom.filterByFile;
+    if (!filterSelect) return;
+
+    // 清空现有选项
+    filterSelect.innerHTML = '';
+
+    // --- 新增选项 ---
+    // 1. 在当前文件中 (只有当文件被选中时才可用)
+    const currentFileOpt = document.createElement('option');
+    currentFileOpt.value = 'scope_current_file';
+    currentFileOpt.textContent = '在当前文件中';
+    if (!currentSessionId) {
+        currentFileOpt.disabled = true;
+        currentFileOpt.textContent += ' (无)';
+    }
+    filterSelect.appendChild(currentFileOpt);
+
+    // 2. 在当前目录中 (只有当在某个目录中时才可用)
+    const currentFolderOpt = document.createElement('option');
+    currentFolderOpt.value = 'scope_current_directory';
+    currentFolderOpt.textContent = '在当前目录中';
+    if (currentFolderId === null) { // 检查是否在根目录
+        currentFolderOpt.disabled = true;
+        currentFolderOpt.textContent += ' (根目录)';
+    }
+    filterSelect.appendChild(currentFolderOpt);
+
+    // --- 分隔线 ---
+    const separator = document.createElement('option');
+    separator.disabled = true;
+    separator.textContent = '──────────';
+    filterSelect.appendChild(separator);
+    
+    // --- 原有选项 ---
+    filterSelect.innerHTML += '<option value="all">所有文件</option>';
 
     folders.forEach(folder => {
         const opt = document.createElement('option');
@@ -539,12 +474,29 @@ function populateCustomStudyFilters() {
 
 // [NEW] 设置待办相关的UI事件
 function setupReviewUIEventListeners() {
-    // 自动待办按钮
+    // [MODIFIED] 主待办按钮现在是智能跳转，而不是开始一个完整的会话
     if (dom.startReviewBtn) {
-        dom.startReviewBtn.addEventListener('click', () => startReviewSession());
+        dom.startReviewBtn.addEventListener('click', () => {
+            let scopeFilterValue = 'all'; // 默认是全局复习
+            if (appState.currentSessionId) {
+                // 如果正在查看某个文件，则范围限定为该文件
+                scopeFilterValue = 'scope_current_file';
+            } else if (appState.currentFolderId !== null) {
+                // 如果在某个目录中，则范围限定为该目录
+                scopeFilterValue = 'scope_current_directory';
+            }
+            
+            // 构建一个简单的筛选器，只指定范围
+            // startReviewSession 内部会处理到期卡片的筛选
+            const filters = {
+                fileOrFolder: scopeFilterValue
+            };
+
+            // 启动复习会话！
+            startReviewSession(filters);
+        });
     }
 
-    // 下拉菜单逻辑
     if (dom.reviewOptionsBtn && dom.reviewDropdownMenu) {
         dom.reviewOptionsBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -553,10 +505,8 @@ function setupReviewUIEventListeners() {
 
         // 点击页面其他地方关闭下拉菜单
         document.addEventListener('click', (e) => {
-            const reviewGroup = dom.reviewOptionsBtn.parentElement; // More robust way to find parent
-            if (reviewGroup && !reviewGroup.contains(e.target)) {
-                dom.reviewDropdownMenu.style.display = 'none';
-            }
+            const reviewGroup = dom.reviewOptionsBtn.parentElement;
+            if (reviewGroup && !reviewGroup.contains(e.target)) dom.reviewDropdownMenu.style.display = 'none';
         });
     }
 
@@ -569,11 +519,7 @@ function setupReviewUIEventListeners() {
             dom.customStudyModal.style.display = 'flex';
         });
     }
-
-    // 关闭模态框的通用函数
-    const closeModal = () => {
-        if (dom.customStudyModal) dom.customStudyModal.style.display = 'none';
-    };
+    const closeModal = () => { if (dom.customStudyModal) dom.customStudyModal.style.display = 'none'; };
     if (dom.customStudyCloseBtn) dom.customStudyCloseBtn.addEventListener('click', closeModal);
     if (dom.customStudyCancelBtn) dom.customStudyCancelBtn.addEventListener('click', closeModal);
 
@@ -581,35 +527,16 @@ function setupReviewUIEventListeners() {
     if (dom.customStudyForm) {
         dom.customStudyForm.addEventListener('submit', (e) => {
             e.preventDefault();
+            const formData = new FormData(e.target);
             const filters = {
-                fileOrFolder: dom.filterByFile.value,
-                cardStates: Array.from(document.querySelectorAll('input[name="anki_cardState"]:checked')).map(cb => cb.value),
-                lastReview: dom.filterByLastReview.value,
-                maxCards: parseInt(dom.maxCards.value, 10),
+                fileOrFolder: formData.get('anki_filterByFile'),
+                cardStates: formData.getAll('cardState'),
+                lastReview: formData.get('anki_filterByLastReview'),
+                maxCards: parseInt(formData.get('anki_maxCards'), 10),
             };
             closeModal();
             startReviewSession(filters);
         });
-    }
-}
-
-// [新增] Cloze 导航函数
-function navigateCloze(direction) {
-    const clozeElements = Array.from(dom.preview.querySelectorAll('.cloze'));
-    if (clozeElements.length === 0) return;
-
-    // 移除旧的高亮
-    const currentActive = dom.preview.querySelector('.cloze-nav-active');
-    if (currentActive) currentActive.classList.remove('cloze-nav-active');
-
-    // 计算新索引 (循环)
-    currentClozeIndex = (currentClozeIndex + direction + clozeElements.length) % clozeElements.length;
-
-    // 高亮并滚动到新元素
-    const nextCloze = clozeElements[currentClozeIndex];
-    if (nextCloze) {
-        nextCloze.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        nextCloze.classList.add('cloze-nav-active');
     }
 }
 
@@ -622,12 +549,8 @@ export function setupAnkiEventListeners() {
     dom.editor.addEventListener('input', handleEditorInput);
     dom.editor.addEventListener('scroll', handleEditorScroll);
     dom.preview.addEventListener('scroll', handlePreviewScroll);
-    
-    // Open file is a bit different, it doesn't need a prefix as it's a global file input
-    dom.openFileBtn.addEventListener('click', () => document.getElementById('anki_fileInput')?.click()); // Assuming you add this ID
-    document.getElementById('anki_fileInput')?.addEventListener('change', handleOpenFile);
-
-    // [MODIFIED] Add event listener for the print button
+    dom.openFileBtn.addEventListener('click', () => dom.fileInput?.click());
+    dom.fileInput?.addEventListener('change', handleOpenFile);
     dom.printPreviewBtn.addEventListener('click', handlePrintPreview);
 
     dom.moveSelectedBtn.addEventListener('click', () => {
@@ -663,12 +586,9 @@ export function setupAnkiEventListeners() {
     dom.insertLinebreakBtn.addEventListener('click', () => insertTextAtCursor('¶'));
     dom.codeBtn.addEventListener('click', () => wrapSelection('`'));
     dom.linkBtn.addEventListener('click', () => wrapSelection('[', `](${prompt('URL:', 'https://')})`));
-    
-    dom.editor.addEventListener('scroll', handleEditorScroll);
-    dom.preview.addEventListener('scroll', handlePreviewScroll);
 
     // [MODIFIED] 确保此按钮的点击事件由我们重写的函数处理
-    dom.toggleEditPreviewBtn.addEventListener('click', toggleEditPreviewMode);
+    dom.toggleEditPreviewBtn.addEventListener('click', () => uiController.setEditPreviewMode('toggle'));
     
     // 修改全部隐藏按钮的图标
     dom.toggleVisibilityClozeBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
@@ -691,26 +611,14 @@ export function setupAnkiEventListeners() {
     dom.pauseBtn?.addEventListener('click', pauseAudio);
     dom.stopBtn?.addEventListener('click', stopAudio);
 
-    dom.clozeNavUpBtn?.addEventListener('click', () => navigateCloze(-1));
-    dom.clozeNavDownBtn?.addEventListener('click', () => navigateCloze(1));
+    dom.clozeNavUpBtn?.addEventListener('click', () => clozeManager.navigateToCloze(-1));
+    dom.clozeNavDownBtn?.addEventListener('click', () => clozeManager.navigateToCloze(1));
 
         // [NEW] Add keydown event listener for Undo/Redo
     dom.editor.addEventListener('keydown', (e) => {
-        // Undo: Ctrl + Z
-        if (e.ctrlKey && e.key === 'z') {
-            e.preventDefault(); // Prevent native browser undo
-            handleUndo();
-        }
-        // Redo: Ctrl + R
-        else if (e.ctrlKey && e.key === 'y') {
-            e.preventDefault(); // IMPORTANT: Prevent page reload
-            handleRedo();
-        }
-                // [MODIFIED] Save: Ctrl + S
-        else if (e.ctrlKey && e.key === 's') {
-            e.preventDefault(); // IMPORTANT: Prevent browser's save dialog
-            handleSave();
-        }
+        if (e.ctrlKey && e.key === 'z') { e.preventDefault(); handleUndo(); }
+        else if (e.ctrlKey && e.key === 'y') { e.preventDefault(); handleRedo(); }
+        else if (e.ctrlKey && e.key === 's') { e.preventDefault(); handleSave(); }
     });
     
     // 这部分在新旧代码中都存在，但为了完整性在此处确认
@@ -720,9 +628,7 @@ export function setupAnkiEventListeners() {
     dom.showStatsBtn?.addEventListener('click', (e) => {
         e.preventDefault();
         statsUI.openStatsModal();
-        if (dom.reviewDropdownMenu) {
-            dom.reviewDropdownMenu.style.display = 'none';
-        }
+        if (dom.reviewDropdownMenu) dom.reviewDropdownMenu.style.display = 'none';
     });
 
     setupModalEventListeners(handleConfirmMove);

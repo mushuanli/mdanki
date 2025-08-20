@@ -545,10 +545,22 @@ export async function persistAgentState() {
 }
 
 export function agent_getAgentById(agentId) { return appState.agents.find(p => p.id === agentId); }
-export async function agent_addApiConfig(data) { setState({ apiConfigs: [...appState.apiConfigs, { id: generateId(), ...data }] }); await persistAgentState(); }
+export async function agent_addApiConfig(data) { 
+    const newConfig = { id: generateId(), ...data }; // 创建新对象
+    setState({ apiConfigs: [...appState.apiConfigs, newConfig] }); 
+    await persistAgentState();
+    return newConfig; // 返回它
+}
+
 export async function agent_updateApiConfig(id, data) { setState({ apiConfigs: appState.apiConfigs.map(c => c.id === id ? { ...c, ...data } : c) }); await persistAgentState(); }
 export async function agent_deleteApiConfig(id) { if (appState.agents.some(a => a.model?.startsWith(id + ':'))) { alert("此 API 配置正在被 Agent 使用。"); return; } setState({ apiConfigs: appState.apiConfigs.filter(c => c.id !== id) }); await persistAgentState(); }
-export async function agent_addAgent(data) { const newAgent = { id: generateId(), ...data, tags: data.tags || [], sendHistory: data.sendHistory !== false }; setState({ agents: [...appState.agents, newAgent], currentAgentId: newAgent.id, currentTopicId: null }); await persistAgentState(); }
+export async function agent_addAgent(data) { 
+    const newAgent = { id: generateId(), ...data, tags: data.tags || [], sendHistory: data.sendHistory !== false }; 
+    setState({ agents: [...appState.agents, newAgent], currentAgentId: newAgent.id, currentTopicId: null }); 
+    await persistAgentState(); 
+    return newAgent; // 返回它
+}
+
 export async function agent_updateAgent(id, data) { setState({ agents: appState.agents.map(p => p.id === id ? { ...p, ...data } : p) }); await persistAgentState(); }
 export async function agent_deleteAgent(id) { const topicsToDelete = new Set(appState.topics.filter(t => t.agentId === id).map(t => t.id)); const history = appState.history.filter(h => !topicsToDelete.has(h.topicId)); const topics = appState.topics.filter(t => t.agentId !== id); const agents = appState.agents.filter(p => p.id !== id); let { currentAgentId, currentTopicId } = appState; if (currentAgentId === id) { currentAgentId = agents[0]?.id || null; currentTopicId = (topics.find(t => t.agentId === currentAgentId) || {}).id || null; } setState({ agents, topics, history, currentAgentId, currentTopicId }); await persistAgentState(); }
 export async function agent_addTopic(title, icon) { if (!appState.currentAgentId) return; const newTopic = { id: generateId(), agentId: appState.currentAgentId, title, icon: icon || 'fas fa-comment', createdAt: new Date() }; setState({ topics: [...appState.topics, newTopic], currentTopicId: newTopic.id }); await persistAgentState(); }

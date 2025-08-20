@@ -1,5 +1,7 @@
 // src/anki/previewUI.js
-import * as dom from './anki_dom.js';
+
+import * as clozeManager from './clozeManager.js';
+import { dom } from './anki_dom.js'; // [修正] 统一 import 风格
 import { appState, setState } from '../common/state.js';
 import { playMultimedia } from './audioUI.js';
 
@@ -317,6 +319,10 @@ function addClozeEventListeners() {
 
         // 如果是点击 Cloze 本身来显示答案 (并且它不是永久查看状态)
         if (cloze.classList.contains('hidden') && !cloze.classList.contains('permanent-view')) {
+            // [需求 1] 当点开 cloze 时记录当前位置
+            // 调用 clozeManager 来记录这次交互
+            clozeManager.recordClozeInteraction(cloze);
+
             clearTimeout(cloze.closeTimer);
 
             cloze.classList.remove('hidden');

@@ -1,5 +1,5 @@
 // src/ui/audioUI.js
-import * as dom from './anki_dom.js';
+import { dom } from './anki_dom.js'; // [修正] 统一 import 风格和路径
 
 let currentAudioUtterance = null;
 let audioProgressInterval = null;

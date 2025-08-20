@@ -475,3 +475,10 @@ body { font-family: var(--font-primary); font-size: var(--text-base); line-heigh
     .panel-actions { width: 100%; justify-content: space-between; flex-wrap: wrap; }
     .app-nav { flex-wrap: wrap; }
 }
+
+.cloze.highlight-review {
+    box-shadow: 0 0 0 3px rgba(255, 165, 0, 0.7); /* 醒目的橙色高亮 */
+    border-radius: 4px;
+    transition: box-shadow 0.3s ease-in-out;
+}
+

@@ -1,8 +1,11 @@
 // src/settings/settings_ui.js
 
-import * as dom from './settings_dom.js';
 import { appState } from '../common/state.js';
 import { LLM_PROVIDERS } from '../services/llm/llmProviders.js';
+// [修正] 从 common/dom 导入 $id
+import { $id } from '../common/dom.js';
+// [重构] 不再需要 DYNAMIC_FORM_IDS
+import { layoutTemplate, generalFormTemplate, apiConfigFormTemplate, agentFormTemplate } from './settings_dom.js';
 
 // --- Private UI Rendering Functions ---
 
@@ -51,42 +54,46 @@ function createNavGroup(title, items, type) {
  * 渲染统一的设置主从布局，并填充所有导航项。
  */
 export function renderSettingsView() {
-    if (dom.settingsView.children.length > 0) return;
-
-    dom.settingsView.innerHTML = '';
-    dom.settingsView.appendChild(dom.layoutTemplate.content.cloneNode(true));
-    
-    const listContainer = dom.navList;
-    if (!listContainer) return;
-
-    // 清空现有列表
-    listContainer.innerHTML = '';
-    
-    const generalSettingsItem = createNavItem({ id: 'general', type: 'general', name: '应用设置' });
-    listContainer.appendChild(generalSettingsItem);
-
-    // b. [修改] 添加动态配置项
-    const apiConfigs = appState.apiConfigs.map(c => ({ id: c.id, name: c.name, type: 'apiConfig' }));
-    const agents = appState.agents.map(p => ({ id: p.id, name: p.name, type: 'agent' }));
-    
-    listContainer.appendChild(createNavGroup('API 配置', apiConfigs, 'apiConfig'));
-    listContainer.appendChild(createNavGroup('Agent 配置', agents, 'agent'));
+    const view = $id('settings-view'); // 使用 $id 保持一致
+    if (view.children.length > 0) return;
+    view.innerHTML = '';
+    view.appendChild(layoutTemplate.content.cloneNode(true));
 }
 
 /**
- * 在详情面板中渲染指定项目的配置表单。
+ * [NEW] 填充导航列表。此函数在DOM元素存在后被调用。
+ * @param {SettingsDom} dom - SettingsDom 类的实例。
+ */
+export function populateNavList(dom) {
+    if (!dom.navList) return;
+
+    dom.navList.innerHTML = '';
+    
+    const generalSettingsItem = createNavItem({ id: 'general', type: 'general', name: '应用设置' });
+    dom.navList.appendChild(generalSettingsItem);
+
+    const apiConfigs = appState.apiConfigs.map(c => ({ id: c.id, name: c.name, type: 'apiConfig' }));
+    const agents = appState.agents.map(p => ({ id: p.id, name: p.name, type: 'agent' }));
+    
+    dom.navList.appendChild(createNavGroup('API 配置', apiConfigs, 'apiConfig'));
+    dom.navList.appendChild(createNavGroup('Agent 配置', agents, 'agent'));
+}
+
+/**
+ * [FIX] 在详情面板中渲染指定项目的配置表单。
+ * @param {SettingsDom} dom - SettingsDom 类的实例。
  * @param {object} item - 要渲染的配置项数据对象。
  * @param {boolean} isCreate - 是否为创建模式。
  */
-export function renderSettingsDetail(item, isCreate = false) {
+export function renderSettingsDetail(dom, item, isCreate = false) {
     if (!dom.detailContent || !dom.detailTitle || !dom.saveBtn) return;
 
     dom.saveBtn.style.display = (item.type !== 'general') ? 'inline-flex' : 'none';
 
     let template;
-    if (item.type === 'general') template = dom.generalFormTemplate;
-    else if (item.type === 'apiConfig') template = dom.apiConfigFormTemplate;
-    else if (item.type === 'agent') template = dom.agentFormTemplate;
+    if (item.type === 'general') template = generalFormTemplate;
+    else if (item.type === 'apiConfig') template = apiConfigFormTemplate;
+    else if (item.type === 'agent') template = agentFormTemplate;
     else {
         dom.detailContent.innerHTML = `<div class="placeholder-content"><p>未知的配置类型</p></div>`;
         return;
@@ -94,12 +101,10 @@ export function renderSettingsDetail(item, isCreate = false) {
 
     dom.detailContent.innerHTML = '';
     dom.detailContent.appendChild(template.content.cloneNode(true));
-
-    if (item.type === 'apiConfig') {
-        populateApiConfigForm(item, isCreate);
-    } else if (item.type === 'agent') {
-        populateAgentForm(item, isCreate);
-    }
+    
+    // [修正] 将 dom 对象向下传递
+    if (item.type === 'apiConfig') populateApiConfigForm(item, isCreate, dom);
+    else if (item.type === 'agent') populateAgentForm(item, isCreate, dom);
     
     const titleIcon = isCreate ? 'fa-plus-circle' : 'fa-edit';
     dom.detailTitle.innerHTML = `<i class="fas ${titleIcon}"></i> ${isCreate ? `创建 ${item.displayName}` : `编辑: ${item.displayName}`}`;
@@ -110,8 +115,9 @@ export function renderSettingsDetail(item, isCreate = false) {
  * @param {object} config - API 配置数据对象。
  * @param {boolean} isCreate - 是否为创建模式。
  */
-function populateApiConfigForm(config, isCreate) {
-    const form = document.getElementById(dom.DYNAMIC_FORM_IDS.apiConfig);
+function populateApiConfigForm(config, isCreate, dom) { // [修正] 函数需接收 dom 对象
+    // [重构] 使用 dom.apiConfigForm
+    const form = dom.apiConfigForm;
     if (!form) return;
 
     const providerSelect = form.querySelector('.config-provider');
@@ -139,8 +145,9 @@ function populateApiConfigForm(config, isCreate) {
  * @param {object} prompt - 角色配置数据对象。
  * @param {boolean} isCreate - 是否为创建模式。
  */
-function populateAgentForm(agent, isCreate) { // [重构]
-    const form = document.getElementById(dom.DYNAMIC_FORM_IDS.agent);
+function populateAgentForm(agent, isCreate, dom) { // [修正] 函数需接收 dom 对象
+    // [重构] 使用 dom.agentForm
+    const form = dom.agentForm;
     if (!form) return;
 
     const modelSelect = form.querySelector('.config-model');

@@ -1,43 +1,50 @@
 // src/task/task_dom.js
 
-// 辅助函数，简化选择器
-const $id = (id) => document.getElementById(id);
-const $ = (selector) => document.querySelector(selector);
-const $$ = (selector) => document.querySelectorAll(selector);
+/**
+ * [修改后]
+ * 将所有 DOM 元素的选择逻辑封装在一个类中。
+ * 这样可以推迟 DOM 查询，直到类的实例被创建。
+ */
+export class DomElements {
+    constructor() {
+        // 辅助函数
+        const $id = (id) => document.getElementById(id);
 
-// 视图主容器
-export const view = $id('task-view');
+        // 视图主容器
+        this.view = $id('task-view');
 
-// 侧边栏和筛选器
-export const sidebar = $id('task-view').querySelector('.task_session-sidebar');
-export const subjectFilter = $id('task_subjectFilter');
-export const tagFilterContainer = $id('task_tagFilterContainer');
-export const reasonFilterContainer = $id('task_reasonFilterContainer');
+        // 侧边栏和筛选器
+        this.sidebar = this.view.querySelector('.task_session-sidebar');
+        this.subjectFilter = $id('task_subjectFilter');
+        this.tagFilterContainer = $id('task_tagFilterContainer');
+        this.reasonFilterContainer = $id('task_reasonFilterContainer');
 
-// 列表和分页
-export const listContainer = $id('task_list');
-export const paginationContainer = $id('task_paginationContainer');
+        // 列表和分页
+        this.listContainer = $id('task_list');
+        this.paginationContainer = $id('task_paginationContainer');
 
-// 统计仪表盘
-export const statsDashboard = $id('task_statsDashboard');
+        // 统计仪表盘
+        this.statsDashboard = $id('task_statsDashboard');
 
-// 预览区
-export const previewContainer = $id('task_previewContainer');
-export const previewPanel = $id('task_previewPanel');
+        // 预览区
+        this.previewContainer = $id('task_previewContainer');
+        this.previewPanel = $id('task_previewPanel');
 
-// 编辑器面板
-export const editorPanel = $id('task_editorPanel');
-export const yamlEditor = $id('task_yamlEditor');
+        // 编辑器面板
+        this.editorPanel = $id('task_editorPanel');
+        this.yamlEditor = $id('task_yamlEditor');
 
-// 头部/面板按钮
-export const toggleSessionBtn = $id('task_toggleSessionBtn');
-export const saveBtn = $id('task_saveBtn');
-export const exportBtn = $id('task_exportBtn');
-export const collapseBtn = $id('task_collapseBtn');
-export const refreshBtn = $id('task_refreshBtn');
-export const loadYamlBtn = $id('task_loadYamlBtn');
-export const yamlFileInput = $id('task_yamlFileInput');
-export const newFileBtn = $id('task_newFileBtn');
+        // 头部/面板按钮
+        this.toggleSessionBtn = $id('task_toggleSessionBtn'); // <- 现在在这里查询
+        this.saveBtn = $id('task_saveBtn');
+        this.exportBtn = $id('task_exportBtn');
+        this.collapseBtn = $id('task_collapseBtn');
+        this.refreshBtn = $id('task_refreshBtn');
+        this.loadYamlBtn = $id('task_loadYamlBtn');
+        this.yamlFileInput = $id('task_yamlFileInput');
+        this.newFileBtn = $id('task_newFileBtn');
 
-// 待办相关按钮
-export const startReviewBtn = $id('task_startReviewBtn');
+        // 待办相关按钮
+        this.startReviewBtn = $id('task_startReviewBtn');
+    }
+}

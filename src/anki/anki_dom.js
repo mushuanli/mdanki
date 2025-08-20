@@ -2,76 +2,165 @@
 
 import { $, $id } from '../common/dom.js';
 
-// Anki-specific elements with 'anki_' prefix
-export const editor = $id('anki_editor');
-export const preview = $id('anki_preview');
-export const sessionList = $id('anki_sessionList');
-export const emptySession = $id('anki_emptySession');
-export const currentFolderContainer = $id('anki_currentFolderContainer');
-export const fileInput = $id('anki_fileInput'); // Note: HTML might not have this ID yet, assuming it will be added
-export const newFileBtn = $id('anki_newFileBtn');
-export const newFolderBtn = $id('anki_newFolderBtn');
-export const openFileBtn = $id('anki_openFileBtn');
-export const saveBtn = $id('anki_saveBtn');
-export const exportFileBtn = $id('anki_exportFileBtn');
-export const printPreviewBtn = $id('anki_printPreviewBtn');
-export const deleteSelectedBtn = $id('anki_deleteSelectedBtn');
-export const moveSelectedBtn = $id('anki_moveSelectedBtn');
-export const toggleSessionBtn = $id('anki_toggleSessionBtn');
-export const toggleEditorBtn = $id('anki_toggleEditorBtn');
-export const clozeBtn = $id('anki_clozeBtn');
-export const boldBtn = $id('anki_boldBtn');
-export const italicBtn = $id('anki_italicBtn');
-export const codeBtn = $id('anki_codeBtn');
-export const linkBtn = $id('anki_linkBtn');
-export const audioBtn = $id('anki_audioBtn');
-export const insertLinebreakBtn = $id('anki_insertLinebreakBtn');
+// 缓存DOM元素引用
+const elementsCache = {};
 
-export const sessionSidebar = $('#anki-view .anki_session-sidebar');
-export const editorPreviewPanel = $id('anki_editorPreviewPanel');
-export const selectAllCheckbox = $id('anki_selectAllCheckbox');
+// DOM元素定义
+const elementDefinitions = {
+    editor: () => $id('anki_editor'),
+    preview: () => $id('anki_preview'),
+    sessionList: () => $id('anki_sessionList'),
+    emptySession: () => $id('anki_emptySession'),
+    currentFolderContainer: () => $id('anki_currentFolderContainer'),
+    fileInput: () => $id('anki_fileInput'),
+    newFileBtn: () => $id('anki_newFileBtn'),
+    newFolderBtn: () => $id('anki_newFolderBtn'),
+    openFileBtn: () => $id('anki_openFileBtn'),
+    saveBtn: () => $id('anki_saveBtn'),
+    exportFileBtn: () => $id('anki_exportFileBtn'),
+    printPreviewBtn: () => $id('anki_printPreviewBtn'),
+    deleteSelectedBtn: () => $id('anki_deleteSelectedBtn'),
+    moveSelectedBtn: () => $id('anki_moveSelectedBtn'),
+    toggleSessionBtn: () => $id('anki_toggleSessionBtn'),
+    toggleEditorBtn: () => $id('anki_toggleEditorBtn'),
+    clozeBtn: () => $id('anki_clozeBtn'),
+    boldBtn: () => $id('anki_boldBtn'),
+    italicBtn: () => $id('anki_italicBtn'),
+    codeBtn: () => $id('anki_codeBtn'),
+    linkBtn: () => $id('anki_linkBtn'),
+    audioBtn: () => $id('anki_audioBtn'),
+    insertLinebreakBtn: () => $id('anki_insertLinebreakBtn'),
+    sessionSidebar: () => $('#anki-view .anki_session-sidebar'),
+    editorPreviewPanel: () => $id('anki_editorPreviewPanel'),
+    selectAllCheckbox: () => $id('anki_selectAllCheckbox'),
+    moveModal: () => $id('anki_moveModal'),
+    folderList: () => $id('anki_folderList'),
+    closeMoveModalBtn: () => $id('anki_closeMoveModalBtn'),
+    confirmMoveBtn: () => $id('anki_confirmMoveBtn'),
+    cancelMoveBtn: () => $id('anki_cancelMoveBtn'),
+    audioControls: () => $id('anki_audioControls'),
+    audioTitle: () => $id('anki_audioTitle'),
+    audioProgress: () => $id('anki_audioProgressBar'),
+    playBtn: () => $id('anki_playBtn'),
+    pauseBtn: () => $id('anki_pauseBtn'),
+    stopBtn: () => $id('anki_stopBtn'),
+    sessionTitleContainer: () => $id('anki_sessionTitleContainer'),
+    toggleVisibilityClozeBtn: () => $id('anki_toggleVisibilityClozeBtn'),
+    invertClozeBtn: () => $id('anki_invertClozeBtn'),
+    toggleEditPreviewBtn: () => $id('anki_toggleEditPreviewBtn'),
+    editModeDot: () => $id('anki_editModeDot'),
+    previewModeDot: () => $id('anki_previewModeDot'),
+    reviewCount: () => $id('anki_reviewCount'),
+    startReviewBtn: () => $id('anki_startReviewBtn'),
+    reviewOptionsBtn: () => $id('anki_reviewOptionsBtn'),
+    reviewDropdownMenu: () => $id('anki_reviewDropdownMenu'),
+    customStudyBtn: () => $id('anki_customStudyBtn'),
+    showStatsBtn: () => $id('anki_showStatsBtn'),
+    customStudyModal: () => $id('anki_customStudyModal'),
+    customStudyCloseBtn: () => $id('anki_customStudyCloseBtn'),
+    customStudyCancelBtn: () => $id('anki_customStudyCancelBtn'),
+    customStudyForm: () => $id('anki_customStudyForm'),
+    filterByFile: () => $id('anki_filterByFile'),
+    filterByLastReview: () => $id('anki_filterByLastReview'),
+    maxCards: () => $id('anki_maxCards'),
+    clozeNavUpBtn: () => $id('anki_clozeNavUpBtn'),
+    clozeNavDownBtn: () => $id('anki_clozeNavDownBtn'),
+    // [新增] 为 statsUI.js 添加元素定义
+    statsModal: () => $id('statsModal'),
+    statsModalCloseBtn: () => $id('statsModalCloseBtn'),
+    statsChartCanvas: () => $id('statsChart')
+};
 
-// Modal elements
-export const moveModal = $id('anki_moveModal');
-export const folderList = $id('anki_folderList');
-export const closeMoveModalBtn = $id('anki_closeMoveModalBtn');
-export const confirmMoveBtn = $id('anki_confirmMoveBtn');
-export const cancelMoveBtn = $id('anki_cancelMoveBtn');
+// 创建代理对象，延迟获取DOM元素
+export const dom = new Proxy(elementsCache, {
+    get(target, prop) {
+        // 如果元素已在缓存中，直接返回
+        if (target[prop] !== undefined) {
+            return target[prop];
+        }
+        
+        // 如果元素有定义，获取并缓存
+        if (prop in elementDefinitions) {
+            const element = elementDefinitions[prop]();
+            if (!element && process.env.NODE_ENV === 'development') {
+                console.warn(`DOM element not found: ${prop}`);
+            }
+            target[prop] = element;
+            return element;
+        }
+        
+        // 未定义的属性返回undefined
+        return undefined;
+    },
+    
+    set(target, prop, value) {
+        target[prop] = value;
+        return true;
+    }
+});
 
-// Audio controls
-export const audioControls = $id('anki_audioControls');
-export const audioTitle = $id('anki_audioTitle');
-export const audioProgress = $id('anki_audioProgressBar');
-export const playBtn = $id('anki_playBtn');
-export const pauseBtn = $id('anki_pauseBtn');
-export const stopBtn = $id('anki_stopBtn');
-
-export const sessionTitleContainer = $id('anki_sessionTitleContainer');
-export const toggleVisibilityClozeBtn = $id('anki_toggleVisibilityClozeBtn');
-export const invertClozeBtn = $id('anki_invertClozeBtn');
-
-// Edit/Preview mode indicators
-export const toggleEditPreviewBtn = $id('anki_toggleEditPreviewBtn');
-export const editModeDot = $id('anki_editModeDot');
-export const previewModeDot = $id('anki_previewModeDot');
-
-// Review related elements
-export const reviewCount = $id('anki_reviewCount');
-export const startReviewBtn = $id('anki_startReviewBtn');
-export const reviewOptionsBtn = $id('anki_reviewOptionsBtn');
-export const reviewDropdownMenu = $id('anki_reviewDropdownMenu');
-export const customStudyBtn = $id('anki_customStudyBtn');
-export const showStatsBtn = $id('anki_showStatsBtn');
-
-// [ADDED] Custom Study Modal elements
-export const customStudyModal = $id('anki_customStudyModal');
-export const customStudyCloseBtn = $id('anki_customStudyCloseBtn');
-export const customStudyCancelBtn = $id('anki_customStudyCancelBtn');
-export const customStudyForm = $id('anki_customStudyForm');
-export const filterByFile = $id('anki_filterByFile');
-export const filterByLastReview = $id('anki_filterByLastReview');
-export const maxCards = $id('anki_maxCards');
-
-// [ADDED] Cloze navigation buttons
-export const clozeNavUpBtn = $id('anki_clozeNavUpBtn');
-export const clozeNavDownBtn = $id('anki_clozeNavDownBtn');
+// 导出所有元素作为备用（不推荐直接使用）
+export const {
+    editor,
+    preview,
+    sessionList,
+    emptySession,
+    currentFolderContainer,
+    fileInput,
+    newFileBtn,
+    newFolderBtn,
+    openFileBtn,
+    saveBtn,
+    exportFileBtn,
+    printPreviewBtn,
+    deleteSelectedBtn,
+    moveSelectedBtn,
+    toggleSessionBtn,
+    toggleEditorBtn,
+    clozeBtn,
+    boldBtn,
+    italicBtn,
+    codeBtn,
+    linkBtn,
+    audioBtn,
+    insertLinebreakBtn,
+    sessionSidebar,
+    editorPreviewPanel,
+    selectAllCheckbox,
+    moveModal,
+    folderList,
+    closeMoveModalBtn,
+    confirmMoveBtn,
+    cancelMoveBtn,
+    audioControls,
+    audioTitle,
+    audioProgress,
+    playBtn,
+    pauseBtn,
+    stopBtn,
+    sessionTitleContainer,
+    toggleVisibilityClozeBtn,
+    invertClozeBtn,
+    toggleEditPreviewBtn,
+    editModeDot,
+    previewModeDot,
+    reviewCount,
+    startReviewBtn,
+    reviewOptionsBtn,
+    reviewDropdownMenu,
+    customStudyBtn,
+    showStatsBtn,
+    customStudyModal,
+    customStudyCloseBtn,
+    customStudyCancelBtn,
+    customStudyForm,
+    filterByFile,
+    filterByLastReview,
+    maxCards,
+    clozeNavUpBtn,
+    clozeNavDownBtn,
+    // [新增] 导出 statsUI.js 的元素
+    statsModal,
+    statsModalCloseBtn,
+    statsChartCanvas
+} = dom;

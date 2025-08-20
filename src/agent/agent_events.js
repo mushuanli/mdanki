@@ -1,9 +1,19 @@
 // src/agent/agent_events.js
 
-import * as dom from './agent_dom.js';
 import * as dataService from '../services/dataService.js';
 import { appState, setState } from '../common/state.js';
 import { renderAgentView, renderHistoryPanel, renderTopicList, renderAttachmentPreviews } from './agent_ui.js';
+
+// [新增] 创建一个模块级变量来存储 DOM 引用
+let dom;
+
+/**
+ * [新增] 初始化函数，用于从外部接收 DOM 引用
+ * @param {object} domInstance - DomElements 类的实例
+ */
+export function initAgentEvents(domInstance) {
+    dom = domInstance;
+}
 
 // --- Module State ---
 let selectedAttachments = [];

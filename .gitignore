@@ -15,3 +15,5 @@ tmp/
 build/
 tookit/aicli/data/client/
 tookit/aicli/data/chats/
+tookit/aicli/data/config.yaml
+tookit/aicli/data/client/index.json

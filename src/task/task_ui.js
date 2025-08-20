@@ -1,25 +1,28 @@
 // src/task/task_ui.js
 
 import { marked } from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js';
-import * as dom from './task_dom.js';
 
 /**
  * [重构后] Task 模块的 UI 渲染类。
  */
 export class TaskUI {
+    // 在构造函数中接收 dom 实例
+    constructor(dom) {
+        this.dom = dom;
+    }
+
     renderFilters(taxonomy, currentSubject) {
-        // 渲染任务
-        dom.subjectFilter.innerHTML = '<option value="all">所有任务</option>';
+        this.dom.subjectFilter.innerHTML = '<option value="all">所有任务</option>';
         Object.keys(taxonomy).sort().forEach(subject => {
             const option = new Option(subject, subject);
             option.selected = subject === currentSubject;
-            dom.subjectFilter.add(option);
+            this.dom.subjectFilter.add(option);
         });
 
         // 渲染标签和原因
         const subjectData = taxonomy[currentSubject] || { tags: new Set(), reasons: new Set() };
-        this._renderFilterAccordion(dom.tagFilterContainer, '标签类型', Array.from(subjectData.tags).sort());
-        this._renderFilterAccordion(dom.reasonFilterContainer, '任务状态', Array.from(subjectData.reasons).sort());
+        this._renderFilterAccordion(this.dom.tagFilterContainer, '标签类型', Array.from(subjectData.tags).sort());
+        this._renderFilterAccordion(this.dom.reasonFilterContainer, '任务状态', Array.from(subjectData.reasons).sort());
     }
 
     _renderFilterAccordion(container, title, items) {
@@ -34,9 +37,9 @@ export class TaskUI {
     }
 
     renderTaskList(tasks) {
-        dom.listContainer.innerHTML = ''; 
+        this.dom.listContainer.innerHTML = ''; 
         if (tasks.length === 0) {
-            dom.listContainer.innerHTML = `<li class="session-item-placeholder"><i class="fas fa-check-circle"></i><p>没有符合条件的任务</p></li>`;
+            this.dom.listContainer.innerHTML = `<li class="session-item-placeholder"><i class="fas fa-check-circle"></i><p>没有符合条件的任务</p></li>`;
             return;
         }
 
@@ -56,7 +59,7 @@ export class TaskUI {
                     </div>
                 </div>
             `;
-            dom.listContainer.appendChild(li);
+            this.dom.listContainer.appendChild(li);
         });
     }
 
@@ -74,17 +77,17 @@ export class TaskUI {
     }
 
     setActiveListItem(taskId) {
-        dom.listContainer.querySelectorAll('.task-item.active').forEach(el => el.classList.remove('active'));
+        this.dom.listContainer.querySelectorAll('.task-item.active').forEach(el => el.classList.remove('active'));
         if (taskId) {
-            const listItem = dom.listContainer.querySelector(`.task-item[data-id="${taskId}"]`);
+            const listItem = this.dom.listContainer.querySelector(`.task-item[data-id="${taskId}"]`);
             listItem?.classList.add('active');
         }
     }
 
     renderTaskPreview(tasks) {
-        dom.previewContainer.innerHTML = '';
+        this.dom.previewContainer.innerHTML = '';
         tasks.forEach(task => {
-            dom.previewContainer.appendChild(this._createTaskCard(task));
+            this.dom.previewContainer.appendChild(this._createTaskCard(task));
         });
     }
 
@@ -143,7 +146,7 @@ export class TaskUI {
      * @param {string} taskId 
      */
     highlightPreviewCard(taskId) {
-        const card = dom.previewContainer.querySelector(`.task-card[data-id="${taskId}"]`);
+        const card = this.dom.previewContainer.querySelector(`.task-card[data-id="${taskId}"]`);
         if (card) {
             card.classList.add('highlight');
             setTimeout(() => card.classList.remove('highlight'), 1500); // 1.5秒后移除高亮
@@ -163,7 +166,7 @@ export class TaskUI {
     }
 
     updateListItem(itemId, task) {
-        const listItem = dom.listContainer.querySelector(`[data-id="${itemId}"] .meta-info`);
+        const listItem = this.dom.listContainer.querySelector(`[data-id="${itemId}"] .meta-info`);
         if (listItem) {
             const { className, text } = this._getDueDateStatus(task.review.due);
             listItem.className = `meta-info ${className}`;
@@ -172,7 +175,7 @@ export class TaskUI {
     }
 
     renderPagination(total, page, pageSize) {
-        dom.paginationContainer.innerHTML = '';
+        this.dom.paginationContainer.innerHTML = '';
         const totalPages = Math.ceil(total / pageSize);
         if (totalPages <= 1) return;
         for (let i = 1; i <= totalPages; i++) {
@@ -180,7 +183,7 @@ export class TaskUI {
             btn.className = `page-btn ${i === page ? 'active' : ''}`;
             btn.textContent = i;
             btn.dataset.page = i;
-            dom.paginationContainer.appendChild(btn);
+            this.dom.paginationContainer.appendChild(btn);
         }
     }
 }
