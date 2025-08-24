@@ -18,6 +18,7 @@ import { dom } from './anki_dom.js'; // [修正] 添加缺失的 import
 import { bus } from '../common/eventBus.js'; 
 // [新增] 导入新的UI控制器
 import * as uiController from './uiController.js';
+import { navigationController } from './navigationController.js';
 
 let undoDebounceTimer = null;
 const MAX_HISTORY_SIZE = 100; // Limit the history size to prevent memory issues
@@ -47,7 +48,6 @@ export function anki_goToRoot() {
 
 function resetUIStateOnNavigate() {
     lastCheckedIndex = -1;
-    currentClozeIndex = -1;
 }
 
 async function handleNewFile() {
@@ -139,15 +139,14 @@ async function handleSessionListClick(e) {
     resetUIStateOnNavigate();
     const { id, type, parent } = item.dataset;
 
-    if (appState.currentSessionId && id !== appState.currentSessionId) {
-        await dataService.anki_saveCurrentSessionContent(dom.editor.value);
+    // 使用导航控制器进行导航
+    if (type === 'file') {
+        await navigationController.navigateToSession(id);
+    } else if (type === 'folder') {
+        await navigationController.navigateToFolder(id);
+    } else if (type === 'subsession') {
+        await navigationController.navigateToSubsession(parent, id);
     }
-
-    if (type === 'file') dataService.anki_selectSession(id);
-    else if (type === 'folder') dataService.anki_selectFolder(id);
-    else if (type === 'subsession') dataService.anki_selectSubsession(parent, id);
-
-    rerenderAnki();
 }
 
 async function handleConfirmMove() {

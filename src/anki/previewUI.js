@@ -9,6 +9,7 @@ import { playMultimedia } from './audioUI.js';
 import * as dataService from '../services/dataService.js';
 import { simpleHash } from '../common/utils.js';
 import { renderRichContent } from '../common/renderingService.js'; // [新增] 导入新服务
+import { SRS_MASTERY_INTERVAL_DAYS } from '../common/config.js'; // [新增] 导入配置
 
 let isPreviewUpdating = false; // <--- 1. 在顶部添加一个锁变量
 
@@ -95,7 +96,23 @@ function processClozeElementsInNode(node) {
             const clozeState = dataService.anki_getOrCreateClozeState(fileId, clozeContent, clozeId);
 
             const clozeSpan = document.createElement('span');
-            clozeSpan.className = `cloze hidden ${getClozeColorClassByState(clozeState)}`;
+
+            // ======================================================
+            //                 ▼▼▼ 需求 2 实现 ▼▼▼
+            //         根据掌握程度决定初始可见性
+            // ======================================================
+            const isMastered = clozeState.interval >= SRS_MASTERY_INTERVAL_DAYS;
+            
+            // 如果已掌握，则默认不添加 'hidden' 类，否则添加
+            const visibilityClass = isMastered ? '' : 'hidden';
+
+            clozeSpan.className = `cloze ${visibilityClass} ${getClozeColorClassByState(clozeState)}`;
+            
+            // 如果已掌握，添加一个特殊的data属性便于样式和逻辑区分
+            if (isMastered) {
+                clozeSpan.dataset.mastered = 'true';
+            }
+
             clozeSpan.dataset.clozeId = clozeId;
             clozeSpan.dataset.content = clozeContent;
             if (locatorKey) clozeSpan.dataset.locator = locatorKey;

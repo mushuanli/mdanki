@@ -24,20 +24,42 @@ export function setEditPreviewMode(mode = 'toggle') {
 
     if (shouldBePreview) {
         // --- 切换到预览模式 ---
-        dataService.anki_saveCurrentSessionContent(dom.editor.value); // 切换前保存
-        updatePreview().then(() => {
+        // 只有当内容确实发生变化时才保存和更新预览
+        if (dom.editor.value !== dataService.anki_getCurrentSession()?.content) {
+            dataService.anki_saveCurrentSessionContent(dom.editor.value).then(() => {
+                updatePreview().then(() => {
+                    // 确保预览内容更新后再显示预览面板
+                    panel.classList.add('preview-active');
+                    
+                    // 更新按钮状态
+                    dom.toggleEditPreviewBtn.innerHTML = '<i class="fas fa-edit"></i>';
+                    dom.editModeDot.classList.remove('active');
+                    dom.previewModeDot.classList.add('active');
+                    dom.printPreviewBtn.disabled = false;
+
+                    requestAnimationFrame(() => {
+                        const preview = dom.preview;
+                        if (appState.editorScrollRatio !== undefined && (preview.scrollHeight > preview.clientHeight)) {
+                            preview.scrollTop = appState.editorScrollRatio * (preview.scrollHeight - preview.clientHeight);
+                        }
+                    });
+                });
+            });
+        } else {
+            // 内容没有变化，直接切换
+            panel.classList.add('preview-active');
+            dom.toggleEditPreviewBtn.innerHTML = '<i class="fas fa-edit"></i>';
+            dom.editModeDot.classList.remove('active');
+            dom.previewModeDot.classList.add('active');
+            dom.printPreviewBtn.disabled = false;
+            
             requestAnimationFrame(() => {
                 const preview = dom.preview;
                 if (appState.editorScrollRatio !== undefined && (preview.scrollHeight > preview.clientHeight)) {
                     preview.scrollTop = appState.editorScrollRatio * (preview.scrollHeight - preview.clientHeight);
                 }
             });
-        });
-        panel.classList.add('preview-active');
-        dom.toggleEditPreviewBtn.innerHTML = '<i class="fas fa-edit"></i>';
-        dom.editModeDot.classList.remove('active');
-        dom.previewModeDot.classList.add('active');
-        dom.printPreviewBtn.disabled = false;
+        }
     } else {
         // --- 切换到编辑模式 ---
         panel.classList.remove('preview-active');

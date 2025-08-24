@@ -9,7 +9,7 @@ import { anki_goBack, anki_goToFolder, anki_goToRoot } from './anki_events.js';
 /**
  * A central function to update all major UI components for the Anki view.
  */
-export function rerenderAnki() {
+export async function rerenderAnki() {
     // Render the list of files and folders
     renderSessionList();
     
@@ -24,5 +24,6 @@ export function rerenderAnki() {
         dom.editor.value = editorContent;
     }
     
-    updatePreview();
+    // 等待预览更新完成
+    await updatePreview();
 }
