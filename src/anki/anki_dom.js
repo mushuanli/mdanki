@@ -66,9 +66,9 @@ const elementDefinitions = {
     clozeNavUpBtn: () => $id('anki_clozeNavUpBtn'),
     clozeNavDownBtn: () => $id('anki_clozeNavDownBtn'),
     // [新增] 为 statsUI.js 添加元素定义
-    statsModal: () => $id('statsModal'),
-    statsModalCloseBtn: () => $id('statsModalCloseBtn'),
-    statsChartCanvas: () => $id('statsChart')
+    statsModal: () => $id('anki_statsModal'),
+    statsModalCloseBtn: () => $id('anki_statsModalCloseBtn'),
+    statsChartCanvas: () => $id('anki_statsChart')
 };
 
 // 创建代理对象，延迟获取DOM元素

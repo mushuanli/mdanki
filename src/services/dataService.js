@@ -611,12 +611,12 @@ export async function agent_sendMessageAndGetResponse(content, attachments) {
         const modelName = new Map((apiConfig.models || '').split(',').map(m => m.split(':').map(s => s.trim()))).get(modelAlias);
         if (!modelName) { alert(`错误：在 API 配置 "${apiConfig.name}" 中找不到别名 "${modelAlias}"。`); return; }
 
-        llmConfig = { provider: apiConfig.provider, apiPath: apiConfig.apiUrl || getDefaultApiPath(apiConfig.provider), apiKey: apiConfig.apiKey, model: modelName, systemPrompt: agent.systemPrompt };
+        llmConfig = { provider: apiConfig.provider, apiPath: apiConfig.apiUrl || getDefaultApiPath(apiConfig.provider), apiKey: `Bearer ${apiConfig.apiKey}`, model: modelName, systemPrompt: agent.systemPrompt };
     } else {
         const apiConfig = apiConfigs[0];
         if (!apiConfig) { alert("错误：没有找到可用的 API 配置。"); return; }
         const modelName = (new Map((apiConfig.models || '').split(',').map(m => m.split(':').map(s => s.trim()))).values().next() || {}).value;
-        llmConfig = { provider: apiConfig.provider, apiPath: apiConfig.apiUrl || getDefaultApiPath(apiConfig.provider), apiKey: apiConfig.apiKey, model: modelName, systemPrompt: "" };
+        llmConfig = { provider: apiConfig.provider, apiPath: apiConfig.apiUrl || getDefaultApiPath(apiConfig.provider), apiKey: `Bearer ${apiConfig.apiKey}`, model: modelName, systemPrompt: "" };
     }
 
     setState({ isAiThinking: true });

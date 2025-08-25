@@ -84,6 +84,12 @@ async function handleTopicClick(e) {
 }
 
 async function handleHistoryActionClick(e) {
+    // [新增] 如果AI正在思考，则禁用所有历史记录操作，防止状态错乱
+    if (appState.isAiThinking) {
+        alert("AI 正在思考中，请稍后再试。");
+        return;
+    }
+
     const actionBtn = e.target.closest('.history-action-btn');
     if (!actionBtn) return;
 
@@ -107,6 +113,12 @@ async function handleHistoryActionClick(e) {
         const newContent = prompt("编辑你的消息:", currentContent);
         if (newContent && newContent !== currentContent && confirm("编辑将删除此后的对话并重新生成回应，是否继续？")) {
             await dataService.agent_editUserMessageAndRegenerate(messageId, newContent);
+        }
+    }
+    // [新增] 添加重新生成的处理逻辑
+    else if (actionBtn.classList.contains('regenerate-btn')) {
+        if (confirm("确定要重新生成这条回应吗？")) {
+            await dataService.agent_regenerateResponse(messageId);
         }
     }
 }
