@@ -8,7 +8,7 @@ import * as dataService from './services/dataService.js';
 // 各模块的初始化函数
 import { ankiApp } from './anki/ankiApp.js'; 
 import { agentApp } from './agent/agentApp.js'; // [修改] 导入新的 agentApp
-import { initializeTaskApp } from './task/task_main.js'; // [重构]
+import { taskApp } from './task/taskApp.js'; // [新] 导入新的 taskApp
 import { initializeSettingsApp } from './settings/settings_main.js';
 
 // --- [新增] 状态管理，防止重复初始化 ---
@@ -47,7 +47,10 @@ async function handleViewChange(context = null) {
                 case 'agent': 
                     await agentApp.initialize(); // [修改] 调用新的 agentApp 初始化方法
                     break;
-                case 'task': await initializeTaskApp(); break;
+            case 'task': 
+                await taskApp.initialize(); // [修改] 调用新的 taskApp 初始化方法
+                    break; 
+
                 // [恢复] settings 初始化时传递 context
                 case 'settings': await initializeSettingsApp(context); break;
             }
@@ -146,8 +149,11 @@ async function main() {
     
     try {
         // 1. Initialize core data services sequentially
-        await dataService.initializeApp(); // Loads Anki core data
-        await dataService.initializeAgentData(); // Loads Agent/Settings data
+        await dataService.initializeApp(); // 加载 Anki 核心数据
+        
+        // [修改] 接收返回值并更新 state
+        const agentData = await dataService.initializeAgentData(); // 加载 Agent/Settings 数据
+        setState(agentData); // <-- 核心修复：将加载的数据设置到全局状态
 
         // 2. Setup application shell functionalities
         setupAppNavigation();

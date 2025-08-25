@@ -26,6 +26,7 @@ let state = {
     folderStack: [],
     
     // --- AI Agent Data State ---
+    apiConfigs: [], // <-- [新增] 添加默认值
     agents: [],  // { id, name, avatar, config }[修改] 在其他地方会为它增加 tags 和 sendHistory 字段
     topics: [],  // { id, promptId, title, icon }
     history: [], // { id, topicId, role, content, images, timestamp，status,promptId }

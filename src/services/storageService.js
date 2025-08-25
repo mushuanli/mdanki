@@ -7,16 +7,13 @@ import { db } from '../common/db.js';
 
 /**
  * [重构] 加载 Anki 模块核心数据和全局持久化状态。
- * 这是应用启动时的关键数据加载函数。
- * @returns {Promise<object>} 包含 anki 数据的对象。
  */
 export async function loadAnkiData() {
-    // [修正] 为每个Promise添加.catch，以提高健壮性并提供更详细的错误日志
-    const [sessions, folders, clozeStates, reviewStats, appStateValues] = await Promise.all([
+    // [精简] 移除了对 anki_reviewStats 表的加载，因为它已不再被全局 dataService 使用。
+    const [sessions, folders, clozeStates, appStateValues] = await Promise.all([
         db.anki_sessions.toArray().catch(e => { console.error('Failed to load anki_sessions', e); return []; }),
         db.anki_folders.toArray().catch(e => { console.error('Failed to load anki_folders', e); return []; }),
         db.anki_clozeStates.toArray().catch(e => { console.error('Failed to load anki_clozeStates', e); return []; }),
-        db.anki_reviewStats.toArray().catch(e => { console.error('Failed to load anki_reviewStats', e); return []; }), // [修正] 已添加 reviewStats 加载
         db.global_appState.toArray().catch(e => { console.error('Failed to load global_appState', e); return []; }),
     ]);
 
@@ -35,7 +32,6 @@ export async function loadAnkiData() {
         sessions,
         folders,
         clozeStates: reconstructedClozeStates,
-        reviewStats: reviewStats || [], // [修正] 已在返回对象中包含 reviewStats
         persistentAppState: reconstructedAppState,
     };
 }
@@ -74,56 +70,11 @@ export async function saveAnkiData({ sessions, folders, clozeStates, persistentA
     });
 }
 
-/**
- * [重构] Anki 待办统计 - 原子性地增加待办次数。
- * @param {string} date - 'YYYY-MM-DD'
- * @param {string} folderId 
- */
-export async function anki_incrementReviewCount(date, folderId) {
-    const id = `${date}:${folderId || 'root'}`;
-    try {
-        await db.transaction('rw', db.anki_reviewStats, async () => {
-            const stat = await db.anki_reviewStats.get(id);
-            if (stat) {
-                await db.anki_reviewStats.update(id, { count: stat.count + 1 });
-            } else {
-                await db.anki_reviewStats.add({ id, date, folderId: folderId || 'root', count: 1 });
-            }
-        });
-    } catch (error) {
-        console.error(`[Storage/Anki] Failed to increment review count for ${id}:`, error);
-    }
-}
+// --- [移除] ---
+// 以下函数 (anki_incrementReviewCount, anki_getStatsForDateRange, anki_getTodaysTotalCount)
+// 的功能已被新的 `src/anki/ankiApp.js` 及其 `store` 和 `services` 完全接管，
+// 不再需要从全局 storageService 调用。因此予以移除。
 
-/**
- * [重构] Anki 待办统计 - 获取指定日期范围的数据。
- * @param {string} startDate - 'YYYY-MM-DD'
- * @param {string} endDate - 'YYYY-MM-DD'
- * @returns {Promise<Array>}
- */
-export async function anki_getStatsForDateRange(startDate, endDate) {
-    try {
-        return await db.anki_reviewStats.where('date').between(startDate, endDate, true, true).toArray();
-    } catch (error) {
-        console.error("[Storage/Anki] Failed to get stats for date range:", error);
-        return [];
-    }
-}
-
-/**
- * [重构] Anki 待办统计 - 获取今日总数。
- * @returns {Promise<number>}
- */
-export async function anki_getTodaysTotalCount() {
-    try {
-        const today = new Date().toISOString().slice(0, 10);
-        const stats = await db.anki_reviewStats.where('date').equals(today).toArray();
-        return stats.reduce((total, current) => total + current.count, 0);
-    } catch (error) {
-        console.error("[Storage/Anki] Failed to get today's total count:", error);
-        return 0;
-    }
-}
 
 // ===================================================================
 //                        Agent 模块存储服务

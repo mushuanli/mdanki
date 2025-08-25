@@ -5,7 +5,6 @@ import * as storage from './storageService.js';
 import { db } from '../common/db.js'; // 引入db实例以进行更直接的操作
 import { generateId } from '../common/utils.js';
 import { INITIAL_CONTENT } from '../common/config.js';
-import { calculateNextReview } from './srs.js';
 
 // 模块化导入
 import * as llmService from './llm/llmService.js';
@@ -166,99 +165,12 @@ export async function persistAnkiState() {
     }
 }
 
-
-// --- Data Manipulation ---
-
-export async function anki_addFile(name, content = INITIAL_CONTENT) {
-    const id = generateId();
-    const newFile = { id, name: name || `新笔记`, content, type: 'file', folderId: appState.currentFolderId, createdAt: new Date() };
-    setState({
-        sessions: [...appState.sessions, newFile],
-        currentSessionId: id,
-        currentSubsessionId: null
-    });
-    anki_createSubsessionsForFile(id, content);
-    await persistAnkiState();
-}
-
-export async function anki_addFolder(name) {
-    const newFolder = { id: generateId(), name: name || `新目录`, type: 'folder', folderId: appState.currentFolderId, createdAt: new Date() };
-    setState({
-        folders: [...appState.folders, newFolder]
-    });
-    await persistAnkiState();
-}
-
-export async function anki_removeItems(itemsToRemove) {
-    const idsToRemove = new Set(itemsToRemove.map(item => item.id));
-    let sessions = [...appState.sessions];
-    let folders = [...appState.folders];
-    let fileSubsessions = {...appState.fileSubsessions};
-    let clozeStates = {...appState.clozeStates}; // [新增] 获取 clozeStates 的副本
-
-    // [新增] 创建一个集合来存储所有需要被删除的文件的ID
-    const fileIdsToDelete = new Set();
-
-    itemsToRemove.forEach(item => {
-        if (item.type === 'file') {
-            fileIdsToDelete.add(item.id);
-        } else if (item.type === 'folder') {
-            const folderIdsToDelete = new Set([item.id]);
-            // Simple recursive delete
-            let changed = true;
-            while(changed) {
-                changed = false;
-                folders.filter(f => folderIdsToDelete.has(f.folderId)).forEach(c => {
-                    if (!folderIdsToDelete.has(c.id)) {
-                        folderIdsToDelete.add(c.id);
-                        changed = true;
-                    }
-                });
-            }
-            // 查找并添加所有在这些文件夹内的文件ID
-            sessions.forEach(s => {
-                if (folderIdsToDelete.has(s.folderId)) fileIdsToDelete.add(s.id);
-            });
-
-            // 从内存中过滤掉被删除的文件夹
-            folders = folders.filter(f => !folderIdsToDelete.has(f.id));
-        }
-    });
-
-    // [新增] 根据收集到的文件ID，一次性清理所有相关数据
-    if (fileIdsToDelete.size > 0) {
-        // 1. 清理 sessions
-        sessions = sessions.filter(s => !fileIdsToDelete.has(s.id));
-        fileIdsToDelete.forEach(id => delete fileSubsessions[id]);
-        clozeStates = Object.fromEntries(Object.entries(clozeStates).filter(([, state]) => !fileIdsToDelete.has(state.fileId)));
-    }
-
-    // 更新当前会话ID，如果它被删除了
-    let currentSessionId = appState.currentSessionId;
-    if (idsToRemove.has(currentSessionId) || fileIdsToDelete.has(currentSessionId)) {
-        currentSessionId = sessions.length > 0 ? sessions[0].id : null;
-    }
-    
-    // 使用清理后的数据更新状态
-    setState({ sessions, folders, fileSubsessions, clozeStates, currentSessionId });
-    await persistAnkiState();
-}
-
-export async function anki_moveItems(items, targetFolderId) {
-    const newSessions = appState.sessions.map(s => items.some(item => item.id === s.id && item.type === 'file') ? { ...s, folderId: targetFolderId } : s);
-    const newFolders = appState.folders.map(f => items.some(item => item.id === f.id && item.type === 'folder') ? { ...f, folderId: targetFolderId } : f);
-    setState({ sessions: newSessions, folders: newFolders });
-    await persistAnkiState();
-}
-
-export async function anki_updateItemName(id, newName, type) {
-    const updater = (collection) => collection.map(item => item.id === id ? { ...item, name: newName } : item);
-    setState(type === 'file' ? { sessions: updater(appState.sessions) } : { folders: updater(appState.folders) });
-    await persistAnkiState();
-}
-
+/**
+ * [保留] 保存当前 Anki 会话的内容。
+ * 仍然被 `autoSave` 使用。
+ */
 export async function anki_saveCurrentSessionContent(newContent) {
-    const session = anki_getCurrentSession();
+    const session = appState.sessions.find(s => s.id === appState.currentSessionId) || null;
     if (session && session.content !== newContent) {
         const newSessions = appState.sessions.map(s =>
             s.id === appState.currentSessionId ? { ...s, content: newContent, lastActive: new Date() } : s
@@ -271,116 +183,13 @@ export async function anki_saveCurrentSessionContent(newContent) {
     return false;
 }
 
-export function anki_getCurrentSession() { return appState.sessions.find(s => s.id === appState.currentSessionId) || null; }
-export function anki_selectSession(sessionId) { setState({ currentSessionId: sessionId, currentSubsessionId: null }); }
-export function anki_selectFolder(folderId) { setState({ currentFolderId: folderId, folderStack: [...appState.folderStack, appState.currentFolderId].filter(Boolean) }); }
-export function anki_selectSubsession(sessionId, subsessionId) { setState({ currentSessionId: sessionId, currentSubsessionId: subsessionId }); }
-export function anki_goBack() { const stack = [...appState.folderStack]; const parentId = stack.pop(); setState({ currentFolderId: parentId, folderStack: stack }); }
-export function anki_goToFolder(folderId, stackIndex) { setState({ currentFolderId: folderId, folderStack: appState.folderStack.slice(0, stackIndex) }); }
-export function anki_goToRoot() { setState({ currentFolderId: null, folderStack: [] }); }
 
-export function anki_getOrCreateClozeState(fileId, clozeContent, clozeId) {
-    const allStates = appState.clozeStates;
-    return allStates[clozeId] || { id: clozeId, fileId, content: clozeContent, state: 'new', due: Date.now(), interval: 0, easeFactor: 2.5, lastReview: null };
-}
-
-/**
- * 根据用户评分更新 Cloze 状态
- * @param {string} fileId 
- * @param {string} clozeContent 
- * @param {number} rating 
- */
-export async function anki_updateClozeState(fileId, clozeContent, rating, clozeId) {
-    const currentState = anki_getOrCreateClozeState(fileId, clozeContent, clozeId);
-    const updates = calculateNextReview(currentState, rating);
-    const allStates = { ...appState.clozeStates, [clozeId]: { ...currentState, ...updates, lastReview: Date.now() } };
-    setState({ clozeStates: allStates });
-    await persistAnkiState();
-}
-
-// --- [新增] 待办统计相关业务逻辑 ---
-
-/**
- * 记录一次待办完成事件
- * @param {string} fileId - 被待办的卡片所在的文件ID
- */
-export async function anki_recordReview(fileId) {
-    if (!fileId) return;
-    const file = appState.sessions.find(s => s.id === fileId);
-    if (!file) return;
-
-    const folderId = file.folderId || 'root';
-    await storage.anki_incrementReviewCount(new Date().toISOString().slice(0, 10), folderId);
-    await anki_updateTodaysReviewCountUI();
-}
-
-/**
- * 更新导航栏中的今日待办计数
- */
-export async function anki_updateTodaysReviewCountUI() {
-    const count = await storage.anki_getTodaysTotalCount();
-    const countElement = document.getElementById('anki_reviewCount');
-    if (countElement) {
-        countElement.textContent = count;
-    }
-}
-
-/**
- * 获取并格式化近30天的待办数据以供图表使用
- * @returns {Promise<object>} - 返回 { labels: string[], datasets: object[] }
- */
-export async function anki_getReviewStatsForChart() {
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(endDate.getDate() - 29);
-
-    const rawStats = await storage.anki_getStatsForDateRange(startDate.toISOString().slice(0, 10), endDate.toISOString().slice(0, 10));
-
-    // 1. 生成日期标签 (近30天)
-    const labels = [];
-    for (let i = 0; i < 30; i++) {
-        const date = new Date(startDate);
-        date.setDate(startDate.getDate() + i);
-        labels.push(date.toISOString().slice(0, 10));
-    }
-
-    // 2. 按 folderId 对数据进行分组
-    const statsByFolder = rawStats.reduce((acc, stat) => {
-        const folderId = stat.folderId;
-        if (!acc[folderId]) acc[folderId] = {};
-        acc[folderId][stat.date] = stat.count;
-        return acc;
-    }, {});
-
-    // 3. 构建 datasets
-    const { folders } = appState;
-    const folderNameMap = folders.reduce((map, folder) => {
-        map[folder.id] = folder.name;
-        return map;
-    }, {});
-    folderNameMap['root'] = '根目录';
-
-    const colorPalette = ['#4361ee', '#e71d36', '#2ec4b6', '#ff9f1c', '#9a031e', '#0ead69', '#f3722c'];
-    let colorIndex = 0;
-
-    const datasets = Object.keys(statsByFolder).map(folderId => {
-        const dailyData = statsByFolder[folderId];
-        const data = labels.map(date => dailyData[date] || 0);
-        const color = colorPalette[colorIndex % colorPalette.length];
-        colorIndex++;
-
-        return {
-            label: folderNameMap[folderId] || '未知目录',
-            data: data,
-            borderColor: color,
-            backgroundColor: `${color}33`, // 带透明度的背景色
-            fill: false,
-            tension: 0.1
-        };
-    });
-
-    return { labels, datasets };
-}
+// --- [移除] ---
+// 以下函数 (anki_addFile, anki_addFolder, anki_removeItems, anki_moveItems, 
+// anki_updateItemName, anki_getCurrentSession, anki_selectSession 等导航函数,
+// anki_getOrCreateClozeState, anki_updateClozeState, anki_recordReview 等)
+// 的功能已被新的 `src/anki/ankiApp.js` 及其 `store` 和 `services` 完全接管，
+// 不再从全局 `dataService` 调用。因此予以移除。
 
 
 // ===================================================================
