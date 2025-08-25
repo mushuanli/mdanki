@@ -9,7 +9,7 @@ import * as dataService from './services/dataService.js';
 import { ankiApp } from './anki/ankiApp.js'; 
 import { agentApp } from './agent/agentApp.js'; // [修改] 导入新的 agentApp
 import { taskApp } from './task/taskApp.js'; // [新] 导入新的 taskApp
-import { initializeSettingsApp } from './settings/settings_main.js';
+import { settingsApp } from './settings/settingsApp.js'; // [新] 导入新的 settingsApp
 
 // --- [新增] 状态管理，防止重复初始化 ---
 const initializationState = {
@@ -52,7 +52,9 @@ async function handleViewChange(context = null) {
                     break; 
 
                 // [恢复] settings 初始化时传递 context
-                case 'settings': await initializeSettingsApp(context); break;
+                case 'settings':
+                     await settingsApp.initialize(context);
+                    break;
             }
             initializationState[viewName] = true;
         } catch (error) {
@@ -61,7 +63,7 @@ async function handleViewChange(context = null) {
     // [恢复] 增加对 settings 视图的特殊处理逻辑
     } else if (viewName === 'settings' && context) {
         console.log(`[Re-init] Re-initializing settings module with new context.`);
-        await initializeSettingsApp(context);
+    await settingsApp.initialize(context); // 修正：使用 settingsApp.initialize
     }
     
     // 4. 显示目标视图和激活按钮
