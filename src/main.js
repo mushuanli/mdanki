@@ -7,7 +7,7 @@ import * as dataService from './services/dataService.js';
 
 // 各模块的初始化函数
 import { ankiApp } from './anki/ankiApp.js'; 
-import { initializeAgentApp } from './agent/agent_main.js';
+import { agentApp } from './agent/agentApp.js'; // [修改] 导入新的 agentApp
 import { initializeTaskApp } from './task/task_main.js'; // [重构]
 import { initializeSettingsApp } from './settings/settings_main.js';
 
@@ -44,7 +44,9 @@ async function handleViewChange(context = null) {
                 case 'anki': 
                     await ankiApp.initialize(); 
                     break;
-                case 'agent': await initializeAgentApp(); break;
+                case 'agent': 
+                    await agentApp.initialize(); // [修改] 调用新的 agentApp 初始化方法
+                    break;
                 case 'task': await initializeTaskApp(); break;
                 // [恢复] settings 初始化时传递 context
                 case 'settings': await initializeSettingsApp(context); break;

@@ -2,6 +2,7 @@
 
 import { appState, setState } from '../common/state.js';
 import * as storage from './storageService.js';
+import { db } from '../common/db.js'; // 引入db实例以进行更直接的操作
 import { generateId } from '../common/utils.js';
 import { INITIAL_CONTENT } from '../common/config.js';
 import { calculateNextReview } from './srs.js';
@@ -9,7 +10,6 @@ import { calculateNextReview } from './srs.js';
 // 模块化导入
 import * as llmService from './llm/llmService.js';
 import { getDefaultApiPath } from './llm/llmProviders.js';
-import { renderHistoryPanel, updateStreamingChunkInDOM, finalizeStreamingUI } from '../agent/agent_ui.js';
 
 // ===================================================================
 //                        应用初始化与全局服务
@@ -514,22 +514,26 @@ export async function initializeAgentData() {
     let { apiConfigs, agents, topics, history } = await storage.loadAgentData();
     const seedResult = agent_seedDefaultData(apiConfigs || [], agents || []);
 
-    const agentState = { ...seedResult, topics: topics || [], history: history || [] };
-    if (agentState.agents.length > 0 && !appState.currentAgentId) {
-        agentState.currentAgentId = agentState.agents[0].id;
-        agentState.currentTopicId = (agentState.topics.find(t => t.agentId === agentState.currentAgentId) || {}).id || null;
-    }
-
-    setState(agentState);
-
-    // 如果添加了新数据，则立即持久化
+    // 1. 构建数据对象
+    const agentData = { 
+        ...seedResult, 
+        topics: topics || [], 
+        history: history || [] 
+    };
+    
+    // 2. [重要] 如果添加了新数据，立即持久化
+    //    注意：我们需要修改 persistAgentState 来接受数据，而不是依赖全局 appState
     if (seedResult.needsPersistence) {
-        await persistAgentState();
+        await storage.saveAgentData(agentData);
     }
+    
+    // 3. [重要] 返回构建好的数据对象，而不是调用 setState
+    return agentData;
 }
 
 /**
  * [重构] 持久化所有设置相关的配置数据。
+ * [修改] 接受一个 state 对象作为参数，以消除对全局 appState 的依赖。
  */
 export async function persistAgentState() {
     try {
@@ -544,146 +548,160 @@ export async function persistAgentState() {
     }
 }
 
-export function agent_getAgentById(agentId) { return appState.agents.find(p => p.id === agentId); }
-export async function agent_addApiConfig(data) { 
-    const newConfig = { id: generateId(), ...data }; // 创建新对象
-    setState({ apiConfigs: [...appState.apiConfigs, newConfig] }); 
-    await persistAgentState();
-    return newConfig; // 返回它
-}
+// --- 新增/重构的数据库交互辅助函数 ---
 
-export async function agent_updateApiConfig(id, data) { setState({ apiConfigs: appState.apiConfigs.map(c => c.id === id ? { ...c, ...data } : c) }); await persistAgentState(); }
-export async function agent_deleteApiConfig(id) { if (appState.agents.some(a => a.model?.startsWith(id + ':'))) { alert("此 API 配置正在被 Agent 使用。"); return; } setState({ apiConfigs: appState.apiConfigs.filter(c => c.id !== id) }); await persistAgentState(); }
-export async function agent_addAgent(data) { 
-    const newAgent = { id: generateId(), ...data, tags: data.tags || [], sendHistory: data.sendHistory !== false }; 
-    setState({ agents: [...appState.agents, newAgent], currentAgentId: newAgent.id, currentTopicId: null }); 
-    await persistAgentState(); 
-    return newAgent; // 返回它
-}
-
-export async function agent_updateAgent(id, data) { setState({ agents: appState.agents.map(p => p.id === id ? { ...p, ...data } : p) }); await persistAgentState(); }
-export async function agent_deleteAgent(id) { const topicsToDelete = new Set(appState.topics.filter(t => t.agentId === id).map(t => t.id)); const history = appState.history.filter(h => !topicsToDelete.has(h.topicId)); const topics = appState.topics.filter(t => t.agentId !== id); const agents = appState.agents.filter(p => p.id !== id); let { currentAgentId, currentTopicId } = appState; if (currentAgentId === id) { currentAgentId = agents[0]?.id || null; currentTopicId = (topics.find(t => t.agentId === currentAgentId) || {}).id || null; } setState({ agents, topics, history, currentAgentId, currentTopicId }); await persistAgentState(); }
-export async function agent_addTopic(title, icon) { if (!appState.currentAgentId) return; const newTopic = { id: generateId(), agentId: appState.currentAgentId, title, icon: icon || 'fas fa-comment', createdAt: new Date() }; setState({ topics: [...appState.topics, newTopic], currentTopicId: newTopic.id }); await persistAgentState(); }
-export async function agent_updateTopic(id, updates) { setState({ topics: appState.topics.map(t => t.id === id ? { ...t, ...updates } : t) }); await persistAgentState(); }
-export async function agent_deleteTopics(topicIdsToDelete) { const ids = new Set(topicIdsToDelete); const topics = appState.topics.filter(t => !ids.has(t.id)); const history = appState.history.filter(h => !ids.has(h.topicId)); let { currentTopicId, currentConversationAgentId } = appState; if (ids.has(currentTopicId)) { currentTopicId = null; currentConversationAgentId = null; } setState({ topics, history, currentTopicId, currentConversationAgentId, isTopicSelectionMode: false, selectedTopicIds: [] }); await persistAgentState(); }
-export async function agent_deleteHistoryMessages(messageIds) { const ids = new Set(messageIds); setState({ history: appState.history.filter(msg => !ids.has(msg.id)) }); await persistAgentState(); }
-export async function agent_editUserMessageAndRegenerate(messageId, newContent) { const allHistory = appState.history; const msgIndex = allHistory.findIndex(msg => msg.id === messageId); if (msgIndex === -1) return; const topicId = allHistory[msgIndex].topicId; const truncatedHistory = allHistory.slice(0, msgIndex).concat([{ ...allHistory[msgIndex], content: newContent }]); setState({ history: truncatedHistory.concat(allHistory.slice(msgIndex + 1).filter(msg => msg.topicId !== topicId)) }); await renderHistoryPanel(); await agent_sendMessageAndGetResponse(newContent, []); }
-
-// [ALIGNMENT] 恢复了 attachments 参数以支持附件功能
-async function agent_addHistoryMessage(topicId, role, content, attachments = [], status = 'completed', reasoning = null) {
-    const newMessage = {
-        id: generateId(),
-        topicId,
-        agentId: role === 'assistant' ? appState.currentConversationAgentId : null,
-        role,
-        content,
-        reasoning,
-        attachments, // <-- 恢复的字段
-        timestamp: new Date().toISOString(),
-        status
-    };
-    setState({ history: [...appState.history, newMessage] });
-    if (status !== 'streaming') {
-        await persistAgentState();
+export async function agent_addTopic(title, agentId) {
+    if (!title || !agentId) {
+        console.error("需要标题和agentId才能创建新主题。");
+        return null;
     }
+    const newTopic = {
+        id: generateId(),
+        agentId: agentId,
+        title: title,
+        icon: 'fas fa-comment',
+        createdAt: new Date().toISOString()
+    };
+    await db.agent_topics.put(newTopic);
+    return newTopic;
+}
+
+export async function agent_updateTopic(topicId, updates) {
+    const topic = await db.agent_topics.get(topicId);
+    if (!topic) return null;
+    const updatedTopic = { ...topic, ...updates };
+    await db.agent_topics.put(updatedTopic);
+    return updatedTopic;
+}
+
+export async function agent_deleteTopics(topicIds) {
+    await db.transaction('rw', [db.agent_topics, db.agent_history], async () => {
+        await db.agent_topics.bulkDelete(topicIds);
+        const historyToDelete = await db.agent_history.where('topicId').anyOf(topicIds).keys();
+        await db.agent_history.bulkDelete(historyToDelete);
+    });
+    const remainingTopics = await db.agent_topics.toArray();
+    const remainingHistory = await db.agent_history.toArray();
+    return { remainingTopics, remainingHistory };
+}
+
+export async function agent_addHistoryMessage(topicId, role, content, attachments = [], status = 'completed', agentId = null, reasoning = null) {
+    const newMessage = {
+        id: generateId(), topicId, role, content, attachments, status, reasoning,
+        agentId: role === 'assistant' ? agentId : null,
+        timestamp: new Date().toISOString(),
+    };
+    await db.agent_history.put(newMessage);
     return newMessage;
 }
 
+export async function agent_updateHistoryMessage(message) {
+    return await db.agent_history.put(message);
+}
 
+export async function agent_deleteHistoryMessages(messageIds) {
+    return await db.agent_history.bulkDelete(messageIds);
+}
+
+
+// --- 新增/重构的纯数据处理辅助函数 ---
 
 /**
- * The main chat function. Handles user message, simulates AI response.
- * @param {string} content - The text content from the user.
- * @param {Array<{name: string, data: string}>} attachments - The user's attachments.
+ * 根据传入的 state 过滤主题列表
+ * @param {object} state - 当前 AgentStore 的状态
+ * @returns {Array<object>} 过滤后的主题列表
  */
-export async function agent_sendMessageAndGetResponse(content, attachments) {
-    const { currentTopicId, currentConversationAgentId, isAiThinking, apiConfigs, agents } = appState;
-    if (!currentTopicId || isAiThinking) return;
+export function agent_getFilteredTopics(state) {
+    const { topicListFilterTag, topics, history, agents } = state;
+    if (!topics) return [];
 
-    const agent = agent_getAgentById(currentConversationAgentId);
-    let llmConfig;
-
-    if (agent) {
-        const [apiConfigId, modelAlias] = agent.model.split(':');
-        const apiConfig = apiConfigs.find(c => c.id === apiConfigId);
-        if (!apiConfig) { alert(`错误：找不到角色 "${agent.name}" 所需的 API 配置。`); return; }
-
-        const modelName = new Map((apiConfig.models || '').split(',').map(m => m.split(':').map(s => s.trim()))).get(modelAlias);
-        if (!modelName) { alert(`错误：在 API 配置 "${apiConfig.name}" 中找不到别名 "${modelAlias}"。`); return; }
-
-        llmConfig = { provider: apiConfig.provider, apiPath: apiConfig.apiUrl || getDefaultApiPath(apiConfig.provider), apiKey: `Bearer ${apiConfig.apiKey}`, model: modelName, systemPrompt: agent.systemPrompt };
-    } else {
-        const apiConfig = apiConfigs[0];
-        if (!apiConfig) { alert("错误：没有找到可用的 API 配置。"); return; }
-        const modelName = (new Map((apiConfig.models || '').split(',').map(m => m.split(':').map(s => s.trim()))).values().next() || {}).value;
-        llmConfig = { provider: apiConfig.provider, apiPath: apiConfig.apiUrl || getDefaultApiPath(apiConfig.provider), apiKey: `Bearer ${apiConfig.apiKey}`, model: modelName, systemPrompt: "" };
-    }
-
-    setState({ isAiThinking: true });
-    // [ALIGNMENT] 传递 attachments 参数
-    await agent_addHistoryMessage(currentTopicId, 'user', content, attachments);
-    await renderHistoryPanel();
-
-    // [ALIGNMENT] 传递空数组作为 AI 消息的 attachments
-    const aiMessage = await agent_addHistoryMessage(currentTopicId, 'assistant', '', [], 'streaming');
-    await renderHistoryPanel();
-
-    let accumulatedContent = "",
-        accumulatedReasoning = "";
-    const historyForAI = appState.history.filter(h => h.topicId === currentTopicId && h.status === 'completed');
-    
-    // [ALIGNMENT] 修正了 `sendHistory: false` 时的逻辑，从 slice(-2) 改为 slice(-1)
-    const messagesToSendToAI = (agent && agent.sendHistory === false) ? historyForAI.slice(-1) : historyForAI;
-
-    await llmService.streamChat(llmConfig, messagesToSendToAI, {
-        onChunk: ({ type, text }) => {
-            if (type === 'content') accumulatedContent += text;
-            else if (type === 'thinking') accumulatedReasoning += text;
-            updateStreamingChunkInDOM(aiMessage.id, type, text);
-        },
-        onDone: async () => {
-            const finalHistory = appState.history.map(msg => msg.id === aiMessage.id ? { ...msg, content: accumulatedContent, reasoning: accumulatedReasoning, status: 'completed' } : msg);
-            setState({ history: finalHistory, isAiThinking: false });
-            await finalizeStreamingUI(aiMessage.id);
-            await persistAgentState();
-        },
-        onError: async (error) => {
-            const errorText = `\n\n**错误:** ${error.message}`;
-            accumulatedContent += errorText;
-            const finalHistory = appState.history.map(msg => msg.id === aiMessage.id ? { ...msg, content: accumulatedContent, status: 'error' } : msg);
-            setState({ history: finalHistory, isAiThinking: false });
-            await finalizeStreamingUI(aiMessage.id);
-            await persistAgentState();
-        }
-    });
-}
-
-export function agent_selectAgent(agentId) {
-    const firstTopic = appState.topics.find(t => t.agentId === agentId);
-    setState({
-        currentAgentId: agentId,
-        currentTopicId: firstTopic?.id || null
-    });
-}
-
-export function agent_selectTopic(topicId) {
-    const lastMessage = appState.history.filter(h => h.topicId === topicId).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
-    setState({
-        currentTopicId: topicId,
-        currentConversationAgentId: lastMessage?.agentId || appState.agents[0]?.id || null
-    });
-}
-
-export function agent_getFilteredTopics() {
-    const { topicListFilterTag, topics, history, agents } = appState;
     if (topicListFilterTag === 'all') {
-        return topics;
+        return topics.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
 
     const agentMap = new Map(agents.map(agent => [agent.id, agent]));
     return topics.filter(topic => {
-        const lastMsg = history.filter(h => h.topicId === topic.id).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
-        const agent = lastMsg ? agentMap.get(lastMsg.agentId) : null;
+        const lastMsg = history
+            .filter(h => h.topicId === topic.id)
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+        
+        if (!lastMsg) return false;
+        
+        const agent = agentMap.get(lastMsg.agentId);
         return agent?.tags?.includes(topicListFilterTag);
-    });
+    }).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+/**
+ * 根据 Topic ID 获取其详细信息
+ * @param {string} topicId 
+ * @param {object} state - 当前 AgentStore 的状态
+ * @returns {object} { topic, lastConversationAgentId }
+ */
+export function agent_getTopicDetails(topicId, state) {
+    const { topics, history, agents } = state;
+    const topic = topics.find(t => t.id === topicId);
+    
+    // 如果找不到 topic，直接返回
+    if (!topic) {
+        return { topic: null, lastConversationAgentId: null };
+    }
+
+    // 优先级 1: 读取用户上次在该主题中明确选择的角色
+    if (topic.lastUsedAgentId) {
+        // 验证这个ID是否仍然有效，防止agent被删除
+        if (agents.some(a => a.id === topic.lastUsedAgentId)) {
+            return { topic, lastConversationAgentId: topic.lastUsedAgentId };
+        }
+    }
+
+    // 优先级 2: 从最后一条AI消息中推断
+    const lastMessage = history
+        .filter(h => h.topicId === topicId && h.role === 'assistant' && h.agentId) // 优先找AI助手的消息
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+
+    if (lastMessage && lastMessage.agentId) {
+        return { topic, lastConversationAgentId: lastMessage.agentId };
+    }
+
+    // 2. 如果没有历史消息，或者历史消息没有 agentId，回退到 topic 对象自带的 agentId
+    //    这个 agentId 是在主题创建时关联的。
+    if (topic.agentId) {
+        return { topic, lastConversationAgentId: topic.agentId };
+    }
+    
+    // 3. 如果以上都没有（异常情况），作为最后的兜底策略，返回当前列表中的第一个 agent
+    //    或者返回 null 以表示使用“默认AI”
+    const fallbackAgentId = agents.length > 0 ? agents[0].id : null;
+
+    return { topic, lastConversationAgentId: fallbackAgentId };
+}
+
+/**
+ * 根据当前选择构建 LLM 服务所需的配置
+ * @param {string} agentId 
+ * @param {Array} agents 
+ * @param {Array} apiConfigs 
+ * @returns {object} llmConfig 或包含 error 的对象
+ */
+export function agent_getLlmConfig(agentId, agents, apiConfigs) {
+    const agent = agents.find(p => p.id === agentId);
+
+    if (agent) {
+        const [apiConfigId, modelAlias] = agent.model.split(':');
+        const apiConfig = apiConfigs.find(c => c.id === apiConfigId);
+        if (!apiConfig) return { error: `错误：找不到角色 "${agent.name}" 所需的 API 配置。` };
+
+        const modelName = new Map((apiConfig.models || '').split(',').map(m => m.split(':').map(s => s.trim()))).get(modelAlias);
+        if (!modelName) return { error: `错误：在 API 配置 "${api.name}" 中找不到别名 "${modelAlias}"。` };
+
+        return { provider: apiConfig.provider, apiPath: apiConfig.apiUrl || getDefaultApiPath(apiConfig.provider), apiKey: `Bearer ${apiConfig.apiKey}`, model: modelName, systemPrompt: agent.systemPrompt };
+    } else {
+        const apiConfig = apiConfigs[0];
+        if (!apiConfig) return { error: "错误：没有找到可用的 API 配置。" };
+        const modelName = (new Map((apiConfig.models || '').split(',').map(m => m.split(':').map(s => s.trim()))).values().next() || {}).value;
+        if (!modelName) return { error: `错误：在 API 配置 "${apiConfig.name}" 中找不到任何模型。` };
+
+        return { provider: apiConfig.provider, apiPath: apiConfig.apiUrl || getDefaultApiPath(apiConfig.provider), apiKey: `Bearer ${apiConfig.apiKey}`, model: modelName, systemPrompt: "" };
+    }
 }
