@@ -6,7 +6,7 @@ import { appState, setState } from './common/state.js';
 import * as dataService from './services/dataService.js';
 
 // 各模块的初始化函数
-import { initializeAnkiApp } from './anki/anki_main.js';
+import { ankiApp } from './anki/ankiApp.js'; 
 import { initializeAgentApp } from './agent/agent_main.js';
 import { initializeTaskApp } from './task/task_main.js'; // [重构]
 import { initializeSettingsApp } from './settings/settings_main.js';
@@ -40,7 +40,10 @@ async function handleViewChange(context = null) {
         console.log(`[Lazy Init] Initializing ${viewName} module...`);
         try {
             switch (viewName) {
-                case 'anki': await initializeAnkiApp(); break;
+                // [修改] 调用 ankiApp 实例的 initialize 方法
+                case 'anki': 
+                    await ankiApp.initialize(); 
+                    break;
                 case 'agent': await initializeAgentApp(); break;
                 case 'task': await initializeTaskApp(); break;
                 // [恢复] settings 初始化时传递 context
