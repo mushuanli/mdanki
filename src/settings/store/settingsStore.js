@@ -2,6 +2,7 @@
 
 import * as dataService from '../../services/dataService.js';
 import { exportDatabase, importDatabase } from '../../services/dbService.js';
+import { db } from '../../common/db.js';
 
 class SettingsStore {
     constructor() {
@@ -50,13 +51,23 @@ class SettingsStore {
     //                   ACTIONS (业务逻辑)
     // ======================================================
 
+    /**
+     * [修改] 初始化函数现在接收外部注入的数据。
+     * @param {object} initialData - 包含 apiConfigs, agents 等的对象。
+     */
     async initialize(initialData) {
+        const theme = localStorage.getItem('app-theme') || 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+        
+        const autoSaveIntervalSetting = await db.global_appState.get('autoSaveInterval');
+        const autoSaveInterval = autoSaveIntervalSetting ? autoSaveIntervalSetting.value : 5;
+
         this.setState({
             apiConfigs: initialData.apiConfigs || [],
             agents: initialData.agents || [],
             settings: {
-                theme: localStorage.getItem('app-theme') || 'light',
-                autoSaveInterval: initialData.settings?.autoSaveInterval ?? 5,
+                theme: theme,
+                autoSaveInterval: autoSaveInterval,
             }
         });
     }
@@ -86,22 +97,20 @@ class SettingsStore {
             if (activeItemType === 'apiConfig') {
                 if (isCreating) {
                     savedItem = await dataService.addApiConfig(formData);
-                    this.setState({ apiConfigs: [...this.state.apiConfigs, savedItem] });
                 } else {
                     savedItem = await dataService.updateApiConfig(formData.id, formData);
-                    this.setState({ apiConfigs: this.state.apiConfigs.map(c => c.id === formData.id ? savedItem : c) });
                 }
             } else if (activeItemType === 'agent') {
                 if (isCreating) {
                     savedItem = await dataService.addAgent(formData);
-                    this.setState({ agents: [...this.state.agents, savedItem] });
                 } else {
                     savedItem = await dataService.updateAgent(formData.id, formData);
-                    this.setState({ agents: this.state.agents.map(a => a.id === formData.id ? savedItem : a) });
                 }
             }
 
-            // 保存成功后，自动选中该项目
+            // [新增] 保存成功后，派发全局事件通知其他模块
+            window.dispatchEvent(new CustomEvent('app:sharedDataUpdated'));
+
             if (savedItem) {
                 this.selectItem(savedItem.id, activeItemType);
             }
@@ -120,12 +129,13 @@ class SettingsStore {
         try {
             if (itemType === 'apiConfig') {
                 await dataService.deleteApiConfig(itemId);
-                this.setState({ apiConfigs: this.state.apiConfigs.filter(c => c.id !== itemId) });
             } else if (itemType === 'agent') {
                 await dataService.deleteAgent(itemId);
-                this.setState({ agents: this.state.agents.filter(a => a.id !== itemId) });
             }
-            // 删除后返回通用设置页
+            
+            // [新增] 删除成功后，派发全局事件
+            window.dispatchEvent(new CustomEvent('app:sharedDataUpdated'));
+            
             this.selectItem('general', 'general');
         } catch (error) {
             console.error("Delete failed:", error);

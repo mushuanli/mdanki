@@ -1,6 +1,7 @@
 // src/agent/store/agentStore.js
 
-import * as dataService from '../../services/dataService.js';
+// [修改] 导入新的、专属的服务文件
+import * as agentService from '../services/agentService.js';
 import * as llmService from '../../services/llm/llmService.js'; 
 import { getDefaultApiPath } from '../../services/llm/llmProviders.js';
 import { generateId } from '../../common/utils.js';
@@ -66,19 +67,59 @@ class AgentStore {
     getState() {
         return { ...this.state };
     }
+    
+    // --- [新增] SELECTORS / DERIVED DATA ---
+    
+    /**
+     * [新增] 根据当前 state 过滤主题列表。
+     * 这是从旧 dataService 迁移过来的逻辑，现在是 Store 的一部分。
+     * @returns {Array<object>} 过滤并排序后的主题列表
+     */
+    getFilteredTopics() {
+        const { topicListFilterTag, topics, history, agents } = this.state;
+        if (!topics) return [];
+
+        // 排序所有主题，最新的在前
+        const sortedTopics = [...topics].sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        if (topicListFilterTag === 'all') {
+            return sortedTopics;
+        }
+
+        const agentMap = new Map(agents.map(agent => [agent.id, agent]));
+
+        return sortedTopics.filter(topic => {
+            // 优化：从 topic 对象本身获取 agentId，这是更可靠的关联
+            const agentId = topic.lastUsedAgentId || topic.agentId;
+            if (!agentId) return false;
+
+            const agent = agentMap.get(agentId);
+            return agent?.tags?.includes(topicListFilterTag);
+        });
+    }
+
 
     // --- ACTIONS ---
 
-    async initialize() {
-        const agentData = await dataService.initializeAgentData();
-        this.setState(agentData);
+    /**
+     * [修改] 初始化函数现在接收外部注入的数据。
+     * @param {object} initialData - 由 main.js 传入的共享数据对象。
+     */
+    async initialize(initialData) {
+        this.setState({
+            apiConfigs: initialData.apiConfigs || [],
+            agents: initialData.agents || [],
+            topics: initialData.topics || [],
+            history: initialData.history || [],
+        });
     }
     
     // --- Topic Management Actions ---
     
     async addTopic(title) {
       if (!title) return;
-      const newTopic = await dataService.agent_addTopic(title, this.state.agents[0]?.id);
+      // [修改] 调用新的 agentService
+      const newTopic = await agentService.addTopic(title, this.state.agents[0]?.id);
 
       // [新增] 检查 newTopic 是否成功创建
       if (newTopic) {
@@ -99,11 +140,8 @@ class AgentStore {
         const currentScrollTop = historyContentEl ? historyContentEl.scrollTop : 0;
         const newScrollPositions = { ...this.state.topicScrollPositions, [this.state.currentTopicId]: currentScrollTop };
 
-      // 旧的、错误的调用
-      // const { topic, lastConversationAgentId } = dataService.agent_getTopicDetails(topicId);
-
-      // 新的、正确的调用
-      const { topic, lastConversationAgentId } = dataService.agent_getTopicDetails(topicId, this.state);
+      // [修改] 调用新的 agentService
+      const { topic, lastConversationAgentId } = agentService.getTopicDetails(topicId, this.state);
 
       // 增加一个健壮性检查，防止在 topic 找不到时程序崩溃
       if (topic) {
@@ -120,7 +158,8 @@ class AgentStore {
     async renameCurrentTopic(newName) {
         const { currentTopicId } = this.state;
         if (!currentTopicId || !newName) return;
-        const updatedTopic = await dataService.agent_updateTopic(currentTopicId, { title: newName });
+        // [修改] 调用新的 agentService
+        const updatedTopic = await agentService.updateTopic(currentTopicId, { title: newName });
         this.setState({
             topics: this.state.topics.map(t => t.id === currentTopicId ? updatedTopic : t),
         });
@@ -130,7 +169,8 @@ class AgentStore {
         const idsToDelete = Array.isArray(topicIds) ? topicIds : Array.from(topicIds);
         if (idsToDelete.length === 0) return;
 
-        const { remainingTopics, remainingHistory } = await dataService.agent_deleteTopics(idsToDelete);
+        // [修改] 调用新的 agentService
+        const { remainingTopics, remainingHistory } = await agentService.deleteTopics(idsToDelete);
         
         let newCurrentTopicId = this.state.currentTopicId;
         if (idsToDelete.includes(newCurrentTopicId)) {
@@ -180,7 +220,8 @@ class AgentStore {
         const { currentTopicId, isAiThinking } = this.state;
         if (!currentTopicId || isAiThinking) return;
 
-        const userMessage = await dataService.agent_addHistoryMessage(currentTopicId, 'user', content, attachments);
+        // [修改] 调用新的 agentService
+        const userMessage = await agentService.addHistoryMessage(currentTopicId, 'user', content, attachments);
         this.setState({ history: [...this.state.history, userMessage] });
 
         const historyForAI = this.state.history.filter(h => h.topicId === currentTopicId && h.status !== 'streaming');
@@ -207,7 +248,7 @@ class AgentStore {
         }
 
         const newHistory = allHistory.filter(h => !idsToDelete.has(h.id));
-        await dataService.agent_deleteHistoryMessages(Array.from(idsToDelete));
+        await agentService.deleteHistoryMessages(Array.from(idsToDelete));
         this.setState({ history: newHistory });
     }
 
@@ -222,7 +263,7 @@ class AgentStore {
         const truncatedHistory = allHistory.filter(m => m.id !== assistantMessageId);
         this.setState({ history: truncatedHistory });
         
-        await dataService.agent_deleteHistoryMessages([assistantMessageId]);
+        await agentService.deleteHistoryMessages([assistantMessageId]);
 
         const historyForAI = truncatedHistory.filter(h => h.topicId === topicId && h.status !== 'streaming');
         await this._fetchAIResponse(historyForAI);
@@ -244,11 +285,11 @@ class AgentStore {
 
         // 删除此消息之后的所有对话
         const idsToDelete = topicHistory.slice(topicMsgIndex + 1).map(m => m.id);
-        await dataService.agent_deleteHistoryMessages(idsToDelete);
+        await agentService.deleteHistoryMessages(idsToDelete);
 
         // 更新用户消息并截断历史
         const updatedUserMessage = { ...allHistory[msgIndex], content: newContent };
-        await dataService.agent_updateHistoryMessage(updatedUserMessage);
+        await agentService.updateHistoryMessage(updatedUserMessage);
         
         const truncatedHistory = allHistory
             .filter(m => !idsToDelete.has(m.id))
@@ -264,7 +305,8 @@ class AgentStore {
     async _fetchAIResponse(historyContext) {
         const { currentTopicId, currentConversationAgentId, apiConfigs, agents } = this.state;
         
-        const llmConfig = dataService.agent_getLlmConfig(currentConversationAgentId, agents, apiConfigs);
+        // [修改] 调用新的 agentService
+        const llmConfig = agentService.getLlmConfig(currentConversationAgentId, agents, apiConfigs);
         if (llmConfig.error) {
             alert(llmConfig.error);
             return;
@@ -272,7 +314,8 @@ class AgentStore {
         
         this.setState({ isAiThinking: true });
 
-        const aiMessageStub = await dataService.agent_addHistoryMessage(currentTopicId, 'assistant', '', [], 'streaming');
+        // [修改] 调用新的 agentService
+        const aiMessageStub = await agentService.addHistoryMessage(currentTopicId, 'assistant', '', [], 'streaming');
         this.setState({ history: [...this.state.history, aiMessageStub] });
 
         const agent = agents.find(a => a.id === currentConversationAgentId);
@@ -292,7 +335,7 @@ class AgentStore {
                 const finalMessageState = this.state.history.find(m => m.id === aiMessageStub.id);
                 if (finalMessageState) {
                     const finalMessage = { ...finalMessageState, status: 'completed' };
-                    await dataService.agent_updateHistoryMessage(finalMessage);
+        await agentService.updateHistoryMessage(finalMessage);
                     this.setState({
                         history: this.state.history.map(msg => msg.id === aiMessageStub.id ? finalMessage : msg),
                         isAiThinking: false,
@@ -304,7 +347,7 @@ class AgentStore {
                 const finalMessageState = this.state.history.find(m => m.id === aiMessageStub.id);
                 if(finalMessageState) {
                     const finalMessage = { ...finalMessageState, content: finalMessageState.content + errorText, status: 'error' };
-                    await dataService.agent_updateHistoryMessage(finalMessage);
+        await agentService.updateHistoryMessage(finalMessage);
                     this.setState({
                         history: this.state.history.map(msg => msg.id === aiMessageStub.id ? finalMessage : msg),
                         isAiThinking: false,
@@ -334,7 +377,7 @@ class AgentStore {
             const updatedTopic = { ...currentTopic, lastUsedAgentId: agentId };
 
             // 3. 在后台异步更新数据库
-            await dataService.agent_updateTopic(currentTopicId, { lastUsedAgentId: agentId });
+        await agentService.updateTopic(currentTopicId, { lastUsedAgentId: agentId });
 
             // 4. 更新Store中的topics数组，以保证状态一致性
             const newTopics = topics.map(t => t.id === currentTopicId ? updatedTopic : t);

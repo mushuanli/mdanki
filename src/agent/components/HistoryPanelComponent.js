@@ -113,30 +113,61 @@ export class HistoryPanelComponent {
     async renderMessageItem(item, message) {
         item.className = `history-item role-${message.role}`;
         
-        let contentHTML;
-        if (message.status === 'streaming') {
-            contentHTML = `<div class="streaming-content-container"><p><i class="fas fa-spinner fa-pulse"></i> ${escapeHTML(message.content)}</p></div>`;
-        } else {
-            let markdownText = message.content || '';
-            if (message.role === 'assistant' && message.reasoning) {
-                const thinkingBlock = `<details class="thinking-block"><summary>AI 思考过程</summary><pre><code>${escapeHTML(message.reasoning)}</code></pre></details>`;
-                markdownText = thinkingBlock + markdownText;
-            }
-            contentHTML = await renderRichContent(null, markdownText);
-        }
-        
+      // 检查是否需要重新渲染整个消息
+      const existingContent = item.querySelector('.history-item-content');
+      const needsFullRender = !existingContent || 
+                             item.dataset.lastStatus !== message.status ||
+                             (message.status !== 'streaming' && item.dataset.lastContentHash !== this.getContentHash(message));
+    
+      if (needsFullRender) {
+        // 完整渲染消息结构
         item.innerHTML = `
             <div class="history-item-header">
                 <span class="role ${message.role}">${message.role === 'user' ? '用户' : 'AI助手'}</span>
                 <span>${new Date(message.timestamp).toLocaleString()}</span>
             </div>
-            <div class="history-item-content">${contentHTML}</div>
+            <div class="history-item-content"></div>
             <div class="history-item-actions">
                 <button class="history-action-btn regenerate-btn" title="重新生成" style="display: ${message.role === 'assistant' ? 'inline-flex' : 'none'};"><i class="fas fa-redo"></i></button>
                 <button class="history-action-btn edit-btn" title="编辑并重新生成" style="display: ${message.role === 'user' ? 'inline-flex' : 'none'};"><i class="fas fa-edit"></i></button>
                 <button class="history-action-btn delete-btn" title="删除"><i class="fas fa-trash"></i></button>
             </div>
         `;
+        
+        // 记录状态用于下次比较
+        item.dataset.lastStatus = message.status;
+        if (message.status !== 'streaming') {
+            item.dataset.lastContentHash = this.getContentHash(message);
+        }
+    }
+    
+    // 单独更新内容部分
+    const contentContainer = item.querySelector('.history-item-content');
+    await this.updateMessageContent(contentContainer, message);
+    }
+
+    async updateMessageContent(container, message) {
+        if (message.status === 'streaming') {
+            // 流式消息：直接设置简单的文本内容
+            container.innerHTML = `<div class="streaming-content-container"><p><i class="fas fa-spinner fa-pulse"></i> ${escapeHTML(message.content || '')}</p></div>`;
+        } else {
+            // 完成的消息：使用富文本渲染
+            let markdownText = message.content || '';
+            if (message.role === 'assistant' && message.reasoning) {
+                const thinkingBlock = `<details class="thinking-block"><summary>AI 思考过程</summary><pre><code>${escapeHTML(message.reasoning)}</code></pre></details>`;
+                markdownText = thinkingBlock + markdownText;
+            }
+        
+            // 修复：先设置容器内容，再传入容器进行渲染
+            container.innerHTML = ''; // 清空
+            await renderRichContent(container, markdownText);
+        }
+    }
+
+    // 辅助方法：生成内容哈希用于比较
+    getContentHash(message) {
+        const contentString = `${message.content || ''}${message.reasoning || ''}`;
+        return contentString.length + '_' + (contentString.slice(0, 50) + contentString.slice(-50));
     }
 
     // [新增] 更新导航按钮的可用状态

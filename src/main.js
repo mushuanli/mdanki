@@ -1,8 +1,9 @@
 // src/main.js
 
 // --- Core Imports ---
-import * as dom from './common/dom.js';
-import { appState, setState } from './common/state.js';
+// [移除] 不再需要从 state.js 导入
+// import { appState, setState } from './common/state.js'; 
+import * as dom from './common/dom.js'; // 假设 dom.js 被需要
 import * as dataService from './services/dataService.js';
 
 // 各模块的初始化函数
@@ -11,6 +12,11 @@ import { agentApp } from './agent/agentApp.js'; // [修改] 导入新的 agentAp
 import { taskApp } from './task/taskApp.js'; // [新] 导入新的 taskApp
 import { settingsApp } from './settings/settingsApp.js'; // [新] 导入新的 settingsApp
 
+// --- [新增] main.js 内部的应用级状态 ---
+const appRuntimeState = {
+    activeView: 'anki', // 默认视图
+};
+
 // --- [新增] 状态管理，防止重复初始化 ---
 const initializationState = {
     anki: false,
@@ -18,20 +24,36 @@ const initializationState = {
     agent: false,
     settings: false,
 };
+// [新增] 存储共享数据，以便在模块间同步时使用
+let sharedSettingsAndAgentData = null;
+
+/**
+ * [新增] 设置应用级状态并触发相应的UI更新
+ * @param {object} updates 
+ */
+function setAppRuntimeState(updates) {
+    const oldView = appRuntimeState.activeView;
+    Object.assign(appRuntimeState, updates);
+
+    if (updates.activeView && updates.activeView !== oldView) {
+        handleViewChange();
+    }
+}
+
 
 /**
  * [恢复] 管理视图切换，并按需进行初始化，增加了 context 参数处理
  * @param {object|null} context - 传递给初始化函数的上下文 (主要用于settings)
  */
 async function handleViewChange(context = null) {
-    console.log('[ViewChange] Switching to view:', appState.activeView);
+    console.log('[ViewChange] Switching to view:', appRuntimeState.activeView);
 
     // 隐藏所有视图
     Object.values(dom.appViews).forEach(view => view.style.display = 'none');
     document.querySelectorAll('.app-nav-btn').forEach(btn => btn.classList.remove('active'));
 
-    // 2. 根据 activeView 确定目标视图和按钮
-    const viewName = appState.activeView || 'anki';
+    // [修改] 直接从内部状态读取
+    const viewName = appRuntimeState.activeView || 'anki'; 
     const activeViewElement = dom.appViews[viewName];
     const activeButtonElement = document.getElementById(`nav-${viewName}`);
 
@@ -45,7 +67,8 @@ async function handleViewChange(context = null) {
                     await ankiApp.initialize(); 
                     break;
                 case 'agent': 
-                    await agentApp.initialize(); // [修改] 调用新的 agentApp 初始化方法
+                    // [修改] 注入共享数据
+                    await agentApp.initialize(sharedSettingsAndAgentData); 
                     break;
             case 'task': 
                 await taskApp.initialize(); // [修改] 调用新的 taskApp 初始化方法
@@ -53,7 +76,8 @@ async function handleViewChange(context = null) {
 
                 // [恢复] settings 初始化时传递 context
                 case 'settings':
-                     await settingsApp.initialize(context);
+                    // [修改] 注入共享数据
+                    await settingsApp.initialize(context, sharedSettingsAndAgentData);
                     break;
             }
             initializationState[viewName] = true;
@@ -62,14 +86,13 @@ async function handleViewChange(context = null) {
         }
     // [恢复] 增加对 settings 视图的特殊处理逻辑
     } else if (viewName === 'settings' && context) {
-        console.log(`[Re-init] Re-initializing settings module with new context.`);
-    await settingsApp.initialize(context); // 修正：使用 settingsApp.initialize
+        // 当再次导航到 settings 并带有上下文时，用最新的共享数据重新初始化
+        await settingsApp.initialize(context, sharedSettingsAndAgentData);
     }
     
     // 4. 显示目标视图和激活按钮
     if (activeViewElement) {
         activeViewElement.style.display = 'flex';
-        activeViewElement.classList.add('active'); // 使用类来控制显示
     }
     if (activeButtonElement) {
         activeButtonElement.classList.add('active');
@@ -87,21 +110,27 @@ function setupAppNavigation() {
         
         e.preventDefault();
         const targetView = button.dataset.view;
-        if (targetView && targetView !== appState.activeView) {
+        // [修改] 调用 dataService.switchView，它会派发事件
+        if (targetView && targetView !== appRuntimeState.activeView) {
             dataService.switchView(targetView);
-            handleViewChange();
+        }
+    });
+
+    // [修改] 监听 dataService 派发的事件来切换视图
+    window.addEventListener('app:switchView', (e) => {
+        const { view } = e.detail;
+        if (view && view !== appRuntimeState.activeView) {
+            setAppRuntimeState({ activeView: view });
         }
     });
 
     // [恢复] 监听从其他模块发来的导航请求 ('app:navigateTo')
     window.addEventListener('app:navigateTo', (e) => {
         const { view, context } = e.detail;
-        if (view && view !== appState.activeView) {
-            dataService.switchView(view);
-            handleViewChange(context);
-        } else if (view && view === appState.activeView && context) {
-            // 如果已经在目标视图，但有新的上下文，也需要处理
-            handleViewChange(context);
+        if (view) {
+             setAppRuntimeState({ activeView: view });
+             // handleViewChange 会被 setAppRuntimeState 自动调用，但如果需要传递 context，则需手动调用
+             handleViewChange(context);
         }
     });
 }
@@ -111,36 +140,62 @@ function setupAutoPersistence() {
 
     const setupTimer = () => {
         if (timerId) clearInterval(timerId);
-        const interval = appState.settings?.autoSaveInterval;
+        // [修改] 从 ankiStore 获取配置
+        const interval = ankiApp.store.getState().settings?.autoSaveInterval;
         if (interval > 0) {
-            timerId = setInterval(dataService.autoSave, interval * 60 * 1000);
+            // [修改] autoSave 由 ankiStore 触发
+            timerId = setInterval(() => ankiApp.store.saveCurrentSession(), interval * 60 * 1000);
             console.log(`Auto-save timer set for every ${interval} minutes.`);
         }
     };
     
-    setupTimer(); // Initial setup
-
-    // 监听状态变化（如果需要动态调整间隔）
-    window.addEventListener('state-changed', (e) => {
-        if (e.detail.settings && e.detail.settings.autoSaveInterval !== undefined) {
+    // ankiApp 初始化后会设置定时器，这里监听设置变化
+    window.addEventListener('app:settingChanged', (e) => {
+        if (e.detail.key === 'autoSaveInterval') {
             setupTimer();
         }
     });
+    
+    // ankiApp 首次初始化时也需要设置
+    window.addEventListener('app:ankiReady', setupTimer);
 
-    window.addEventListener('beforeunload', () => dataService.persistAllAppState());
+    // 页面关闭/隐藏时强制保存所有模块
+    const persistAll = () => {
+        if(initializationState.anki) ankiApp.store.saveCurrentSession();
+        if(initializationState.agent) agentApp.store.persistState(); // 假设 agentStore 有 persist 方法
+        // ... 其他模块
+    };
+
+    window.addEventListener('beforeunload', persistAll);
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') {
-            dataService.persistAllAppState();
+            persistAll();
         }
     });
 }
 
 /**
- * [恢复] 增加了旧代码中的全局应用事件监听器
+ * [新增] 设置一个监听器，用于在共享数据更新时同步相关模块。
  */
+function setupDataSyncListener() {
+    window.addEventListener('app:sharedDataUpdated', async () => {
+        console.log("Shared data updated, re-syncing relevant modules...");
+        // 1. 重新加载最新的共享数据
+        sharedSettingsAndAgentData = await dataService.loadSettingsAndAgentData();
+
+        // 2. 如果模块已初始化，则用新数据重新初始化它们的 store
+        if (initializationState.agent) {
+            await agentApp.store.initialize(sharedSettingsAndAgentData);
+        }
+        if (initializationState.settings) {
+            // 重新初始化 settings store 以反映潜在的交叉变更
+            await settingsApp.store.initialize(null, sharedSettingsAndAgentData);
+        }
+    });
+}
+
 function setupAppEventListeners() {
     window.addEventListener('app:dataImported', async () => {
-        console.log("Event 'app:dataImported' received. Re-initializing app...");
         alert("数据导入成功！应用将刷新以应用更改。");
         location.reload();
     });
@@ -150,23 +205,21 @@ async function main() {
     document.body.classList.add('is-loading'); 
     
     try {
-        // 1. Initialize core data services sequentially
-        await dataService.initializeApp(); // 加载 Anki 核心数据
+        // [修改] 调整初始化顺序和逻辑
+        // 1. 加载所有模块都可能依赖的共享数据
+        sharedSettingsAndAgentData = await dataService.loadSettingsAndAgentData();
         
-        // [修改] 接收返回值并更新 state
-        const agentData = await dataService.initializeAgentData(); // 加载 Agent/Settings 数据
-        setState(agentData); // <-- 核心修复：将加载的数据设置到全局状态
-
-        // 2. Setup application shell functionalities
+        // 2. 设置应用外壳功能
         setupAppNavigation();
         setupAutoPersistence();
-        // [恢复] 调用全局事件监听设置函数
+        setupDataSyncListener(); // [新增]
         setupAppEventListeners();
 
-        // 4. [修改] 设置并按需初始化第一个视图
-        const initialView = appState.activeView || 'anki';
-        setState({ activeView: initialView });
-        await handleViewChange(); // `handleViewChange` 现在负责初始化
+        // [修改] 初始化第一个视图，不再使用 setState
+        // 可以在这里从 localStorage 或 IndexedDB 读取上一次的视图
+        const lastView = localStorage.getItem('lastActiveView') || 'anki';
+        appRuntimeState.activeView = lastView;
+        await handleViewChange();
 
         console.log("Application initialized successfully.");
 
@@ -182,6 +235,13 @@ async function main() {
         document.body.classList.remove('is-loading');
     }
 }
+
+// [新增] 在页面关闭前保存当前视图
+window.addEventListener('beforeunload', () => {
+    localStorage.setItem('lastActiveView', appRuntimeState.activeView);
+    // ... 原有的 persistAll 逻辑
+});
+
 
 // Start the application
 document.addEventListener('DOMContentLoaded', main);

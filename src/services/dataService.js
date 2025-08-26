@@ -1,106 +1,25 @@
 // src/services/dataService.js
 
-import { appState, setState } from '../common/state.js';
 import * as storage from './storageService.js';
-import { db } from '../common/db.js'; // 引入db实例以进行更直接的操作
+import { db } from '../common/db.js';
 import { generateId } from '../common/utils.js';
 import { INITIAL_CONTENT } from '../common/config.js';
-
-// 模块化导入
-import * as llmService from './llm/llmService.js';
 import { getDefaultApiPath } from './llm/llmProviders.js';
 
 // ===================================================================
 //                        应用初始化与全局服务
 // ===================================================================
 
-/**
- * [重构] 应用主初始化函数。
- * 仅加载 Anki 核心数据和全局状态。Agent 和 Task 模块将按需加载。
- */
-export async function initializeApp() {
-    setState({ isLoading: true });
-    try {
-        // 1. 加载 Anki 核心数据和全局持久化状态
-        const { sessions, folders, clozeStates, persistentAppState } = await storage.loadAnkiData();
-
-        const ankiState = {
-            sessions: sessions || [],
-            folders: folders || [],
-            clozeStates: clozeStates || {}, // [MODIFIED] 加载 clozeStates
-            currentSessionId: persistentAppState.currentSessionId || null,
-            currentFolderId: persistentAppState.currentFolderId || null,
-            currentSubsessionId: persistentAppState.currentSubsessionId || null,
-            folderStack: persistentAppState.folderStack || [],
-            isSessionSidebarHidden: persistentAppState.isSessionSidebarHidden || false,
-            fileSubsessions: {},
-            // [新增] 加载设置，并提供默认值
-            settings: {
-                autoSaveInterval: persistentAppState.autoSaveInterval ?? 5
-            },
-        };
-
-        ankiState.sessions.forEach(session => {
-            ankiState.fileSubsessions[session.id] = anki_parseAndStructureHeadings(session.content);
-        });
-
-        if (ankiState.sessions.length === 0) {
-            const id = generateId();
-            ankiState.sessions.push({ id, name: '初始笔记', content: INITIAL_CONTENT, type: 'file', folderId: null, createdAt: new Date() });
-            ankiState.currentSessionId = id;
-            ankiState.fileSubsessions[id] = anki_parseAndStructureHeadings(INITIAL_CONTENT);
-        }
-
-        if (!ankiState.sessions.some(s => s.id === ankiState.currentSessionId)) {
-            ankiState.currentSessionId = ankiState.sessions.length > 0 ? ankiState.sessions[0].id : null;
-        }
-
-        setState(ankiState);
-    } catch (error) {
-        console.error("Failed to initialize core application state:", error);
-    } finally {
-        setState({ isLoading: false });
-    }
-}
 
 /**
- * [重构] 自动保存所有已加载模块的状态。
- */
-export async function autoSave() {
-    console.log(`[${new Date().toLocaleTimeString()}] Auto-saving...`);
-    // 只有 Anki 编辑器需要特殊处理，先从 DOM 获取最新内容
-    if (appState.activeView === 'anki' && appState.currentSessionId) {
-        const editor = document.getElementById('anki_editor');
-        if (editor) {
-            await anki_saveCurrentSessionContent(editor.value);
-        }
-    }
-    // 其他模块的状态已经在内存中，直接保存即可
-    await persistAllAppState();
-}
-
-/**
- * [重构] 持久化所有应用模块的状态。
- */
-export async function persistAllAppState() {
-    try {
-        await Promise.all([
-            persistAnkiState(),
-            // 只有当 agent 数据加载后才尝试保存
-            appState.agents ? persistAgentState() : Promise.resolve(),
-        ]);
-        console.log("All application state persisted.");
-    } catch (error) {
-        console.error("Failed to persist all application state:", error);
-    }
-}
-
-/**
- * [保留] 视图切换服务。
+ * [最终重构] 视图切换服务。
+ * 不再管理状态，而是派发一个全局事件，由 main.js 监听并处理。
  */
 export function switchView(viewName) {
     if (['anki', 'task', 'agent', 'settings'].includes(viewName)) {
-        setState({ activeView: viewName });
+        window.dispatchEvent(new CustomEvent('app:switchView', {
+            detail: { view: viewName }
+        }));
     }
 }
 
@@ -138,62 +57,9 @@ function anki_parseAndStructureHeadings(content) {
     return structuredHeadings;
 }
 
-function anki_createSubsessionsForFile(fileId, content) {
-    const subsessions = anki_parseAndStructureHeadings(content);
-    setState({
-        fileSubsessions: { ...appState.fileSubsessions, [fileId]: subsessions }
-    });
-}
-
-export async function persistAnkiState() {
-    try {
-        await storage.saveAnkiData({
-            sessions: appState.sessions,
-            folders: appState.folders,
-            clozeStates: appState.clozeStates, // [MODIFIED] 保存 clozeStates
-            persistentAppState: {
-                currentSessionId: appState.currentSessionId,
-                currentFolderId: appState.currentFolderId,
-                currentSubsessionId: appState.currentSubsessionId,
-                folderStack: appState.folderStack,
-                isSessionSidebarHidden: appState.isSessionSidebarHidden,
-                autoSaveInterval: appState.settings.autoSaveInterval,
-            },
-        });
-    } catch (error) {
-        console.error("Failed to persist Anki state:", error);
-    }
-}
-
-/**
- * [保留] 保存当前 Anki 会话的内容。
- * 仍然被 `autoSave` 使用。
- */
-export async function anki_saveCurrentSessionContent(newContent) {
-    const session = appState.sessions.find(s => s.id === appState.currentSessionId) || null;
-    if (session && session.content !== newContent) {
-        const newSessions = appState.sessions.map(s =>
-            s.id === appState.currentSessionId ? { ...s, content: newContent, lastActive: new Date() } : s
-        );
-        setState({ sessions: newSessions });
-        anki_createSubsessionsForFile(appState.currentSessionId, newContent);
-        await persistAnkiState();
-        return true;
-    }
-    return false;
-}
-
-
-// --- [移除] ---
-// 以下函数 (anki_addFile, anki_addFolder, anki_removeItems, anki_moveItems, 
-// anki_updateItemName, anki_getCurrentSession, anki_selectSession 等导航函数,
-// anki_getOrCreateClozeState, anki_updateClozeState, anki_recordReview 等)
-// 的功能已被新的 `src/anki/ankiApp.js` 及其 `store` 和 `services` 完全接管，
-// 不再从全局 `dataService` 调用。因此予以移除。
-
 
 // ===================================================================
-// [重构] SETTINGS & AGENT (PROMPT) DATA SERVICE
+// [重构] SETTINGS & AGENT (共享数据) 服务
 // ===================================================================
 
 const DEFAULT_API_CONFIG = { id: 'default_deepseek_api', name: 'DeepSeek (默认)', provider: 'deepseek', apiKey: '', models: 'chat:deepseek-chat,reasoner:deepseek-reasoner' };
@@ -299,218 +165,99 @@ const DEFAULT_AGENTS = [
     }
 ];
 
-function agent_seedDefaultData(existingApiConfigs, existingAgents) {
-    let apiConfigs = [...existingApiConfigs];
-    let agents = [...existingAgents];
+
+
+/**
+ * [重构] 加载所有 Settings 和 Agent 模块共享的数据。
+ * 此函数负责加载、播种默认数据，并返回一个干净的数据对象，不产生副作用。
+ */
+
+export async function loadSettingsAndAgentData() {
+    let { apiConfigs, agents, topics, history } = await storage.loadAgentData();
+    apiConfigs = apiConfigs || [];
+    agents = agents || [];
+
     let needsPersistence = false;
 
+    // 播种默认 API 配置
     if (!apiConfigs.some(c => c.id === DEFAULT_API_CONFIG.id)) {
         apiConfigs.push(DEFAULT_API_CONFIG);
         needsPersistence = true;
     }
 
+    // 播种默认 Agents
     DEFAULT_AGENTS.forEach(defaultAgent => {
         if (!agents.some(p => p.id === defaultAgent.id)) {
             agents.push(defaultAgent);
             needsPersistence = true;
         }
     });
-
-    return { apiConfigs, agents, needsPersistence };
-}
-
-export async function initializeAgentData() {
-    let { apiConfigs, agents, topics, history } = await storage.loadAgentData();
-    const seedResult = agent_seedDefaultData(apiConfigs || [], agents || []);
-
-    // 1. 构建数据对象
-    const agentData = { 
-        ...seedResult, 
-        topics: topics || [], 
-        history: history || [] 
+    
+    const sharedData = {
+        apiConfigs,
+        agents,
+        topics: topics || [],
+        history: history || [],
     };
-    
-    // 2. [重要] 如果添加了新数据，立即持久化
-    //    注意：我们需要修改 persistAgentState 来接受数据，而不是依赖全局 appState
-    if (seedResult.needsPersistence) {
-        await storage.saveAgentData(agentData);
+
+    // 如果添加了默认数据，则立即回写到数据库
+    if (needsPersistence) {
+        await storage.saveAgentData(sharedData);
     }
-    
-    // 3. [重要] 返回构建好的数据对象，而不是调用 setState
-    return agentData;
+
+    return sharedData;
+}
+
+
+// --- [新增] 细粒度的数据库操作函数，供 settingsStore 使用 ---
+
+export async function addApiConfig(configData) {
+    const newConfig = { ...configData, id: generateId() };
+    await db.agent_apiConfigs.put(newConfig);
+    return newConfig;
+}
+
+export async function updateApiConfig(id, updates) {
+    const config = await db.agent_apiConfigs.get(id);
+    if (!config) throw new Error("API config not found");
+    const updatedConfig = { ...config, ...updates };
+    await db.agent_apiConfigs.put(updatedConfig);
+    return updatedConfig;
+}
+
+export async function deleteApiConfig(id) {
+    // 健壮性检查：确保没有 Agent 正在使用此配置
+    const agentsUsingConfig = await db.agent_agents.filter(agent => agent.model.startsWith(id + ':')).count();
+    if (agentsUsingConfig > 0) {
+        throw new Error(`无法删除，仍有 ${agentsUsingConfig} 个 Agent 正在使用此 API 配置。`);
+    }
+    await db.agent_apiConfigs.delete(id);
+}
+
+export async function addAgent(agentData) {
+    const newAgent = { ...agentData, id: generateId() };
+    await db.agent_agents.put(newAgent);
+    return newAgent;
+}
+
+export async function updateAgent(id, updates) {
+    const agent = await db.agent_agents.get(id);
+    if (!agent) throw new Error("Agent not found");
+    const updatedAgent = { ...agent, ...updates };
+    await db.agent_agents.put(updatedAgent);
+    return updatedAgent;
+}
+
+export async function deleteAgent(id) {
+    await db.agent_agents.delete(id);
 }
 
 /**
- * [重构] 持久化所有设置相关的配置数据。
- * [修改] 接受一个 state 对象作为参数，以消除对全局 appState 的依赖。
+ * [新增] 更新单个全局设置项
+ * @param {string} key - The key of the setting to update.
+ * @param {*} value - The new value for the setting.
  */
-export async function persistAgentState() {
-    try {
-        await storage.saveAgentData({
-            apiConfigs: appState.apiConfigs,
-            agents: appState.agents,
-            topics: appState.topics,
-            history: appState.history
-        });
-    } catch (error) {
-        console.error("Failed to persist Agent state:", error);
-    }
+export async function updateGlobalSetting(key, value) {
+    await db.global_appState.put({ key, value });
 }
 
-// --- 新增/重构的数据库交互辅助函数 ---
-
-export async function agent_addTopic(title, agentId) {
-    if (!title || !agentId) {
-        console.error("需要标题和agentId才能创建新主题。");
-        return null;
-    }
-    const newTopic = {
-        id: generateId(),
-        agentId: agentId,
-        title: title,
-        icon: 'fas fa-comment',
-        createdAt: new Date().toISOString()
-    };
-    await db.agent_topics.put(newTopic);
-    return newTopic;
-}
-
-export async function agent_updateTopic(topicId, updates) {
-    const topic = await db.agent_topics.get(topicId);
-    if (!topic) return null;
-    const updatedTopic = { ...topic, ...updates };
-    await db.agent_topics.put(updatedTopic);
-    return updatedTopic;
-}
-
-export async function agent_deleteTopics(topicIds) {
-    await db.transaction('rw', [db.agent_topics, db.agent_history], async () => {
-        await db.agent_topics.bulkDelete(topicIds);
-        const historyToDelete = await db.agent_history.where('topicId').anyOf(topicIds).keys();
-        await db.agent_history.bulkDelete(historyToDelete);
-    });
-    const remainingTopics = await db.agent_topics.toArray();
-    const remainingHistory = await db.agent_history.toArray();
-    return { remainingTopics, remainingHistory };
-}
-
-export async function agent_addHistoryMessage(topicId, role, content, attachments = [], status = 'completed', agentId = null, reasoning = null) {
-    const newMessage = {
-        id: generateId(), topicId, role, content, attachments, status, reasoning,
-        agentId: role === 'assistant' ? agentId : null,
-        timestamp: new Date().toISOString(),
-    };
-    await db.agent_history.put(newMessage);
-    return newMessage;
-}
-
-export async function agent_updateHistoryMessage(message) {
-    return await db.agent_history.put(message);
-}
-
-export async function agent_deleteHistoryMessages(messageIds) {
-    return await db.agent_history.bulkDelete(messageIds);
-}
-
-
-// --- 新增/重构的纯数据处理辅助函数 ---
-
-/**
- * 根据传入的 state 过滤主题列表
- * @param {object} state - 当前 AgentStore 的状态
- * @returns {Array<object>} 过滤后的主题列表
- */
-export function agent_getFilteredTopics(state) {
-    const { topicListFilterTag, topics, history, agents } = state;
-    if (!topics) return [];
-
-    if (topicListFilterTag === 'all') {
-        return topics.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-    }
-
-    const agentMap = new Map(agents.map(agent => [agent.id, agent]));
-    return topics.filter(topic => {
-        const lastMsg = history
-            .filter(h => h.topicId === topic.id)
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
-        
-        if (!lastMsg) return false;
-        
-        const agent = agentMap.get(lastMsg.agentId);
-        return agent?.tags?.includes(topicListFilterTag);
-    }).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-}
-
-/**
- * 根据 Topic ID 获取其详细信息
- * @param {string} topicId 
- * @param {object} state - 当前 AgentStore 的状态
- * @returns {object} { topic, lastConversationAgentId }
- */
-export function agent_getTopicDetails(topicId, state) {
-    const { topics, history, agents } = state;
-    const topic = topics.find(t => t.id === topicId);
-    
-    // 如果找不到 topic，直接返回
-    if (!topic) {
-        return { topic: null, lastConversationAgentId: null };
-    }
-
-    // 优先级 1: 读取用户上次在该主题中明确选择的角色
-    if (topic.lastUsedAgentId) {
-        // 验证这个ID是否仍然有效，防止agent被删除
-        if (agents.some(a => a.id === topic.lastUsedAgentId)) {
-            return { topic, lastConversationAgentId: topic.lastUsedAgentId };
-        }
-    }
-
-    // 优先级 2: 从最后一条AI消息中推断
-    const lastMessage = history
-        .filter(h => h.topicId === topicId && h.role === 'assistant' && h.agentId) // 优先找AI助手的消息
-        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
-
-    if (lastMessage && lastMessage.agentId) {
-        return { topic, lastConversationAgentId: lastMessage.agentId };
-    }
-
-    // 2. 如果没有历史消息，或者历史消息没有 agentId，回退到 topic 对象自带的 agentId
-    //    这个 agentId 是在主题创建时关联的。
-    if (topic.agentId) {
-        return { topic, lastConversationAgentId: topic.agentId };
-    }
-    
-    // 3. 如果以上都没有（异常情况），作为最后的兜底策略，返回当前列表中的第一个 agent
-    //    或者返回 null 以表示使用“默认AI”
-    const fallbackAgentId = agents.length > 0 ? agents[0].id : null;
-
-    return { topic, lastConversationAgentId: fallbackAgentId };
-}
-
-/**
- * 根据当前选择构建 LLM 服务所需的配置
- * @param {string} agentId 
- * @param {Array} agents 
- * @param {Array} apiConfigs 
- * @returns {object} llmConfig 或包含 error 的对象
- */
-export function agent_getLlmConfig(agentId, agents, apiConfigs) {
-    const agent = agents.find(p => p.id === agentId);
-
-    if (agent) {
-        const [apiConfigId, modelAlias] = agent.model.split(':');
-        const apiConfig = apiConfigs.find(c => c.id === apiConfigId);
-        if (!apiConfig) return { error: `错误：找不到角色 "${agent.name}" 所需的 API 配置。` };
-
-        const modelName = new Map((apiConfig.models || '').split(',').map(m => m.split(':').map(s => s.trim()))).get(modelAlias);
-        if (!modelName) return { error: `错误：在 API 配置 "${api.name}" 中找不到别名 "${modelAlias}"。` };
-
-        return { provider: apiConfig.provider, apiPath: apiConfig.apiUrl || getDefaultApiPath(apiConfig.provider), apiKey: `Bearer ${apiConfig.apiKey}`, model: modelName, systemPrompt: agent.systemPrompt };
-    } else {
-        const apiConfig = apiConfigs[0];
-        if (!apiConfig) return { error: "错误：没有找到可用的 API 配置。" };
-        const modelName = (new Map((apiConfig.models || '').split(',').map(m => m.split(':').map(s => s.trim()))).values().next() || {}).value;
-        if (!modelName) return { error: `错误：在 API 配置 "${apiConfig.name}" 中找不到任何模型。` };
-
-        return { provider: apiConfig.provider, apiPath: apiConfig.apiUrl || getDefaultApiPath(apiConfig.provider), apiKey: `Bearer ${apiConfig.apiKey}`, model: modelName, systemPrompt: "" };
-    }
-}

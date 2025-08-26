@@ -12,11 +12,15 @@ class AgentApp {
         this.components = [];
     }
   
-    async initialize() {
+    /**
+     * [修改] initialize 方法现在接受初始数据。
+     * @param {object} initialData - 包含 apiConfigs, agents 等的共享数据。
+     */
+    async initialize(initialData) {
         console.log("Initializing AI Agent module with new architecture...");
 
-        // 1. Initialize the store (loads data)
-        await this.store.initialize();
+        // 1. Initialize the store with injected data
+        await this.store.initialize(initialData);
       
         // 2. Initialize all components and pass the store to them
         this.components = [

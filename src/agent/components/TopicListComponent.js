@@ -1,6 +1,7 @@
 // src/agent/components/TopicListComponent.js
 import { escapeHTML } from '../../common/utils.js';
-import * as dataService from '../../services/dataService.js';
+// [移除] 不再需要 dataService
+// import * as dataService from '../../services/dataService.js'; 
 
 export class TopicListComponent {
     constructor(store) {
@@ -69,7 +70,10 @@ export class TopicListComponent {
         
         // Render Topic List
         this.dom.list.innerHTML = '';
-        const filteredTopics = dataService.agent_getFilteredTopics(state);
+        
+        // [修正] 调用 Store 的新方法来获取派生数据
+        const filteredTopics = this.store.getFilteredTopics();
+        
         filteredTopics.forEach(topic => this.dom.list.appendChild(this.createTopicItem(topic, state)));
         
         // Add "New Topic" button

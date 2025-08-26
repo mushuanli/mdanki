@@ -26,10 +26,22 @@ export class ChatInputComponent {
             }
         });
 
+        // 添加这个监听器来实时更新按钮状态
+        this.dom.input.addEventListener('input', () => {
+            this.updateSendButtonState();
+        });
+
         // [新增] 附件事件监听
         this.dom.attachFileBtn.addEventListener('click', () => this.dom.attachmentInput.click());
         this.dom.attachmentInput.addEventListener('change', e => this.handleAttachmentChange(e));
         this.dom.attachmentPreviewContainer.addEventListener('click', e => this.handleRemoveAttachment(e));
+    }
+
+    updateSendButtonState() {
+        const state = this.store.getState();
+        const isThinking = state.isAiThinking;
+        const hasContent = this.dom.input.value.trim() !== '' || this.attachments.length > 0;
+        this.dom.sendBtn.disabled = isThinking || !hasContent;
     }
 
     sendMessage() {
@@ -86,13 +98,10 @@ export class ChatInputComponent {
     }
 
     render(state) {
-        const isThinking = state.isAiThinking;
-        this.dom.input.disabled = isThinking;
-        this.dom.sendBtn.disabled = isThinking || (this.dom.input.value.trim() === '' && this.attachments.length === 0);
-        this.dom.attachFileBtn.disabled = isThinking;
-
-        this.dom.sendBtn.innerHTML = isThinking 
-            ? '<i class="fas fa-spinner fa-spin"></i>'
-            : '<i class="fas fa-paper-plane"></i>';
+    this.updateSendButtonState(); // 使用统一的方法
+    this.dom.input.disabled = state.isAiThinking;
+    this.dom.sendBtn.innerHTML = state.isAiThinking 
+        ? '<i class="fas fa-spinner fa-spin"></i>'
+        : '<i class="fas fa-paper-plane"></i>';
     }
 }
