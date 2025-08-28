@@ -323,14 +323,88 @@ body { font-family: var(--font-primary); font-size: var(--text-base); line-heigh
 .cloze.cloze-error-duplicate .placeholder { color: var(--danger-color, #EF4444) !important; font-weight: bold; }
 
 /* ------------------- Task (Mistake) 视图 ------------------- */
+
+/* [布局-1] 确保 app-container 在 task-view 内部正确布局 */
+#task-view .app-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* 保持元素间的间距 */
+    flex: 1; /* 占据 task-view 内的剩余空间 */
+    min-height: 0; /* 防止内容溢出时容器无限增长 */
+}
+
+/* [布局-2] 让主面板占据所有可用的垂直空间 */
+#task_mainPanel {
+    flex: 1; /* 这是关键！让这个元素伸展以填充可用空间 */
+    min-height: 0; /* 允许面板内部内容滚动，而不是撑开面板本身 */
+}
+
+/* [布局-3] 调整统计面板的样式和位置 (合并和修正) */
+#task_statsDashboard { 
+    display: flex; 
+    gap: 15px; 
+    flex-shrink: 0; /* 确保它不会被 flex 容器拉伸或压缩 */
+}
+
+/* [核心-1] 为 Task 视图的编辑器/预览容器设置样式 */
+#task_mainPanel .editor-container {
+    flex: 1;
+    position: relative;
+    min-height: 0;
+}
+
+/* [核心-2] 为编辑器和预览面板设置绝对定位和层叠 */
+#task_mainPanel #task_yamlEditor,
+#task_mainPanel #task_previewContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+/* [核心-3] 编辑器的具体样式 */
+#task_mainPanel #task_yamlEditor {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    padding: 15px;
+    resize: none;
+    line-height: 1.6;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    z-index: 10; /* 确保编辑器在顶层，可交互 */
+}
+
+/* [核心-4] 预览面板的具体样式 */
+#task_mainPanel #task_previewContainer {
+    padding: 20px;
+    background-color: var(--bg-secondary);
+    display: none; /* 默认隐藏预览 */
+
+    /* [修复] 添加 z-index，确保预览在下层 */
+    z-index: 5;
+}
+
+
+/* [新增] 切换逻辑的核心 */
+#task_mainPanel.preview-mode #task_yamlEditor {
+    display: none;
+}
+
+#task_mainPanel.preview-mode #task_previewContainer {
+    display: block; /* 在预览模式下显示预览 */
+}
+
 #task-view .filter-group { margin-bottom: 15px; }
 #task-view .tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
 #task-view .list-header { font-weight: 600; color: var(--text-secondary); padding: 10px 0; border-top: 1px solid var(--border-color); margin-top: 15px; }
 #task_list .session-item { /* Styles for task items */ }
 #task_list .mistake-title { font-weight: 500; margin-bottom: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #task_list .mistake-meta { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-tertiary); }
-#task_yamlEditor { font-family: 'Consolas', 'Courier New', monospace; font-size: 15px; resize: none; line-height: 1.5; background-color: var(--bg-primary); color: var(--text-primary); }
-#task_previewContainer { flex: 1; overflow-y: auto; padding: 15px; background-color: var(--bg-elevated); display: block; }
+
 #task_statsDashboard { display: flex; gap: 15px; padding-bottom: 15px; }
 .stats-card { flex: 1; background-color: var(--bg-elevated); border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); overflow: hidden; }
 .stats-card-header { font-size: 0.9rem; font-weight: 600; padding: 8px 12px; background-color: var(--bg-tertiary); border-bottom: 1px solid var(--border-color); color: var(--text-secondary); }
