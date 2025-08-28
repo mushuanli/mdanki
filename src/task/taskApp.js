@@ -8,13 +8,14 @@ import { PreviewComponent } from './components/PreviewComponent.js';
 import { EditorComponent } from './components/EditorComponent.js';
 import { PaginationComponent } from './components/PaginationComponent.js';
 import { ToolbarComponent } from './components/ToolbarComponent.js';
+import { ReviewComponent } from './components/ReviewComponent.js';
 
 class TaskApp {
     constructor() {
         this.store = taskStore;
         this.components = [];
     }
-  
+
     async initialize() {
         console.log("Initializing Task Management System (Refactored)...");
 
@@ -27,6 +28,7 @@ class TaskApp {
             new EditorComponent(this.store),
             new PaginationComponent(this.store),
             new ToolbarComponent(this.store),
+            new ReviewComponent(this.store), // 新增
         ];
       
         // 2. 加载初始数据到 Store，这将自动触发所有组件的首次渲染
@@ -34,7 +36,25 @@ class TaskApp {
 
         console.log("Task Management System is ready.");
     }
-  
+
+    exportYamlFile() {
+        const content = this.store.getState().yamlContent;
+        if (!content.trim()) {
+            alert('没有内容可导出');
+            return;
+        }
+
+        const blob = new Blob([content], { type: 'text/yaml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `tasks-${new Date().toISOString().slice(0, 10)}.yaml`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
     destroy() {
         this.components.forEach(c => c.destroy && c.destroy());
         this.components = [];

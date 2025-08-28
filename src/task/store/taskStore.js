@@ -23,6 +23,12 @@ class TaskStore {
 
             // 临时状态
             isLoading: true,
+            
+            // 待办状态
+            isReviewMode: false,
+            currentReviewTask: null,
+            reviewQueue: [],
+            reviewIndex: 0,
         };
         this.listeners = new Set();
     }
@@ -124,6 +130,15 @@ class TaskStore {
         }
     }
 
+    clearTasks() {
+        this.setState({
+            tasks: [],
+            taxonomy: {},
+            selectedTaskId: null,
+            currentPage: 1
+        });
+    }
+    
     async rateTask(taskId, rating) {
         const tasks = [...this.state.tasks];
         const task = tasks.find(t => t.uuid === taskId);
@@ -164,6 +179,61 @@ class TaskStore {
     setSelectedTask(taskId) { this.setState({ selectedTaskId: taskId }); }
     toggleSidebar() { this.setState({ isSidebarVisible: !this.state.isSidebarVisible }); }
     toggleEditor() { this.setState({ isEditorCollapsed: !this.state.isEditorCollapsed }); }
+    
+    // 待办相关Actions
+    async startReview() {
+        const dueTasks = this.getFilteredTasks().filter(task => 
+            new Date(task.review.due) <= new Date()
+        );
+    
+        if (dueTasks.length === 0) {
+            alert('暂无需要待办的任务！');
+            return;
+        }
+
+        this.setState({
+            isReviewMode: true,
+            reviewQueue: dueTasks,
+            reviewIndex: 0,
+            currentReviewTask: dueTasks[0]
+        });
+    }
+
+    async rateCurrentTask(rating) {
+        const { currentReviewTask, reviewQueue, reviewIndex } = this.state;
+        if (!currentReviewTask) return;
+
+        // 使用SRS算法更新任务
+        await this.rateTask(currentReviewTask.uuid, rating);
+    
+        // 移动到下一个任务
+        const nextIndex = reviewIndex + 1;
+        if (nextIndex >= reviewQueue.length) {
+            // 待办完成
+            this.setState({
+                isReviewMode: false,
+                currentReviewTask: null,
+                reviewQueue: [],
+                reviewIndex: 0
+            });
+            alert('待办完成！');
+        } else {
+            this.setState({
+                reviewIndex: nextIndex,
+                currentReviewTask: reviewQueue[nextIndex]
+            });
+        }
+    }
+
+    exitReview() {
+        this.setState({
+            isReviewMode: false,
+            currentReviewTask: null,
+            reviewQueue: [],
+            reviewIndex: 0
+        });
+    }
+
 }
 
 export const taskStore = new TaskStore();

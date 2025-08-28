@@ -82,23 +82,21 @@ export async function loadInitialAnkiState() {
 
 // --- File & Folder Management ---
 
-export async function anki_addFile(name, parentFolderId) {
+export async function anki_addFile(name, content = INITIAL_CONTENT, parentFolderId) {
     const newFile = { 
         id: generateId(), 
         name, 
-        content: INITIAL_CONTENT, 
+        content, 
         type: 'file', 
         folderId: parentFolderId, 
         createdAt: new Date() 
     };
     await db.anki_sessions.add(newFile);
     
-    // [FIXED] Return the new file along with its parsed subsessions.
-    return {
-        newFile,
-        subsessions: anki_parseAndStructureHeadings(newFile.content)
-    };
+    // 直接返回文件对象，保持一致性
+    return newFile;
 }
+
 
 export async function anki_addFolder(name, parentFolderId) {
     const newFolder = { 

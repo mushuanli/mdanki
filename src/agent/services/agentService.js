@@ -4,7 +4,44 @@ import { db } from '../../common/db.js';
 import { generateId } from '../../common/utils.js';
 import { getDefaultApiPath } from '../../services/llm/llmProviders.js'; // 依然需要这个
 
-// --- 数据库交互辅助函数 ---
+// --- [新增] 数据持久化函数 ---
+
+/**
+ * [新增] 持久化 Agent 模块的所有数据
+ * @param {object} data - 包含 apiConfigs, agents, topics, history 的数据对象
+ */
+export async function persistAgentData(data) {
+    const { apiConfigs, agents, topics, history } = data;
+    
+    try {
+        await db.transaction('rw', [db.agent_apiConfigs, db.agent_agents, db.agent_topics, db.agent_history], async () => {
+            // 获取现有数据的 ID 集合
+            const existingApiConfigIds = new Set(apiConfigs.map(c => c.id));
+            const existingAgentIds = new Set(agents.map(a => a.id));
+            const existingTopicIds = new Set(topics.map(t => t.id));
+            const existingHistoryIds = new Set(history.map(h => h.id));
+
+            // 删除不再存在的数据
+            await Promise.all([
+                db.agent_apiConfigs.where('id').noneOf(Array.from(existingApiConfigIds)).delete(),
+                db.agent_agents.where('id').noneOf(Array.from(existingAgentIds)).delete(),
+                db.agent_topics.where('id').noneOf(Array.from(existingTopicIds)).delete(),
+                db.agent_history.where('id').noneOf(Array.from(existingHistoryIds)).delete(),
+            ]);
+            
+            // 批量更新或插入数据
+            await Promise.all([
+                db.agent_apiConfigs.bulkPut(apiConfigs),
+                db.agent_agents.bulkPut(agents),
+                db.agent_topics.bulkPut(topics),
+                db.agent_history.bulkPut(history),
+            ]);
+        });
+    } catch (error) {
+        console.error("Failed to persist agent data:", error);
+        throw error;
+    }
+}
 
 export async function addTopic(title, agentId) {
     if (!title || !agentId) {
@@ -43,7 +80,13 @@ export async function deleteTopics(topicIds) {
 
 export async function addHistoryMessage(topicId, role, content, attachments = [], status = 'completed', agentId = null, reasoning = null) {
     const newMessage = {
-        id: generateId(), topicId, role, content, attachments, status, reasoning,
+        id: generateId(), 
+        topicId, 
+        role, 
+        content, 
+        attachments, 
+        status, 
+        reasoning,
         agentId: role === 'assistant' ? agentId : null,
         timestamp: new Date().toISOString(),
     };
@@ -117,7 +160,7 @@ export function getLlmConfig(agentId, agents, apiConfigs) {
         return { 
             provider: apiConfig.provider, 
             apiPath: apiConfig.apiUrl || getDefaultApiPath(apiConfig.provider), 
-            apiKey: apiConfig.apiKey, // Adapter 会处理 Bearer
+            apiKey: apiConfig.apiKey,
             model: modelName, 
             systemPrompt: agent.systemPrompt 
         };

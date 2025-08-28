@@ -34,7 +34,7 @@ export class ToolbarComponent {
         // 订阅所有与工具栏按钮状态相关的 state
         this.unsubscribe = store.subscribe(
             this.handleStateChange.bind(this),
-            ['viewMode', 'isSaving', 'isSidebarVisible', 'reviewCount', 'areAllClozesVisible']
+        ['viewMode', 'isSaving', 'isSidebarVisible', 'reviewCount', 'areAllClozesVisible', 'currentSessionId', 'sessions'] // 添加这两个
         );
         this.setupEventListeners();
     }
@@ -142,7 +142,7 @@ export class ToolbarComponent {
     }
 
 
-    handleStateChange(newState) {
+    handleStateChange(newState, oldState) { // 修复：添加 oldState 参数
         // 更新视图切换按钮
         const icon = '<i class="fas fa-book-open"></i>';
         this.dom.toggleEditPreviewBtn.innerHTML = `${icon} ${newState.viewMode === 'edit' ? 'Preview' : 'Edit'}`;
@@ -170,7 +170,31 @@ export class ToolbarComponent {
 
         // 更新侧边栏显示状态
         document.querySelector('.anki_session-sidebar').classList.toggle('hidden-session', !newState.isSidebarVisible);
+        
+        // 修复：正确检查 oldState
+        if (oldState && (newState.currentSessionId !== oldState.currentSessionId || 
+            newState.sessions !== oldState.sessions)) {
+            this.updatePanelTitle(newState);
+        } else if (!oldState) {
+            // 初始化时没有 oldState，直接更新
+            this.updatePanelTitle(newState);
+        }
     }
+
+// 新增方法
+updatePanelTitle(state) {
+    const panelTitle = document.getElementById('anki_panelTitle');
+    if (!panelTitle) return;
+
+    if (state.currentSessionId && state.sessions) {
+        const session = state.sessions.find(s => s.id === state.currentSessionId);
+        if (session) {
+            panelTitle.innerHTML = `<i class="fas fa-edit"></i> ${session.name}`;
+            return;
+        }
+    }
+    panelTitle.innerHTML = '<i class="fas fa-edit"></i> Anki 编辑器';
+}
 
     destroy() {
         this.unsubscribe();

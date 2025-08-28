@@ -24,6 +24,19 @@ export class EditorComponent {
                 setTimeout(() => this.dom.saveBtn.innerHTML = '<i class="fas fa-save"></i>', 2000);
             }
         });
+    
+    // 导出按钮
+    this.dom.exportBtn.addEventListener('click', () => {
+        this.exportYamlFile();
+    });
+    
+    // 新建文件按钮
+    this.dom.newFileBtn.addEventListener('click', () => {
+        if (confirm('创建新文件将清空当前编辑器内容，是否继续？')) {
+            this.store.setYamlContent('');
+            this.store.clearTasks();
+        }
+    });
         this.dom.loadYamlBtn.addEventListener('click', () => this.dom.fileInput.click());
         this.dom.fileInput.addEventListener('change', async e => {
             if (!e.target.files[0]) return;
@@ -31,7 +44,6 @@ export class EditorComponent {
             await this.store.loadFromYAML();
             e.target.value = '';
         });
-        // ... 其他按钮事件
     }
 
     render({ yamlContent }) {

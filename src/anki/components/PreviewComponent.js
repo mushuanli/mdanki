@@ -75,16 +75,26 @@ export class PreviewComponent {
     }
   
     async handleStateChange(newState, oldState) {
+        // 添加调试日志
+        console.log("Preview state change:", {
+            hasContent: !!newState.previewContent,
+            viewMode: newState.viewMode,
+            currentSession: newState.currentSessionId
+        });
+
         // 1. 当核心HTML内容变化时，完全重绘
         if (newState.previewContent !== oldState.previewContent || !oldState.previewContent) {
-            this.element.innerHTML = newState.previewContent;
-            // 完全重绘后需要重新处理第三方库和动态元素
-            // 2. 同步调用 processTaskLists 并直接获取返回值
-            const processedHtml = processTaskLists(this.element.innerHTML);
-            this.element.innerHTML = processedHtml;
-
-            // 3. 使用 await 来处理后续的异步渲染函数
-            await renderMathAndMermaid(this.element);
+          if (newState.previewContent) {
+              this.element.innerHTML = newState.previewContent;
+              // 处理任务列表
+              const processedHtml = processTaskLists(this.element.innerHTML);
+              this.element.innerHTML = processedHtml;
+              // 渲染数学公式和图表
+              await renderMathAndMermaid(this.element);
+          } else {
+              // 如果没有内容，显示提示
+              this.element.innerHTML = '<div class="empty-preview"><p>暂无内容</p></div>';
+          }
         }
 
         // 2. 高效更新Cloze的可见性，避免重绘

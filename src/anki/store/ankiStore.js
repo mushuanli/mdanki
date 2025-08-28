@@ -4,6 +4,7 @@
 import * as dataService from '../services/dataService.js';
 import { renderMarkdown, processCloze } from '../services/renderService.js';
 import { calculateNextReview } from '../../services/srs.js'; // 导入SRS算法服务
+import { INITIAL_CONTENT } from '../../common/config.js';
 
 
 const MAX_UNDO_HISTORY = 100;
@@ -132,10 +133,23 @@ class AnkiStore {
     async createFile() {
         const fileName = prompt("请输入新文件的名称：", "新笔记");
         if (!fileName || !fileName.trim()) return;
+    
+        try {
+            const newFile = await dataService.anki_addFile(fileName.trim(), INITIAL_CONTENT, this.state.currentFolderId);
         
-        const newFile = await dataService.anki_addFile(fileName.trim(), this.state.currentFolderId);
-        this.setState({ sessions: [...this.state.sessions, newFile] });
-        await this.navigateToFile(newFile.id);
+            // 确保新文件被添加到状态中
+            this.setState({ 
+                sessions: [...this.state.sessions, newFile] 
+            });
+        
+            // 导航到新文件
+            await this.navigateToFile(newFile.id);
+        
+            console.log("New file created:", newFile); // 调试日志
+        } catch (error) {
+            console.error("Failed to create file:", error);
+            alert("创建文件失败，请重试。");
+        }
     }
     
     async createFolder() {
@@ -572,40 +586,46 @@ class AnkiStore {
     async navigateToFile(fileId) {
         if (this.state.isNavigating || this.state.currentSessionId === fileId) return;
         this.setState({ isNavigating: true });
-      
+    
         try {
+            // 保存当前会话
             if (this.state.currentSessionId) {
                 await this.saveCurrentSession();
             }
-          
-            // 加载新文件
+        
+            // 查找目标文件
             const session = this.state.sessions.find(s => s.id === fileId);
             if (!session) {
-                // 如果文件ID为空或找不到，则清空编辑器
+                console.error("Session not found:", fileId);
                 this.setState({
                     currentSessionId: null,
                     editorContent: '',
                     previewContent: '',
-                    viewMode: 'edit'
+                viewMode: 'preview', // 确保切换到预览模式
+                isNavigating: false
                 });
                 return;
             }
-          
+        
+            // 设置新的会话状态
             this.setState({
                 currentSessionId: fileId,
-                editorContent: session.content,
+                editorContent: session.content || '',
                 viewMode: 'preview' // 导航后默认进入预览模式
             });
-          
-            // 触发预览更新
+        
+            // 立即更新预览
             await this.updatePreview();
-          
+            
+            console.log("Navigated to file:", session); // 调试日志
+            
         } catch (error) {
             console.error("Navigation failed:", error);
         } finally {
             this.setState({ isNavigating: false });
         }
     }
+
   
     /** Action: 保存当前会话内容 */
     async saveCurrentSession() {
@@ -668,14 +688,15 @@ class AnkiStore {
     async _doUpdatePreview() {
     const { editorContent, currentSessionId } = this.state;
     
-      // 修复：确保即使没有当前会话也要设置空内容
-    if (!currentSessionId || !editorContent) {
+    // 修复：确保即使没有当前会话也要设置空内容
+    if (!currentSessionId) {
         this.setState({ previewContent: '' });
         return;
     }
     
+    // 修复：即使 editorContent 为空也要渲染
     try {
-        const previewHTML = await renderMarkdown(editorContent);
+        const previewHTML = await renderMarkdown(editorContent || '');
         const processedHTML = await processCloze(previewHTML);
         this.setState({ previewContent: processedHTML });
         } catch (error) {
@@ -696,6 +717,16 @@ class AnkiStore {
         } else {
             this.setState({ viewMode: mode });
         }
+    }
+
+    debugState() {
+        console.log("Current Anki State:", {
+            currentSessionId: this.state.currentSessionId,
+            sessionsCount: this.state.sessions.length,
+            editorContent: this.state.editorContent?.substring(0, 100) + "...",
+            previewContent: this.state.previewContent?.substring(0, 100) + "...",
+            viewMode: this.state.viewMode
+        });
     }
 }
 

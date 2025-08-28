@@ -37,8 +37,17 @@ export class SessionListComponent {
                 return;
             }
             // 处理项目导航
-            if (type === 'file') this.store.navigateToFile(id);
-            else if (type === 'folder') this.store.goToFolder(id);
+            if (type === 'file') {
+                this.store.navigateToFile(id);
+                // 立即更新标题（乐观更新）
+                const session = this.store.getState().sessions.find(s => s.id === id);
+                if (session) {
+                    document.title = `Anki - ${session.name}`;
+                }
+            } else if (type === 'folder') {
+                this.store.goToFolder(id);
+                document.title = '智能学习套件'; // 进入文件夹时重置标题
+            }
         });
 
         // 处理面包屑导航点击
@@ -87,7 +96,6 @@ export class SessionListComponent {
     render(state) {
         this.renderBreadcrumbs(state);
         
-        const fragment = document.createDocumentFragment();
         const itemsInCurrentFolder = [
             ...state.folders.filter(f => f.folderId === state.currentFolderId),
             ...state.sessions.filter(s => s.folderId === state.currentFolderId)
