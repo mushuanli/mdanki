@@ -25,6 +25,22 @@ export function simpleHash(str) {
     return hash.toString(36);
 }
 
+
+/**
+ * [NEW] 创建一个与 Marked.js 兼容的 slug
+ * @param {string} text 
+ * @returns {string}
+ */
+export function slugify(text) {
+    if (typeof text !== 'string') {
+        return ''; // 防御性编程，如果text不是字符串，返回空
+    }
+    return text
+        .toLowerCase()
+        .trim()
+        .replace(/[\s\W-]+/g, '-'); // 替换空格和非单词字符为连字符
+}
+
 /**
  * [NEW] Generates a consistent HSL color based on a string's hash.
  * This ensures that the same tag always gets the same color.

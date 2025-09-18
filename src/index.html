@@ -129,7 +129,7 @@
                             </div>
                             <div class="editor-container" id="anki_editorContainer">
                                 <textarea id="anki_editor" class="editor"></textarea>
-                                <div id="anki_preview"></div>
+                                <div id="anki_preview" tabindex="0"></div>
                             </div>
                             <div class="mode-indicator">
                                 <div class="mode-dot active" id="anki_editModeDot" title="编辑模式"></div>
@@ -272,9 +272,12 @@
                 <div class="topics-panel agent_topics-panel">
                     <!-- [MODIFIED] Added .component-header for layout -->
                     <div class="topics-header component-header">
-                        <div class="header-title-group"><i class="fas fa-book"></i> 聊天主题</div>
+                        <div class="header-title-group"><i class="fas fa-book"></i> 聊天</div>
                         <div class="header-actions-group">
                             <select id="agent_topicTagFilter" class="topic-filter-select"></select>
+                            <button id="agent_addTopicHeaderBtn" class="action-btn topic-action-btn" title="添加新主题">
+                                <i class="fas fa-plus"></i>
+                            </button>
                             <!-- [MODIFIED] Added .action-btn base class -->
                             <button id="agent_editTopicBtn" class="action-btn topic-action-btn" title="重命名"><i class="fas fa-pencil-alt"></i></button>
                             <button id="agent_manageTopicsBtn" class="action-btn topic-action-btn" title="管理"><i class="fas fa-tasks"></i></button>
@@ -300,6 +303,9 @@
                         </div>
                         <div class="history-header-actions">
                             <input type="text" id="agent_historySearch" class="history-search" placeholder="搜索...">
+                            <button type="button" id="agent_aiBtn" class="action-btn panel-btn" title="AI 助手">
+                                <i class="fas fa-magic-wand-sparkles"></i>
+                            </button>
                             <select id="agent_conversationRoleSelector" class="role-selector"></select>
                         </div>
                     </div>

@@ -178,7 +178,13 @@ export async function loadAllTasks() {
  */
 export async function saveAllTasks(tasks) {
     try {
-        await db.task_tasks.bulkPut(tasks);
+        const now = Date.now();
+        // [关键] 对每一个要保存的任务，都更新其 `updatedAt` 时间戳
+        const tasksWithTimestamp = tasks.map(task => ({
+            ...task,
+            updatedAt: now
+        }));
+        await db.task_tasks.bulkPut(tasksWithTimestamp);
     } catch (error) {
         console.error("[Storage/Task] Failed to save tasks to DB:", error);
     }
@@ -189,8 +195,17 @@ export async function saveAllTasks(tasks) {
  * @param {object} task 
  */
 export async function updateTask(task) {
+    if (!task || !task.uuid) {
+        console.error("[Storage/Task] Failed to update task: Invalid task object or UUID.", task);
+        return; // 返回，避免写入无效数据
+    }
     try {
-        await db.task_tasks.put(task);
+        // [关键] 在每次更新时，自动设置最后修改时间
+        const taskWithTimestamp = {
+            ...task,
+            updatedAt: Date.now() 
+        };
+        await db.task_tasks.put(taskWithTimestamp);
     } catch (error) {
         console.error(`[Storage/Task] Failed to update task ${task.uuid}:`, error);
     }

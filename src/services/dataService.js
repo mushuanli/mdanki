@@ -3,7 +3,7 @@
 import * as storage from './storageService.js';
 import { db } from '../common/db.js';
 import { generateId } from '../common/utils.js';
-import { INITIAL_CONTENT } from '../common/config.js';
+import { INITIAL_ANKI_CONTENT } from '../common/config.js';
 import { getDefaultApiPath } from './llm/llmProviders.js';
 
 // ===================================================================
