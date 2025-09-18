@@ -1,0 +1,4678 @@
+[
+    {"name":"1"},
+  {
+    "name": "critical",
+    "symbol": "/ˈkrɪtɪkl/",
+    "chn": "adj. 批评的,批判性的;关键的;危急的",
+    "example_en": "His critical comments helped improve the project.",
+    "example_cn": "他批判性的评论帮助改进了项目。",
+    "word_family": "criticize（v. 批评）, critic（n. 批评家）, criticism（n. 批评）",
+    "memory_tips": "记忆技巧：'critical' 来自希腊语 'kritikos'，意为 '能够判断的'。联想 'crit' 表示 '判断'，加上 'ical' 形成形容词，表示 '具有判断力的' 或 '关键的'。",
+    "difficulty": "3",
+    "collocations": "critical thinking（批判性思维）, critical point（临界点）, critical condition（危急状况）",
+    "image_prompt": "一位教授在教室里对学生进行批判性思维训练，黑板上写满了分析图表，学生们认真讨论。",
+    "synonym_diff": {
+      "words": "crucial, vital, imperative, decisive, judgmental",
+      "quick_guide": "关键情况用 crucial/vital，紧急必要用 imperative，决定性的用 decisive，批评性的用 judgmental。"
+    }
+  },
+  {
+    "name": "trap",
+    "symbol": "/træp/",
+    "chn": "vt. 使落入险境;卡住,绊住 n. 陷阱,罗网;圈套;困境,牢笼",
+    "example_en": "The mouse was caught in a trap.",
+    "example_cn": "老鼠被陷阱捉住了。",
+    "word_family": "trapped（adj. 被困住的）, trapper（n. 设陷阱者）",
+    "memory_tips": "记忆技巧：'trap' 源自古英语 'træppe'，意为 'snare'（圈套）。联想 'trap' 发音类似 'trip'（绊倒），表示 '使陷入困境'。",
+    "difficulty": "2",
+    "collocations": "set a trap（设陷阱）, fall into a trap（落入陷阱）, escape the trap（逃脱陷阱）",
+    "image_prompt": "一只老鼠在厨房里被一个古老的木质陷阱卡住，周围有奶酪作为诱饵，场景昏暗。",
+    "synonym_diff": {
+      "words": "snare, pitfall, entrap, ensnare, catch",
+      "quick_guide": "物理陷阱用 snare/pitfall，动词使陷入用 entrap/ensnare，一般捕捉用 catch。"
+    }
+  },
+  {
+    "name": "release",
+    "symbol": "/rɪˈliːs/",
+    "chn": "vt. 发布;释放;松开;发泄 n. 释放;发行;排放,泄漏",
+    "example_en": "The company will release a new product next month.",
+    "example_cn": "公司将在下个月发布新产品。",
+    "word_family": "releasable（adj. 可释放的）, releasee（n. 被释放者）",
+    "memory_tips": "记忆技巧：'release' 由 're-'（再次） + 'lease'（放松）组成，联想为 '再次放松' 即 '释放'。词源来自拉丁语 'relaxare'。",
+    "difficulty": "2",
+    "collocations": "release pressure（释放压力）, release date（发布日期）, release from prison（从监狱释放）",
+    "image_prompt": "一个工程师在工厂里按下按钮释放气体，背后有大屏幕显示数据，场景现代而专业。",
+    "synonym_diff": {
+      "words": "free, liberate, unleash, emit, publish",
+      "quick_guide": " freeing people用 free/liberate，释放能量用 unleash，排放物质用 emit，发布信息用 publish。"
+    }
+  },
+  {
+    "name": "ambulance",
+    "symbol": "/ˈæmbjələns/",
+    "chn": "n. 救护车",
+    "example_en": "The ambulance arrived quickly at the accident scene.",
+    "example_cn": "救护车迅速到达事故现场。",
+    "word_family": "ambulant（adj. 走动的）, ambulanceman（n. 救护车工作人员）",
+    "memory_tips": "记忆技巧：'ambulance' 来自拉丁语 'ambulare'，意为 'to walk'（行走），因为早期救护车是移动的医疗单位。联想 'ambul' 表示 '移动'。",
+    "difficulty": "1",
+    "collocations": "call an ambulance（叫救护车）, ambulance service（救护服务）, ambulance driver（救护车司机）",
+    "image_prompt": "一辆红色的救护车闪着灯疾驰在城市街道上，医护人员在车内准备急救设备，背景有建筑物和交通。",
+    "synonym_diff": {
+      "words": "medical van, rescue vehicle, emergency car",
+      "quick_guide": "救护车专用 ambulance，其他救援车辆用 rescue vehicle，一般紧急车辆用 emergency car。"
+    }
+  },
+  {
+    "name": "extend",
+    "symbol": "/ɪkˈstend/",
+    "chn": "vi. & vt. 延伸(距离);扩大;延长;伸展",
+    "example_en": "They decided to extend the meeting by an hour.",
+    "example_cn": "他们决定将会议延长一小时。",
+    "word_family": "extension（n. 延伸）, extensive（adj. 广泛的）",
+    "memory_tips": "记忆技巧：'extend' 由 'ex-'（出） + 'tend'（伸展）组成，联想为 '向外伸展'。词源来自拉丁语 'extendere'。",
+    "difficulty": "2",
+    "collocations": "extend a deadline（延长截止日期）, extend an invitation（发出邀请）, extend help（提供帮助）",
+    "image_prompt": "一条道路向远方的山脉延伸，两旁是绿色的田野，夕阳西下，营造出宁静而广阔的景象。",
+    "synonym_diff": {
+      "words": "lengthen, prolong, stretch, expand, enlarge",
+      "quick_guide": "延长时间用 prolong，延伸空间用 stretch/lengthen，扩大规模用 expand/enlarge。"
+    }
+  },
+  {
+    "name": "construction",
+    "symbol": "/kənˈstrʌkʃn/",
+    "chn": "n. 建筑,建造;建造物",
+    "example_en": "The construction of the new bridge will take two years.",
+    "example_cn": "新桥的建设将耗时两年。",
+    "word_family": "construct（v. 建造）, constructive（adj. 建设性的）",
+    "memory_tips": "记忆技巧：'construction' 来自拉丁语 'construere'，意为 'to build'。联想 'con-'（一起） + 'struct'（建造），表示 '一起建造'。",
+    "difficulty": "2",
+    "collocations": "under construction（建设中）, construction site（建筑工地）, construction worker（建筑工人）",
+    "image_prompt": "一个繁忙的建筑工地，起重机和高楼在背景中，工人们戴着安全帽正在施工，阳光明媚。",
+    "synonym_diff": {
+      "words": "building, erection, assembly, fabrication, structure",
+      "quick_guide": "建筑施工用 building/erection，组装用 assembly，制造用 fabrication，结构物用 structure。"
+    }
+  },
+  {
+    "name": "dozen",
+    "symbol": "/ˈdʌzn/",
+    "chn": "n. 许多;(一) 打;十来个",
+    "example_en": "She bought a dozen eggs from the market.",
+    "example_cn": "她从市场买了一打鸡蛋。",
+    "word_family": "dozens（pl. 许多）",
+    "memory_tips": "记忆技巧：'dozen' 来自古法语 'dozaine'，意为 'a group of twelve'。联想 'doz' 发音类似 'does'，记忆为 '十二个'。",
+    "difficulty": "1",
+    "collocations": "a dozen eggs（一打鸡蛋）, dozens of people（许多人）, half a dozen（半打）",
+    "image_prompt": "一个厨房柜台上有十二个鸡蛋整齐排列在纸盒中，背景是早餐食材，温暖阳光照射。",
+    "synonym_diff": {
+      "words": "twelve, score, multitude, many, several",
+      "quick_guide": "精确十二用 dozen/twelve，二十用 score，许多用 multitude/many，几个用 several。"
+    }
+  },
+  {
+    "name": "dozens of",
+    "symbol": "/ˈdʌznz əv/",
+    "chn": "很多,许多",
+    "example_en": "There were dozens of students at the event.",
+    "example_cn": "活动上有许多学生。",
+    "word_family": "dozen（n. 一打）",
+    "memory_tips": "记忆技巧：'dozens of' 是 'dozen' 的复数形式，表示 '许多'。联想 'dozen' 意为 '十二'，多个十二就是 '很多'。",
+    "difficulty": "1",
+    "collocations": "dozens of times（许多次）, dozens of books（许多书）, dozens of options（许多选择）",
+    "image_prompt": "一个拥挤的教室里有几十个学生正在听课，老师站在讲台前，书架上有许多书本。",
+    "synonym_diff": {
+      "words": "many, numerous, countless, a lot of, plenty of",
+      "quick_guide": "许多事物用 dozens of/many/numerous，数不清用 countless，大量用 a lot of/plenty of。"
+    }
+  },
+  {
+    "name": "minor",
+    "symbol": "/ˈmaɪnə(r)/",
+    "chn": "adj. 轻微的,次要的",
+    "example_en": "He suffered only minor injuries in the accident.",
+    "example_cn": "他在事故中只受了轻伤。",
+    "word_family": "minority（n. 少数）, minorly（adv. 次要地）",
+    "memory_tips": "记忆技巧：'minor' 来自拉丁语 'minor'，意为 'smaller' 或 'less important'。联想 'min' 表示 '小'，如 'minimum'。",
+    "difficulty": "2",
+    "collocations": "minor issue（小问题）, minor change（轻微变化）, minor role（次要角色）",
+    "image_prompt": "一个医生在检查一个病人手上的轻微擦伤，医疗室干净明亮，工具简单。",
+    "synonym_diff": {
+      "words": "slight, insignificant, trivial, negligible, small",
+      "quick_guide": "轻微程度用 slight/trivial，不重要用 insignificant/negligible，体积小用 small。"
+    }
+  },
+  {
+    "name": "bath",
+    "symbol": "/bɑːθ/",
+    "chn": "n. 洗澡,洗浴;浴缸,浴盆",
+    "example_en": "She takes a warm bath every evening to relax.",
+    "example_cn": "她每晚洗个热水澡来放松。",
+    "word_family": "bathe（v. 洗澡）, bathroom（n. 浴室）",
+    "memory_tips": "记忆技巧：'bath' 源自古英语 'bæð'，意为 'immersing in water'。联想 'bath' 发音类似 'path'，但表示 '洗浴之路'。",
+    "difficulty": "1",
+    "collocations": "take a bath（洗澡）, bath towel（浴巾）, bath tub（浴缸）",
+    "image_prompt": "一个舒适的浴室里，浴缸充满泡沫，旁边有蜡烛和毛巾，窗外夜色宁静。",
+    "synonym_diff": {
+      "words": "shower, wash, soak, tub,沐浴",
+      "quick_guide": "洗澡用 bath/shower，冲洗用 wash，浸泡用 soak，浴缸用 tub。"
+    }
+  },
+  {
+    "name": "scream",
+    "symbol": "/skriːm/",
+    "chn": "vi. &vt. 尖叫;高声喊;发出大而尖的声音 n. 尖叫,尖锐刺耳的声音",
+    "example_en": "The child screamed when he saw the spider.",
+    "example_cn": "孩子看到蜘蛛时尖叫起来。",
+    "word_family": "screamer（n. 尖叫者）, screaming（adj. 尖叫的）",
+    "memory_tips": "记忆技巧：'scream' 可能来自古诺尔斯语 'skræma'，意为 'to terrify'。联想 'scr' 声音尖锐，如 'screech'。",
+    "difficulty": "2",
+    "collocations": "scream in fear（恐惧尖叫）, scream for help（尖叫求救）, blood-curdling scream（令人毛骨悚然的尖叫）",
+    "image_prompt": "一个孩子在黑暗的房间里尖叫，脸上露出恐惧表情，阴影中有一个蜘蛛的轮廓。",
+    "synonym_diff": {
+      "words": "shriek, yell, cry out, screech, holler",
+      "quick_guide": "高声尖叫用 shriek/scream，大喊用 yell/holler，哭喊用 cry out，刺耳声用 screech。"
+    }
+  },
+  {
+    "name": "bark",
+    "symbol": "/bɑːk/",
+    "chn": "vi.(狗)吠叫 vt.厉声发令 n.(狗) 吠声;短促响亮的人声;树皮",
+    "example_en": "The dog barked loudly at the stranger.",
+    "example_cn": "狗对陌生人大声吠叫。",
+    "word_family": "barker（n. 吠叫的狗或叫卖者）",
+    "memory_tips": "记忆技巧：'bark' 作为吠叫，源自古英语 'beorcan'；作为树皮，来自古诺尔斯语 'börkr'。联想狗吠声 'bark' 类似树皮剥落声。",
+    "difficulty": "2",
+    "collocations": "bark at someone（对某人吠叫）, bark orders（厉声命令）, tree bark（树皮）",
+    "image_prompt": "一只狗在花园里对着邮递员吠叫，树皮粗糙的树木在背景中，阳光明媚。",
+    "synonym_diff": {
+      "words": "yap, howl, growl, snarl, shout",
+      "quick_guide": "狗吠用 bark/yap，嚎叫用 howl，咆哮用 growl/snarl，人喊叫用 shout。"
+    }
+  },
+  {
+    "name": "choke",
+    "symbol": "/tʃəʊk/",
+    "chn": "vt. & vi. (使)窒息;(使) 哽咽, (尤指感情激动而) 说不出话来",
+    "example_en": "He choked on a piece of food during dinner.",
+    "example_cn": "他在晚餐时被一块食物噎住了。",
+    "word_family": "choker（n. 窒息物或项链）, choking（adj. 令人窒息的）",
+    "memory_tips": "记忆技巧：'choke' 来自古英语 'ācēocian'，意为 'to stifle'。联想 'choke' 发音类似 'joke'，但表示 '窒息' 的严肃情况。",
+    "difficulty": "2",
+    "collocations": "choke on something（被某物噎住）, choke back tears（忍住眼泪）, choke hold（锁喉）",
+    "image_prompt": "一个人用餐时突然窒息，双手抓住喉咙，家人惊慌地帮忙，餐桌上有食物。",
+    "synonym_diff": {
+      "words": "suffocate, strangle, gag, smother, asphyxiate",
+      "quick_guide": "窒息用 choke/suffocate/asphyxiate，勒颈用 strangle，噎住用 gag，闷死用 smother。"
+    }
+  },
+  {
+    "name": "department",
+    "symbol": "/dɪˈpɑːtmənt/",
+    "chn": "n. 部门,局,系",
+    "example_en": "She works in the marketing department of the company.",
+    "example_cn": "她在公司的市场部工作。",
+    "word_family": "departmental（adj. 部门的）",
+    "memory_tips": "记忆技巧：'department' 来自法语 'département'，意为 'division'。联想 'de-'（分开） + 'part'（部分），表示 '分成部分'。",
+    "difficulty": "2",
+    "collocations": "department store（百货商店）, police department（警察局）, university department（大学系别）",
+    "image_prompt": "一个现代化的办公室，员工在部门隔间工作，墙上挂着部门标志，电脑屏幕显示数据。",
+    "synonym_diff": {
+      "words": "division, section, branch, unit, agency",
+      "quick_guide": "组织部门用 department/division，分支用 branch，小单位用 section/unit，政府机构用 agency。"
+    }
+  },
+  {
+    "name": "cigarette",
+    "symbol": "/ˌsɪɡəˈret/",
+    "chn": "n. 香烟",
+    "example_en": "He lit a cigarette after dinner.",
+    "example_cn": "他在晚餐后点了一支香烟。",
+    "word_family": "cigaret（n. 香烟，变体）, smoking（n. 吸烟）",
+    "memory_tips": "记忆技巧：'cigarette' 来自法语 'cigarette'，是 'cigare'（雪茄）的指小词。联想 'cigar' + 'ette'（小），表示 '小雪茄'。",
+    "difficulty": "1",
+    "collocations": "smoke a cigarette（吸烟）, cigarette butt（烟头）, cigarette lighter（打火机）",
+    "image_prompt": "一个男人在阳台吸烟，香烟烟雾缭绕，城市夜景在背景中，氛围沉思。",
+    "synonym_diff": {
+      "words": "cigar, smoke, tobacco, fag, butt",
+      "quick_guide": "香烟用 cigarette/fag，雪茄用 cigar，烟草用 tobacco，烟头用 butt。"
+    }
+  },
+  {
+    "name": "carpet",
+    "symbol": "/ˈkɑːpɪt/",
+    "chn": "n.地毯;覆盖地面的一层厚东西",
+    "example_en": "The red carpet was rolled out for the celebrities.",
+    "example_cn": "为名人铺上了红地毯。",
+    "word_family": "carpeting（n. 地毯材料）",
+    "memory_tips": "记忆技巧：'carpet' 来自古法语 'carpite'，意为 'heavy cloth'。联想 'carp' 可能源自拉丁语 'carpere'（to pluck），但表示 '覆盖物'。",
+    "difficulty": "2",
+    "collocations": "red carpet（红地毯）, carpet cleaner（地毯清洁剂）, wall-to-wall carpet（全覆盖地毯）",
+    "image_prompt": "一个豪华活动入口铺着红地毯，名人走过，闪光灯闪烁，背景有媒体和观众。",
+    "synonym_diff": {
+      "words": "rug, mat, flooring, cover, tapestry",
+      "quick_guide": "大地毯用 carpet，小地毯用 rug/mat，地板材料用 flooring，覆盖物用 cover/tapestry。"
+    }
+  },
+  {
+    "name": "automatic",
+    "symbol": "/ˌɔːtəˈmætɪk/",
+    "chn": "adj. 自动的;无意识的,不假思索的",
+    "example_en": "The doors open automatically when someone approaches.",
+    "example_cn": "当有人接近时，门自动打开。",
+    "word_family": "automatically（adv. 自动地）, automation（n. 自动化）",
+    "memory_tips": "记忆技巧：'automatic' 来自希腊语 'automatos'，意为 'self-acting'。联想 'auto-'（自己） + 'matic'（动作），表示 '自动的'。",
+    "difficulty": "2",
+    "collocations": "automatic door（自动门）, automatic response（自动反应）, automatic transmission（自动变速器）",
+    "image_prompt": "一个购物中心的自动门感应打开，人们进出流畅，现代建筑和灯光在背景中。",
+    "synonym_diff": {
+      "words": "mechanized, involuntary, reflexive, spontaneous, self-acting",
+      "quick_guide": "机械自动用 automatic/mechanized，无意识用 involuntary/reflexive，自发用 spontaneous。"
+    }
+  },
+  {
+    "name": "investigate",
+    "symbol": "/ɪnˈvestɪɡeɪt/",
+    "chn": "vt. & vi.侦查,调查;研究",
+    "example_en": "The police will investigate the crime scene.",
+    "example_cn": "警察将调查犯罪现场。",
+    "word_family": "investigation（n. 调查）, investigator（n. 调查员）",
+    "memory_tips": "记忆技巧：'investigate' 来自拉丁语 'investigare'，意为 'to track or trace'。联想 'in-'（进入） + 'vestige'（痕迹），表示 '追踪痕迹'。",
+    "difficulty": "3",
+    "collocations": "investigate a case（调查案件）, investigate thoroughly（彻底调查）, investigate possibilities（研究可能性）",
+    "image_prompt": "侦探在犯罪现场调查，戴着手套收集证据，黄色警戒线围绕，气氛紧张。",
+    "synonym_diff": {
+      "words": "examine, probe, explore, research, scrutinize",
+      "quick_guide": "官方调查用 investigate/probe，检查用 examine/scrutinize，探索用 explore/research。"
+    }
+  },
+  {
+    "name": "come about",
+    "symbol": "/kʌm əˈbaʊt/",
+    "chn": "发生",
+    "example_en": "How did this situation come about?",
+    "example_cn": "这种情况是怎么发生的？",
+    "word_family": "come（v. 来）, about（adv. 大约）",
+    "memory_tips": "记忆技巧：'come about' 是短语动词，字面意为 '来到周围'，引申为 '发生'。联想事件 'come about' 就像船改变方向。",
+    "difficulty": "3",
+    "collocations": "come about unexpectedly（意外发生）, come about through discussion（通过讨论发生）",
+    "image_prompt": "一个团队在会议室讨论，突然灵感迸发，白板上写满了想法，表示事件发生。",
+    "synonym_diff": {
+      "words": "happen, occur, take place, arise, transpire",
+      "quick_guide": "发生用 come about/happen/occur，正式发生用 take place/transpire，出现用 arise。"
+    }
+  },
+  {
+    "name": "journalist",
+    "symbol": "/ˈdʒɜːnəlɪst/",
+    "chn": "n. 新闻记者,新闻工作者",
+    "example_en": "The journalist wrote an article about the election.",
+    "example_cn": "记者写了一篇关于选举的文章。",
+    "word_family": "journalism（n. 新闻业）, journalistic（adj. 新闻的）",
+    "memory_tips": "记忆技巧：'journalist' 来自 'journal'（日记或报纸） + '-ist'（人），表示 '写日记的人' 即 '记者'。词源拉丁语 'diurnalis'。",
+    "difficulty": "3",
+    "collocations": "investigative journalist（调查记者）, freelance journalist（自由记者）, journalist ethics（记者伦理）",
+    "image_prompt": "一名记者在新闻发布会提问，拿着麦克风和笔记本，背景有摄像机和人群。",
+    "synonym_diff": {
+      "words": "reporter, correspondent, newsman, broadcaster, columnist",
+      "quick_guide": "一般记者用 journalist/reporter，特派员用 correspondent，新闻工作者用 newsman，播音员用 broadcaster，专栏作家用 columnist。"
+    }
+  },
+  {
+    "name": "priority",
+    "symbol": "/praɪˈɒrəti/",
+    "chn": "n. 优先事项,首要事情;优先权,重点",
+    "example_en": "Safety is our top priority in this project.",
+    "example_cn": "安全是我们这个项目的首要任务。",
+    "word_family": "prior（adj. 优先的）, prioritize（v. 优先处理）",
+    "memory_tips": "记忆技巧：'priority' 来自拉丁语 'prioritas'，意为 'precedence'。联想 'prior'（先前的） + '-ity'（名词后缀），表示 '优先权'。",
+    "difficulty": "3",
+    "collocations": "high priority（高优先级）, give priority to（优先考虑）, priority list（优先列表）",
+    "image_prompt": "一个项目经理在办公桌前查看优先任务列表，电脑屏幕显示日程安排，表情专注。",
+    "synonym_diff": {
+      "words": "precedence, preference, urgency, importance, primacy",
+      "quick_guide": "优先权用 priority/precedence，偏好用 preference，紧急用 urgency，重要性用 importance/primacy。"
+    }
+  },
+  {
+    "name": "contradict",
+    "symbol": "/ˌkɒntrəˈdɪkt/",
+    "chn": "vt. 相矛盾,相反;反驳",
+    "example_en": "His statement contradicts the evidence.",
+    "example_cn": "他的陈述与证据相矛盾。",
+    "word_family": "contradiction（n. 矛盾）, contradictory（adj. 矛盾的）",
+    "memory_tips": "记忆技巧：'contradict' 由 'contra-'（反对） + 'dict'（说）组成，联想为 '反对地说' 即 '反驳'。词源拉丁语 'contradicere'。",
+    "difficulty": "4",
+    "collocations": "contradict oneself（自相矛盾）, contradict a theory（反驳理论）",
+    "image_prompt": "两个人在辩论中，一人指着证据反驳对方，背景是会议室，气氛激烈。",
+    "synonym_diff": {
+      "words": "deny, oppose, refute, conflict, disprove",
+      "quick_guide": "反驳用 contradict/refute/disprove，否认用 deny，反对用 oppose，冲突用 conflict。"
+    }
+  },
+  {
+    "name": "factual",
+    "symbol": "/ˈfæktʃuəl/",
+    "chn": "adj. 事实的,真实的",
+    "example_en": "The report provided factual information about the event.",
+    "example_cn": "报告提供了关于事件的事实信息。",
+    "word_family": "fact（n. 事实）, factually（adv. 事实地）",
+    "memory_tips": "记忆技巧：'factual' 来自 'fact'（事实） + '-ual'（形容词后缀），表示 '基于事实的'。联想 'fact' 源自拉丁语 'factum'（做的事）。",
+    "difficulty": "3",
+    "collocations": "factual accuracy（事实准确性）, factual evidence（事实证据）, factual error（事实错误）",
+    "image_prompt": "一个研究员在图书馆查阅事实资料，书架上堆满了书籍和文档，电脑显示数据图表。",
+    "synonym_diff": {
+      "words": "actual, true, real, objective, verifiable",
+      "quick_guide": "事实的用 factual/actual，真实用 true/real，客观用 objective，可验证用 verifiable。"
+    }
+  },
+  {
+    "name": "instance",
+    "symbol": "/ˈɪnstəns/",
+    "chn": "n. 例子,事例",
+    "example_en": "This is an instance of poor management.",
+    "example_cn": "这是管理不善的一个例子。",
+    "word_family": "instant（adj. 立即的）",
+    "memory_tips": "记忆技巧：'instance' 来自拉丁语 'instantia'，意为 'presence' 或 'example'。联想 'in-'（在） + 'stance'（站立），表示 '站立在那作为例子'。",
+    "difficulty": "3",
+    "collocations": "for instance（例如）, in this instance（在这种情况下）, rare instance（罕见例子）",
+    "image_prompt": "一个老师在课堂上举例子，白板上写着一个实例，学生们点头理解。",
+    "synonym_diff": {
+      "words": "example, case, occurrence, specimen, illustration",
+      "quick_guide": "例子用 instance/example，案例用 case，发生用 occurrence，标本用 specimen，图示用 illustration。"
+    }
+  },
+  {
+    "name": "for instance",
+    "symbol": "/fɔːr ˈɪnstəns/",
+    "chn": "例如,比如",
+    "example_en": "Many animals, for instance, lions and tigers, are carnivores.",
+    "example_cn": "许多动物，例如狮子和老虎，是食肉动物。",
+    "word_family": "instance（n. 例子）",
+    "memory_tips": "记忆技巧：'for instance' 是固定短语，意为 'for example'。联想 'instance' 作为 '例子'，'for' 表示 '为了'，即 '为了举例'。",
+    "difficulty": "2",
+    "collocations": "use for instance（使用例如）, cite for instance（引用例如）",
+    "image_prompt": "一个演讲者在台上举例说明，PPT显示“for instance”和图像例子，观众认真聆听。",
+    "synonym_diff": {
+      "words": "for example, such as, e.g., including, like",
+      "quick_guide": "举例用 for instance/for example/such as，缩写用 e.g.，包括用 including，类似用 like。"
+    }
+  },
+  {
+    "name": "differ",
+    "symbol": "/ˈdɪfə(r)/",
+    "chn": "vi. 相异;意见相左",
+    "example_en": "Our opinions differ on this topic.",
+    "example_cn": "我们在这个话题上意见不同。",
+    "word_family": "difference（n. 不同）, different（adj. 不同的）",
+    "memory_tips": "记忆技巧：'differ' 来自拉丁语 'differre'，意为 'to carry apart'。联想 'dif-'（分开） + 'fer'（携带），表示 '携带到不同地方'。",
+    "difficulty": "3",
+    "collocations": "differ from（与...不同）, differ in opinion（意见不同）, agree to differ（求同存异）",
+    "image_prompt": "两个朋友在咖啡馆讨论，手势表示不同意见，桌面有咖啡杯和文件，氛围友好但分歧。",
+    "synonym_diff": {
+      "words": "vary, disagree, contrast, diverge, conflict",
+      "quick_guide": "相异用 differ/vary/contrast，不同意用 disagree，分歧用 diverge，冲突用 conflict。"
+    }
+  },
+  {
+    "name": "conclusion",
+    "symbol": "/kənˈkluːʒn/",
+    "chn": "n. 结论,推论;结束,结果;签订,达成",
+    "example_en": "The detective reached a conclusion after examining all the evidence.",
+    "example_cn": "侦探在检查所有证据后得出了结论。",
+    "word_family": "conclude（v. 结论）, conclusive（adj. 决定性的）",
+    "memory_tips": "记忆技巧：'conclusion' 来自拉丁语 'concludere'，意为 'to shut up' 或 'end'。联想 'con-'（一起） + 'clus'（关闭），表示 '一起关闭' 即 '结束' 或 '结论'。",
+    "difficulty": "3",
+    "collocations": "draw a conclusion（得出结论）, in conclusion（总之）, come to a conclusion（达成结论）",
+    "image_prompt": "一个科学家在实验室拿着报告，背后是实验设备，表情满意，表示得出结论。",
+    "synonym_diff": {
+      "words": "end, finale, inference, verdict, resolution",
+      "quick_guide": "结束用 conclusion/end/finale，推论用 inference，裁决用 verdict，解决用 resolution。"
+    }
+  },
+  {
+    "name": "false",
+    "symbol": "/fɔːls/",
+    "chn": "adj.错误的,不真实的;非天生的;假的,伪造的;不真诚的",
+    "example_en": "He gave a false statement to the police.",
+    "example_cn": "他向警方提供了虚假陈述。",
+    "word_family": "falsify（v. 伪造）, falsehood（n. 虚假）",
+    "memory_tips": "记忆技巧：'false' 来自拉丁语 'falsus'，意为 'deceptive'。联想 'false' 发音类似 'fault'（错误），表示 '错误的'。",
+    "difficulty": "2",
+    "collocations": "false alarm（虚假警报）, false identity（虚假身份）, false promise（虚假承诺）",
+    "image_prompt": "一个警察在调查虚假文件，桌上散落着伪造证件，表情严肃。",
+    "synonym_diff": {
+      "words": "untrue, incorrect, fake, artificial, deceitful",
+      "quick_guide": "错误用 false/untrue/incorrect，假货用 fake，人造用 artificial，欺骗用 deceitful。"
+    }
+  },
+  {
+    "name": "bring sth to light",
+    "symbol": "/brɪŋ ˈsʌmθɪŋ tuː laɪt/",
+    "chn": "揭露,披露",
+    "example_en": "The investigation brought new facts to light.",
+    "example_cn": "调查揭露了新的事实。",
+    "word_family": "light（n. 光）",
+    "memory_tips": "记忆技巧：'bring to light' 是短语，字面意为 '带到光下'，比喻 '揭露'。联想黑暗中的东西被光照亮。",
+    "difficulty": "3",
+    "collocations": "bring evidence to light（揭露证据）, bring secrets to light（披露秘密）",
+    "image_prompt": "一个记者在暗室中揭露文件，一束光照射在纸上，象征真相大白。",
+    "synonym_diff": {
+      "words": "reveal, disclose, expose, uncover, unveil",
+      "quick_guide": "揭露用 bring to light/reveal/disclose，暴露用 expose/uncover，揭幕用 unveil。"
+    }
+  },
+  {
+    "name": "minimum",
+    "symbol": "/ˈmɪnɪməm/",
+    "chn": "n. 最小值,最少量 adj. 最低的,最小的",
+    "example_en": "The minimum age for driving is 18 in this country.",
+    "example_cn": "这个国家驾驶的最低年龄是18岁。",
+    "word_family": "minimize（v. 最小化）, minimal（adj. 最小的）",
+    "memory_tips": "记忆技巧：'minimum' 来自拉丁语 'minimus'，意为 'smallest'。联想 'min' 表示 '小'，如 'minor'。",
+    "difficulty": "3",
+    "collocations": "minimum wage（最低工资）, minimum requirement（最低要求）, at a minimum（至少）",
+    "image_prompt": "一个标牌显示“最低年龄18”，背景是驾驶学校，年轻人咨询。",
+    "synonym_diff": {
+      "words": "least, lowest, minimal, slightest, bottom",
+      "quick_guide": "最少量用 minimum/least，最低点用 lowest/bottom，最小程度用 minimal/slightest。"
+    }
+  },
+  {
+    "name": "maximum",
+    "symbol": "/ˈmæksɪməm/",
+    "chn": "n. 最大量,最大限度adj.最高的,最多的",
+    "example_en": "The maximum speed on this road is 60 km/h.",
+    "example_cn": "这条路的最高速度是60公里/小时。",
+    "word_family": "maximize（v. 最大化）, maximal（adj. 最大的）",
+    "memory_tips": "记忆技巧：'maximum' 来自拉丁语 'maximus'，意为 'greatest'。联想 'max' 表示 '大'，如 'maximize'。",
+    "difficulty": "3",
+    "collocations": "maximum capacity（最大容量）, maximum effort（最大努力）, to the maximum（到最大限度）",
+    "image_prompt": "一个速度限制标志显示“60 km/h”，汽车在公路上行驶，背景有山丘。",
+    "synonym_diff": {
+      "words": " utmost, peak, highest, top, supreme",
+      "quick_guide": "最大量用 maximum/utmost，峰值用 peak，最高点用 highest/top，极致用 supreme。"
+    }
+  },
+  {
+    "name": "sum",
+    "symbol": "/sʌm/",
+    "chn": "vt. 总结,概括n. 金额;总和;全部",
+    "example_en": "The sum of 5 and 3 is 8.",
+    "example_cn": "5和3的和是8。",
+    "word_family": "summary（n. 总结）, summation（n. 总和）",
+    "memory_tips": "记忆技巧：'sum' 来自拉丁语 'summa'，意为 'total amount'。联想 'sum' 发音类似 'some'，但表示 '总和'。",
+    "difficulty": "3",
+    "collocations": "sum total（总和）, large sum of money（大笔钱）, in sum（总之）",
+    "image_prompt": "一个数学老师在黑板上计算数字之和，学生看着，公式和数字清晰。",
+    "synonym_diff": {
+      "words": "total, amount, aggregate, whole, entirety",
+      "quick_guide": "总和用 sum/total/aggregate，金额用 amount，整体用 whole/entirety。"
+    }
+  },
+  {
+    "name": "sum up",
+    "symbol": "/sʌm ʌp/",
+    "chn": "总结,概括",
+    "example_en": "To sum up, we need to focus on three key points.",
+    "example_cn": "总之，我们需要关注三个关键点。",
+    "word_family": "sum（n. 总和）",
+    "memory_tips": "记忆技巧：'sum up' 是短语动词，来自 'sum'（总和） + 'up'（向上），表示 '加起来总结'。联想数学中的求和。",
+    "difficulty": "3",
+    "collocations": "sum up the meeting（总结会议）, sum up briefly（简要概括）",
+    "image_prompt": "一个演讲者在会议结束时总结要点，PPT显示“Sum Up”和 bullet points，观众鼓掌。",
+    "synonym_diff": {
+      "words": " summarize, recap, conclude, outline, review",
+      "quick_guide": "总结用 sum up/summarize/recap，结束用 conclude，概述用 outline，回顾用 review。"
+    }
+  },
+  {
+    "name": "accurate",
+    "symbol": "/ˈækjərət/",
+    "chn": "adj. 正确无误的;精确的",
+    "example_en": "The weather forecast was accurate today.",
+    "example_cn": "今天的天气预报很准确。",
+    "word_family": "accuracy（n. 准确性）, accurately（adv. 准确地）",
+    "memory_tips": "记忆技巧：'accurate' 来自拉丁语 'accuratus'，意为 'done with care'。联想 'ac-'（向） + 'cura'（关心），表示 '精心做的' 即 '准确的'。",
+    "difficulty": "3",
+    "collocations": "accurate information（准确信息）, accurate measurement（精确测量）, highly accurate（高度准确）",
+    "image_prompt": "一个科学家使用精密仪器测量数据，实验室环境整洁，数字显示准确结果。",
+    "synonym_diff": {
+      "words": "precise, exact, correct, right, truthful",
+      "quick_guide": "精确用 accurate/precise/exact，正确用 correct/right，真实用 truthful。"
+    }
+  },
+  {
+    "name": "committed",
+    "symbol": "/kəˈmɪtɪd/",
+    "chn": "adj.尽心尽力的;承诺过的",
+    "example_en": "She is committed to her work and always gives her best.",
+    "example_cn": "她致力于工作，总是尽力而为。",
+    "word_family": "commit（v. 承诺）, commitment（n. 承诺）",
+    "memory_tips": "记忆技巧：'committed' 是 'commit' 的过去分词，用作形容词。联想 'com-'（一起） + 'mit'（送），表示 '一起送交' 即 '承诺' 或 '致力于'。",
+    "difficulty": "3",
+    "collocations": "committed relationship（承诺的关系）, committed to excellence（致力于卓越）",
+    "image_prompt": "一个员工在办公室加班，专注电脑工作，桌上咖啡杯，表示尽心尽力。",
+    "synonym_diff": {
+      "words": "dedicated, devoted, loyal, steadfast, pledged",
+      "quick_guide": "尽心尽力用 committed/dedicated/devoted，忠诚用 loyal/steadfast，承诺用 pledged。"
+    }
+  },
+  {
+    "name": "be committed to",
+    "symbol": "/biː kəˈmɪtɪd tuː/",
+    "chn": "致力于;承诺过",
+    "example_en": "The company is committed to reducing its carbon footprint.",
+    "example_cn": "公司致力于减少碳足迹。",
+    "word_family": "committed（adj. 尽心尽力的）",
+    "memory_tips": "记忆技巧：'be committed to' 是短语，表示 '致力于'。联想 'commit' 意为 '承诺'，'to' 后接目标。",
+    "difficulty": "3",
+    "collocations": "be committed to success（致力于成功）, be committed to a cause（致力于事业）",
+    "image_prompt": "一个团队在环保项目中植树，穿着统一T恤，背景有绿色标志，表示承诺。",
+    "synonym_diff": {
+      "words": "dedicated to, devoted to, engaged in, focused on, pledged to",
+      "quick_guide": "致力于用 be committed to/dedicated to/devoted to，从事用 engaged in，专注于 focused on，承诺用 pledged to。"
+    }
+  },
+  {
+    "name": "discrimination",
+    "symbol": "/dɪˌskrɪmɪˈneɪʃn/",
+    "chn": "n. 辨别力, 识别力;歧视,区别对待",
+    "example_en": "Discrimination based on race is illegal.",
+    "example_cn": "基于种族的歧视是非法的。",
+    "word_family": "discriminate（v. 区分）, discriminatory（adj. 歧视的）",
+    "memory_tips": "记忆技巧：'discrimination' 来自拉丁语 'discriminare'，意为 'to distinguish'。联想 'dis-'（分开） + 'crimin'（判断），表示 '区分'，但也可指 '不公平区分'。",
+    "difficulty": "4",
+    "collocations": "racial discrimination（种族歧视）, gender discrimination（性别歧视）, discrimination against（歧视 against）",
+    "image_prompt": "一个抗议标志反对歧视，人群举牌，表情坚定，城市背景，象征平等斗争。",
+    "synonym_diff": {
+      "words": "bias, prejudice, bigotry, distinction, discernment",
+      "quick_guide": "歧视用 discrimination/bias/prejudice/bigotry，区分用 distinction/discernment。"
+    }
+  },
+  {
+    "name": "curiosity",
+    "symbol": "/ˌkjʊəriˈɒsəti/",
+    "chn": "n. 好奇心,求知欲;奇物,珍品",
+    "example_en": "Children have a natural curiosity about the world.",
+    "example_cn": "孩子们对世界有天然的好奇心。",
+    "word_family": "curious（adj. 好奇的）, curiously（adv. 好奇地）",
+    "memory_tips": "记忆技巧：'curiosity' 来自拉丁语 'curiositas'，意为 'desire to know'。联想 'curio'（古董）但表示 '好奇心'。",
+    "difficulty": "5",
+    "collocations": "arouse curiosity（激起好奇心）, intellectual curiosity（求知欲）, curiosity shop（古玩店）",
+    "image_prompt": "一个孩子透过显微镜好奇地观察昆虫，实验室充满惊奇表情，背景有科学工具。",
+    "synonym_diff": {
+      "words": "inquisitiveness, interest, wonder, novelty, rarity",
+      "quick_guide": "好奇心用 curiosity/inquisitiveness，兴趣用 interest，惊奇用 wonder，新奇用 novelty，珍品用 rarity。"
+    }
+  },
+  {
+    "name": "journalism",
+    "symbol": "/ˈdʒɜːnəlɪzəm/",
+    "chn": "n. 新闻业,新闻工作",
+    "example_en": "She studied journalism at university to become a reporter.",
+    "example_cn": "她在大学学习新闻业以成为记者。",
+    "word_family": "journalist（n. 记者）, journalistic（adj. 新闻的）",
+    "memory_tips": "记忆技巧：'journalism' 来自 'journal'（日记） + '-ism'（行业），表示 '新闻行业'。词源拉丁语 'diurnalis'。",
+    "difficulty": "4",
+    "collocations": "investigative journalism（调查新闻）, journalism ethics（新闻伦理）, digital journalism（数字新闻）",
+    "image_prompt": "一个新闻编辑室，记者们忙碌工作，电脑屏幕显示新闻头条，电话铃声不断。",
+    "synonym_diff": {
+      "words": "reporting, news media, press, correspondence, broadcasting",
+      "quick_guide": "新闻业用 journalism/reporting，新闻媒体用 news media/press，通讯用 correspondence，广播用 broadcasting。"
+    }
+  },
+  {
+    "name": "commitment",
+    "symbol": "/kəˈmɪtmənt/",
+    "chn": "n. 献身,投入;承诺,许诺;花费",
+    "example_en": "His commitment to the project ensured its success.",
+    "example_cn": "他对项目的投入确保了其成功。",
+    "word_family": "commit（v. 承诺）, committed（adj. 尽心尽力的）",
+    "memory_tips": "记忆技巧：'commitment' 是 'commit' 的名词形式。联想 'com-'（一起） + 'mit'（送），表示 '一起送交的承诺'。",
+    "difficulty": "5",
+    "collocations": "long-term commitment（长期承诺）, commitment device（承诺机制）, show commitment（展示投入）",
+    "image_prompt": "一个运动员在训练中汗流浃背，专注表情，象征对运动的献身。",
+    "synonym_diff": {
+      "words": "dedication, devotion, obligation, promise, pledge",
+      "quick_guide": "投入用 commitment/dedication/devotion，义务用 obligation，承诺用 promise/pledge。"
+    }
+  },
+  {
+    "name": "citizen",
+    "symbol": "/ˈsɪtɪzn/",
+    "chn": "n. 公民;市民,居民",
+    "example_en": "As a citizen, it is important to vote in elections.",
+    "example_cn": "作为公民，在选举中投票很重要。",
+    "word_family": "citizenship（n. 公民身份）, citizenry（n. 市民）",
+    "memory_tips": "记忆技巧：'citizen' 来自古法语 'citeain'，意为 'inhabitant of a city'。联想 'city'（城市） + '-zen'（人），表示 '城市人'。",
+    "difficulty": "6",
+    "collocations": "law-abiding citizen（守法公民）, citizen science（公民科学）, senior citizen（老年人）",
+    "image_prompt": "一个人在城市广场投票，背景有国旗和投票箱，象征公民参与。",
+    "synonym_diff": {
+      "words": "resident, national, inhabitant, denizen, subject",
+      "quick_guide": "公民用 citizen/national，居民用 resident/inhabitant/denizen，臣民用 subject。"
+    }
+  },
+  {
+    "name": "found",
+    "symbol": "/faʊnd/",
+    "chn": "vt. 创建,创办;建立,兴建",
+    "example_en": "They founded the company in 1995.",
+    "example_cn": "他们在1995年创办了公司。",
+    "word_family": "foundation（n. 基础）, founder（n. 创始人）",
+    "memory_tips": "记忆技巧：'found' 来自拉丁语 'fundare'，意为 'to lay a base for'。联想 'found' 发音类似 'found'（find的过去式），但表示 '建立'。",
+    "difficulty": "6",
+    "collocations": "found a school（创办学校）, found a movement（发起运动）",
+    "image_prompt": "一个企业家在办公室签署文件创办新公司，团队鼓掌，背景有城市天际线。",
+    "synonym_diff": {
+      "words": "establish, create, set up, institute, launch",
+      "quick_guide": "创办用 found/establish/set up，创建用 create/institute，发起用 launch。"
+    }
+  },
+  {
+    "name": "politics",
+    "symbol": "/ˈpɒlətɪks/",
+    "chn": "n. 政治,政治事务;(个人的) 政治观点,政见",
+    "example_en": "He is very interested in politics and current events.",
+    "example_cn": "他对政治和时事非常感兴趣。",
+    "word_family": "political（adj. 政治的）, politician（n. 政治家）",
+    "memory_tips": "记忆技巧：'politics' 来自希腊语 'politika'，意为 'affairs of the city'。联想 'poly'（多） + 'tics'（技巧），表示 '管理多人的技巧'。",
+    "difficulty": "6",
+    "collocations": "enter politics（从政）, politics of identity（身份政治）, international politics（国际政治）",
+    "image_prompt": "一个政治家在演讲台上讨论政治，观众鼓掌，背景有国旗和媒体。",
+    "synonym_diff": {
+      "words": "government, policy, statecraft, ideology, governance",
+      "quick_guide": "政治用 politics/government，政策用 policy，治国术用 statecraft，意识形态用 ideology，治理用 governance。"
+    }
+  },
+  {
+    "name": "accuse",
+    "symbol": "/əˈkjuːz/",
+    "chn": "vt. 谴责,控诉",
+    "example_en": "The prosecutor accused him of theft.",
+    "example_cn": "检察官指控他盗窃。",
+    "word_family": "accusation（n. 指控）, accusatory（adj. 指责的）",
+    "memory_tips": "记忆技巧：'accuse' 来自拉丁语 'accusare'，意为 'to call to account'。联想 'ac-'（向） + 'cuse'（原因），表示 '向原因呼叫' 即 '指控'。",
+    "difficulty": "6",
+    "collocations": "accuse someone of something（指控某人某事）, falsely accuse（诬告）",
+    "image_prompt": "法庭场景，检察官指着被告 accused，法官和陪审团在场，气氛严肃。",
+    "synonym_diff": {
+      "words": "charge, blame, indict, impeach, denounce",
+      "quick_guide": "指控用 accuse/charge/indict，责备用 blame，弹劾用 impeach，谴责用 denounce。"
+    }
+  },
+  {
+    "name": "tax",
+    "symbol": "/tæks/",
+    "chn": "n. 税,税款 vt.对…征税,使纳税",
+    "example_en": "The government taxes income to fund public services.",
+    "example_cn": "政府对收入征税以资助公共服务。",
+    "word_family": "taxation（n. 征税）, taxable（adj. 应纳税的）",
+    "memory_tips": "记忆技巧：'tax' 来自拉丁语 'taxare'，意为 'to evaluate' 或 'charge'。联想 'tax' 发音类似 'tacks'，但表示 '税'。",
+    "difficulty": "6",
+    "collocations": "income tax（所得税）, tax return（纳税申报单）, tax evasion（逃税）",
+    "image_prompt": "一个会计在计算税款，桌上堆满表格和计算器，背景有日历显示报税截止日。",
+    "synonym_diff": {
+      "words": "duty, levy, tariff, impost, revenue",
+      "quick_guide": "税用 tax/duty/levy，关税用 tariff，税收用 impost/revenue。"
+    }
+  },
+  {
+    "name": "mount",
+    "symbol": "/maʊnt/",
+    "chn": "vi. 逐步增加 vt. 攀登,爬上 n.山",
+    "example_en": "Tension mounted as the deadline approached.",
+    "example_cn": "随着截止日期临近，紧张局势加剧。",
+    "word_family": "mountain（n. 山）, mounting（adj. 增加的）",
+    "memory_tips": "记忆技巧：'mount' 来自拉丁语 'montare'，意为 'to climb'。联想 'mount' 作为山，表示 '攀登' 或 '增加'。",
+    "difficulty": "6",
+    "collocations": "mount a campaign（发起活动）, mount an attack（发动攻击）, mount up（增加）",
+    "image_prompt": "一个登山者攀登雪山，背景陡峭，象征逐步增加的努力。",
+    "synonym_diff": {
+      "words": "climb, ascend, increase, rise, scale",
+      "quick_guide": "攀登用 mount/climb/ascend/scale，增加用 increase/rise。"
+    }
+  },
+  {
+    "name": "mount up",
+    "symbol": "/maʊnt ʌp/",
+    "chn": "(尺寸和数量上)增加,上升",
+    "example_en": "The costs began to mount up quickly.",
+    "example_cn": "成本开始迅速增加。",
+    "word_family": "mount（v. 增加）",
+    "memory_tips": "记忆技巧：'mount up' 是短语动词，来自 'mount'（增加） + 'up'（向上），强调 '向上增加'。联想数字上升。",
+    "difficulty": "6",
+    "collocations": "mount up over time（随时间增加）, mount up to a large amount（增加到大量）",
+    "image_prompt": "一个堆叠的账单和硬币越来越高，表示成本增加，背景有计算器。",
+    "synonym_diff": {
+      "words": "accumulate, pile up, build up, grow, escalate",
+      "quick_guide": "增加用 mount up/accumulate/pile up，建立用 build up，生长用 grow，升级用 escalate。"
+    }
+  },
+  {
+    "name": "elevation",
+    "symbol": "/ˌelɪˈveɪʃn/",
+    "chn": "n. 提高;提升;海拔",
+    "example_en": "The elevation of the mountain is 4,000 meters.",
+    "example_cn": "这座山的海拔是4000米。",
+    "word_family": "elevate（v. 提升）, elevator（n. 电梯）",
+    "memory_tips": "记忆技巧：'elevation' 来自拉丁语 'elevare'，意为 'to lift up'。联想 'e-'（出） + 'lev'（轻），表示 '使轻而升起'。",
+    "difficulty": "6",
+    "collocations": "elevation gain（海拔增益）, elevation point（高程点）, promotion and elevation（晋升和提升）",
+    "image_prompt": "一个登山者站在山顶，测量海拔，背景广阔，云层 below。",
+    "synonym_diff": {
+      "words": "altitude, height, promotion, advancement, rise",
+      "quick_guide": "海拔用 elevation/altitude/height，提升用 promotion/advancement/rise。"
+    }
+  },
+  {
+    "name": "profession",
+    "symbol": "/prəˈfeʃn/",
+    "chn": "n.行业,职业;同行;宣称",
+    "example_en": "Teaching is a noble profession.",
+    "example_cn": "教学是一个崇高的职业。",
+    "word_family": "professional（adj. 专业的）, professionally（adv. 专业地）",
+    "memory_tips": "记忆技巧：'profession' 来自拉丁语 'professio'，意为 'public declaration'。联想 'pro-'（前） + 'fess'（说），表示 '在众人面前说' 即 '宣称' 或 '职业'。",
+    "difficulty": "7",
+    "collocations": "medical profession（医疗行业）, by profession（职业是）, profession of faith（信仰宣称）",
+    "image_prompt": "一个医生在医院穿着白大褂，象征职业，背景有医疗设备。",
+    "synonym_diff": {
+      "words": "occupation, career, vocation, trade, calling",
+      "quick_guide": "职业用 profession/occupation/career，天职用 vocation/calling，行业用 trade。"
+    }
+  },
+  {
+    "name": "drama",
+    "symbol": "/ˈdrɑːmə/",
+    "chn": "n. 戏剧;戏剧性事件",
+    "example_en": "She enjoys watching drama series on TV.",
+    "example_cn": "她喜欢看电视戏剧系列。",
+    "word_family": "dramatic（adj. 戏剧性的）, dramatist（n. 剧作家）",
+    "memory_tips": "记忆技巧：'drama' 来自希腊语 'drama'，意为 'action' 或 'play'。联想 'drama' 发音类似 'dream'，但表示 '戏剧'。",
+    "difficulty": "7",
+    "collocations": "high drama（高度戏剧性）, drama club（戏剧俱乐部）, create drama（制造戏剧性）",
+    "image_prompt": "一个剧院舞台，演员表演戏剧，观众席黑暗，聚光灯聚焦。",
+    "synonym_diff": {
+      "words": "theater, play, melodrama, suspense, excitement",
+      "quick_guide": "戏剧用 drama/theater/play，情节剧用 melodrama，悬念用 suspense，兴奋用 excitement。"
+    }
+  },
+  {
+    "name": "scholarship",
+    "symbol": "/ˈskɒləʃɪp/",
+    "chn": "n. 奖学金;学术",
+    "example_en": "She received a scholarship to study abroad.",
+    "example_cn": "她获得了奖学金去国外学习。",
+    "word_family": "scholar（n. 学者）, scholarly（adj. 学术的）",
+    "memory_tips": "记忆技巧：'scholarship' 来自 'scholar'（学者） + '-ship'（状态），表示 '学术状态' 或 '奖学金'。",
+    "difficulty": "7",
+    "collocations": "apply for scholarship（申请奖学金）, academic scholarship（学术奖学金）, full scholarship（全额奖学金）",
+    "image_prompt": "一个学生在图书馆收到奖学金通知书，笑容满面，背景有书籍和电脑。",
+    "synonym_diff": {
+      "words": "grant, fellowship, bursary, learning, erudition",
+      "quick_guide": "奖学金用 scholarship/grant/fellowship/bursary，学术用 learning/erudition。"
+    }
+  },
+  {
+    "name": "category",
+    "symbol": "/ˈkætəɡəri/",
+    "chn": "n. 类别,种类",
+    "example_en": "Books are divided into categories like fiction and non-fiction.",
+    "example_cn": "书籍分为小说和非小说等类别。",
+    "word_family": "categorize（v. 分类）",
+    "memory_tips": "记忆技巧：'category' 来自希腊语 'kategoria'，意为 'accusation' 或 'class'。联想 'cat'（猫）但表示 '类别'，记忆为 '分类猫品种'。",
+    "difficulty": "7",
+    "collocations": "product category（产品类别）, fall into a category（属于某类别）, broad category（广泛类别）",
+    "image_prompt": "一个图书馆员在整理书籍分类，书架标签清晰，背景有各种书籍。",
+    "synonym_diff": {
+      "words": "class, group, type, classification, division",
+      "quick_guide": "类别用 category/class/group/type，分类用 classification/division。"
+    }
+  },
+  {
+    "name": "nevertheless",
+    "symbol": "/ˌnevəðəˈles/",
+    "chn": "adv. 尽管如此",
+    "example_en": "It was raining; nevertheless, they went for a walk.",
+    "example_cn": "尽管下雨，他们还是去散步了。",
+    "word_family": "none",
+    "memory_tips": "记忆技巧：'nevertheless' 由 'never' + 'the' + 'less' 组成，字面意为 '从不少于此'，引申为 '尽管如此'。联想为转折词。",
+    "difficulty": "7",
+    "collocations": "use nevertheless in a sentence（在句子中使用尽管如此）",
+    "image_prompt": "两个人在雨中散步，打着伞，表情快乐，象征尽管困难但继续。",
+    "synonym_diff": {
+      "words": "however, nonetheless, yet, still, despite that",
+      "quick_guide": "尽管如此用 nevertheless/however/nonetheless，但用 yet/still，尽管用 despite that。"
+    }
+  },
+  {
+    "name": "witness",
+    "symbol": "/ˈwɪtnəs/",
+    "chn": "vt. & vi. 是发生…的时间(或地点),见证;目击;作证;是…的迹象 n. 目击者,见证人;证人",
+    "example_en": "She witnessed the accident and called the police.",
+    "example_cn": "她目击了事故并报警。",
+    "word_family": "witnessable（adj. 可目睹的）",
+    "memory_tips": "记忆技巧：'witness' 来自古英语 'witnes'，意为 'knowledge' 或 'testimony'。联想 'wit'（智慧） + '-ness'，表示 '智慧的表现' 即 '见证'。",
+    "difficulty": "8",
+    "collocations": "eyewitness（目击者）, witness stand（证人席）, witness protection（证人保护）",
+    "image_prompt": "一个目击者在法庭作证，手指向证据，法官和陪审团倾听。",
+    "synonym_diff": {
+      "words": "observe, see, behold, testify, spectator",
+      "quick_guide": "目击用 witness/observe/see/behold，作证用 testify，观众用 spectator。"
+    }
+  },
+  {
+    "name": "edition",
+    "symbol": "/ɪˈdɪʃn/",
+    "chn": "n. 版本;一份,一期;版次",
+    "example_en": "The first edition of the book is very valuable.",
+    "example_cn": "这本书的第一版非常珍贵。",
+    "word_family": "edit（v. 编辑）, editor（n. 编辑）",
+    "memory_tips": "记忆技巧：'edition' 来自拉丁语 'editio'，意为 'a bringing forth'。联想 'edit'（编辑） + '-ion'（名词后缀），表示 '编辑的版本'。",
+    "difficulty": "8",
+    "collocations": "limited edition（限量版）, special edition（特别版）, morning edition（晨间版）",
+    "image_prompt": "一个收藏家展示一本书的第一版，书页泛黄，背景有书架和放大镜。",
+    "synonym_diff": {
+      "words": "version, issue, printing, release, publication",
+      "quick_guide": "版本用 edition/version/issue，印刷用 printing，发布用 release/publication。"
+    }
+  },
+  {
+    "name": "platform",
+    "symbol": "/ˈplætfɔːm/",
+    "chn": "n.平台;站台;讲台,舞台",
+    "example_en": "The train will depart from platform 3.",
+    "example_cn": "火车将从3号站台出发。",
+    "word_family": "platformer（n. 平台游戏）",
+    "memory_tips": "记忆技巧：'platform' 来自法语 'plateforme'，意为 'flat form'。联想 'plat'（平） + 'form'（形状），表示 '平台'。",
+    "difficulty": "8",
+    "collocations": "social media platform（社交媒体平台）, railway platform（铁路站台）, political platform（政治纲领）",
+    "image_prompt": "一个火车站台，火车进站，乘客等待，标志显示“Platform 3”。",
+    "synonym_diff": {
+      "words": "stage, podium, dais, base, program",
+      "quick_guide": "平台用 platform/stage/podium/dais，基础用 base，节目用 program。"
+    }
+  },
+  {
+    "name": "spring up",
+    "symbol": "/sprɪŋ ʌp/",
+    "chn": "迅速出现,突然兴起",
+    "example_en": "New cafes are springing up all over the city.",
+    "example_cn": "新咖啡馆在城市各处迅速出现。",
+    "word_family": "spring（v. 跳跃）",
+    "memory_tips": "记忆技巧：'spring up' 是短语动词，来自 'spring'（跳跃） + 'up'（向上），表示 '跳起来' 即 '迅速出现'。联想植物春天发芽。",
+    "difficulty": "8",
+    "collocations": "spring up overnight（一夜之间出现）, spring up like mushrooms（如雨后春笋般出现）",
+    "image_prompt": "一个城市街道上突然出现的新咖啡馆，人们排队，建筑现代，象征快速兴起。",
+    "synonym_diff": {
+      "words": "emerge, appear, arise, pop up, develop quickly",
+      "quick_guide": "迅速出现用 spring up/emerge/appear/arise/pop up，快速发展用 develop quickly。"
+    }
+  },
+  {
+    "name": "interaction",
+    "symbol": "/ˌɪntərˈækʃn/",
+    "chn": "n. 互动;互相作用",
+    "example_en": "The interaction between the teacher and students was positive.",
+    "example_cn": "老师和学生之间的互动是积极的。",
+    "word_family": "interact（v. 互动）, interactive（adj. 交互的）",
+    "memory_tips": "记忆技巧：'interaction' 由 'inter-'（相互） + 'action'（行动）组成，表示 '相互行动' 即 '互动'。",
+    "difficulty": "8",
+    "collocations": "social interaction（社会互动）, human-computer interaction（人机交互）, interaction effect（交互作用）",
+    "image_prompt": "一个教室场景，老师和学生小组讨论，手势交流，背景有白板和书籍。",
+    "synonym_diff": {
+      "words": "communication, exchange, interplay, collaboration, engagement",
+      "quick_guide": "互动用 interaction/communication/exchange，相互影响用 interplay，合作用 collaboration，参与用 engagement。"
+    }
+  },
+  {
+    "name": "membership",
+    "symbol": "/ˈmembəʃɪp/",
+    "chn": "n.(统称)会员,会员人数;会员资格",
+    "example_en": "The gym offers a membership that includes access to all facilities.",
+    "example_cn": "健身房提供会员资格，包括使用所有设施。",
+    "word_family": "member（n. 成员）",
+    "memory_tips": "记忆技巧：'membership' 来自 'member'（成员） + '-ship'（状态），表示 '成员状态' 或 '会员资格'。",
+    "difficulty": "8",
+    "collocations": "membership fee（会员费）, membership card（会员卡）, full membership（全权会员）",
+    "image_prompt": "一个人出示会员卡进入健身房，器械齐全，其他会员在锻炼。",
+    "synonym_diff": {
+      "words": "affiliation, association, enrollment, subscription, fellowship",
+      "quick_guide": "会员资格用 membership/affiliation/association，注册用 enrollment，订阅用 subscription，联谊会用 fellowship。"
+    }
+  },
+  {
+    "name": "chart",
+    "symbol": "/tʃɑːt/",
+    "chn": "n. 图表;海图;(the charts)排行榜",
+    "example_en": "The sales chart shows an increase in revenue.",
+    "example_cn": "销售图表显示收入增加。",
+    "word_family": "chartist（n. 图表分析者）",
+    "memory_tips": "记忆技巧：'chart' 来自希腊语 'khartes'，意为 'papyrus leaf' 或 'map'。联想 'chart' 发音类似 'art'，但表示 '图表'。",
+    "difficulty": "8",
+    "collocations": "pie chart（饼图）, chart topping（排行榜榜首）, nautical chart（海图）",
+    "image_prompt": "一个商务会议中，经理指向投影仪上的销售图表，团队讨论数据。",
+    "synonym_diff": {
+      "words": "graph, diagram, map, table, ranking",
+      "quick_guide": "图表用 chart/graph/diagram，地图用 map，表格用 table，排名用 ranking。"
+    }
+  },
+  {
+    "name": "broadcast",
+    "symbol": "/ˈbrɔːdkɑːst/",
+    "chn": "n. 广播节目,电视节目 vi. & vt.播送,广播;散布,传播",
+    "example_en": "The news was broadcast live around the world.",
+    "example_cn": "新闻向全世界直播。",
+    "word_family": "broadcaster（n. 广播员）, broadcasting（n. 广播）",
+    "memory_tips": "记忆技巧：'broadcast' 由 'broad'（广泛） + 'cast'（投掷）组成，表示 '广泛投掷' 即 '广播'。联想农民播种但用于媒体。",
+    "difficulty": "8",
+    "collocations": "live broadcast（直播）, broadcast news（广播新闻）, radio broadcast（无线电广播）",
+    "image_prompt": "一个电台工作室，主持人广播节目，麦克风和设备 visible，背景有听众。",
+    "synonym_diff": {
+      "words": "transmit, air, disseminate, telecast, spread",
+      "quick_guide": "广播用 broadcast/transmit/air/telecast，传播用 disseminate/spread。"
+    }
+  },
+  {
+    "name": "advertising",
+    "symbol": "/ˈædvətaɪzɪŋ/",
+    "chn": "n. 广告活动,广告业",
+    "example_en": "Advertising is essential for promoting new products.",
+    "example_cn": "广告对于推广新产品至关重要。",
+    "word_family": "advertise（v. 广告）, advertisement（n. 广告）",
+    "memory_tips": "记忆技巧：'advertising' 来自 'advertise'（广告） + '-ing'，表示 '广告活动'。联想 'ad-'（向） + 'vert'（转），表示 '转向注意'。",
+    "difficulty": "8",
+    "collocations": "online advertising（在线广告）, advertising campaign（广告活动）, targeted advertising（定向广告）",
+    "image_prompt": "一个广告团队在会议室讨论活动，白板上写有策略，电脑显示设计。",
+    "synonym_diff": {
+      "words": "marketing, promotion, publicity, campaigning, branding",
+      "quick_guide": "广告用 advertising/marketing/promotion，宣传用 publicity，活动用 campaigning，品牌用 branding。"
+    }
+  },
+  {
+    "name": "persuasion",
+    "symbol": "/pəˈsweɪʒn/",
+    "chn": "n. 说服,劝说;信仰",
+    "example_en": "She used persuasion to convince them to join the project.",
+    "example_cn": "她用说服来 convince 他们加入项目。",
+    "word_family": "persuade（v. 说服）, persuasive（adj. 有说服力的）",
+    "memory_tips": "记忆技巧：'persuasion' 来自拉丁语 'persuasionem'，意为 'a convincing'。联想 'per-'（通过） + 'suasion'（劝告），表示 '通过劝告'。",
+    "difficulty": "11",
+    "collocations": "power of persuasion（说服力）, gentle persuasion（温和劝说）",
+    "image_prompt": "一个演讲者在台上 persuasive 地讲话，观众点头同意，背景有幻灯片。",
+    "synonym_diff": {
+      "words": "conviction, influence, coaxing, urging, belief",
+      "quick_guide": "说服用 persuasion/influence/coaxing/urging，信念用 conviction/belief。"
+    }
+  },
+  {
+    "name": "persuade",
+    "symbol": "/pəˈsweɪd/",
+    "chn": "vt. 说服;使信服",
+    "example_en": "He tried to persuade her to change her mind.",
+    "example_cn": "他试图说服她改变主意。",
+    "word_family": "persuasion（n. 说服）, persuasive（adj. 有说服力的）",
+    "memory_tips": "记忆技巧：'persuade' 来自拉丁语 'persuadere'，意为 'to advise'。联想 'per-'（彻底） + 'suade'（劝告），表示 '彻底劝告'。",
+    "difficulty": "11",
+    "collocations": "persuade someone to do something（说服某人做某事）, persuade with facts（用事实说服）",
+    "image_prompt": "两个朋友在咖啡馆谈话，一人 persuasive 地手势，另一人思考。",
+    "synonym_diff": {
+      "words": "convince, coax, urge, influence, win over",
+      "quick_guide": "说服用 persuade/convince/coax/urge，影响用 influence，争取用 win over。"
+    }
+  },
+  {
+    "name": "advertisement",
+    "symbol": "/ədˈvɜːtɪsmənt/",
+    "chn": "n. 广告,启事;广告活动,广告宣传",
+    "example_en": "She saw an advertisement for a job online.",
+    "example_cn": "她在网上看到了一个工作广告。",
+    "word_family": "advertise（v. 广告）, advertising（n. 广告业）",
+    "memory_tips": "记忆技巧：'advertisement' 来自 'advertise' + '-ment'（名词后缀）。联想 'ad-'（向） + 'vert'（转），表示 '转向注意的东西'。",
+    "difficulty": "11",
+    "collocations": "TV advertisement（电视广告）, classified advertisement（分类广告）, advertisement board（广告牌）",
+    "image_prompt": "一个城市街道上的大型广告牌，显示产品广告，人群走过。",
+    "synonym_diff": {
+      "words": "ad, commercial, promo, notice, announcement",
+      "quick_guide": "广告用 advertisement/ad/commercial/promo，通知用 notice/announcement。"
+    }
+  },
+  {
+    "name": "channel",
+    "symbol": "/ˈtʃænl/",
+    "chn": "n. 途径,渠道;电视台;频道;方法;水渠",
+    "example_en": "Change the channel to watch the news.",
+    "example_cn": "换频道看新闻。",
+    "word_family": "channelize（v. 引导）",
+    "memory_tips": "记忆技巧：'channel' 来自拉丁语 'canalis'，意为 'pipe' 或 'groove'。联想 'channel' 发音类似 'tunnel'，但表示 '渠道'。",
+    "difficulty": "11",
+    "collocations": "TV channel（电视频道）, distribution channel（分销渠道）, English Channel（英吉利海峡）",
+    "image_prompt": "一个人用遥控器换电视频道，屏幕显示新闻播报，客厅舒适。",
+    "synonym_diff": {
+      "words": "station, medium, conduit, pathway, means",
+      "quick_guide": "频道用 channel/station，媒介用 medium，管道用 conduit，路径用 pathway，方法用 means。"
+    }
+  },
+  {
+    "name": "peak",
+    "symbol": "/piːk/",
+    "chn": "adj. 高峰时期的,最高度的 n.顶峰,高峰;山峰;尖端vi.达到高峰,达到最高值",
+    "example_en": "Tourist season peaks in the summer.",
+    "example_cn": "旅游季节在夏季达到高峰。",
+    "word_family": "peaky（adj. 尖的）",
+    "memory_tips": "记忆技巧：'peak' 可能来自拉丁语 'picus'，意为 'pointed'。联想 'peak' 发音类似 'peek'，但表示 '顶峰'。",
+    "difficulty": "11",
+    "collocations": "peak performance（最佳表现）, peak hour（高峰时间）, mountain peak（山峰）",
+    "image_prompt": "一个登山者站在雪山顶峰，旗帜飘扬，背景云海和阳光。",
+    "synonym_diff": {
+      "words": "summit, apex, zenith, climax, high point",
+      "quick_guide": "顶峰用 peak/summit/apex/zenith，高潮用 climax，高点用 high point。"
+    }
+  },
+  {
+    "name": "advertise",
+    "symbol": "/ˈædvətaɪz/",
+    "chn": "vt. & vi. 做广告,登广告;公布,征聘;展现,宣传",
+    "example_en": "They will advertise the job opening in the newspaper.",
+    "example_cn": "他们将在报纸上登广告招聘职位。",
+    "word_family": "advertisement（n. 广告）, advertising（n. 广告业）",
+    "memory_tips": "记忆技巧：'advertise' 来自拉丁语 'advertere'，意为 'to turn toward'。联想 'ad-'（向） + 'vert'（转），表示 '转向公众注意'。",
+    "difficulty": "11",
+    "collocations": "advertise a product（宣传产品）, advertise for staff（招聘员工）",
+    "image_prompt": "一个商家在街上发放广告传单，人们接收，背景有商店和标志。",
+    "synonym_diff": {
+      "words": "promote, publicize, market, announce, display",
+      "quick_guide": "做广告用 advertise/promote/publicize/market，公布用 announce，展示用 display。"
+    }
+  },
+  {
+    "name": "boost",
+    "symbol": "/buːst/",
+    "chn": "vt. 使增长,使兴旺 n. 增长,提高;帮助,激励",
+    "example_en": "The new policy will boost the economy.",
+    "example_cn": "新政策将提振经济。",
+    "word_family": "booster（n. 助推器）",
+    "memory_tips": "记忆技巧：'boost' 可能来自方言，意为 'to lift'。联想 'boost' 发音类似 'boast'，但表示 '提升'。",
+    "difficulty": "11",
+    "collocations": "boost confidence（增强信心）, energy boost（能量提升）, boost sales（提升销售）",
+    "image_prompt": "一个经理在会议中展示销售增长图表，团队兴奋，背景有“Boost”标语。",
+    "synonym_diff": {
+      "words": "increase, enhance, raise, improve, stimulate",
+      "quick_guide": "增长用 boost/increase/raise，增强用 enhance/improve，刺激用 stimulate。"
+    }
+  },
+  {
+    "name": "psychology",
+    "symbol": "/saɪˈkɒlədʒi/",
+    "chn": "n.心理(特征);心理学",
+    "example_en": "She studied psychology to understand human behavior.",
+    "example_cn": "她学习心理学以理解人类行为。",
+    "word_family": "psychologist（n. 心理学家）, psychological（adj. 心理的）",
+    "memory_tips": "记忆技巧：'psychology' 来自希腊语 'psyche'（灵魂） + '-logy'（学科），表示 '研究灵魂的学科'。联想 'psych' 表示 '心理'。",
+    "difficulty": "11",
+    "collocations": "clinical psychology（临床心理学）, child psychology（儿童心理学）, psychology of learning（学习心理学）",
+    "image_prompt": "一个心理学家在咨询室与客户谈话，笔记本和书籍在旁，氛围宁静。",
+    "synonym_diff": {
+      "words": "mind, mentality, behaviorism, cognition, psyche",
+      "quick_guide": "心理学用 psychology，心理用 mind/mentality/psyche，行为主义用 behaviorism，认知用 cognition。"
+    }
+  },
+  {
+    "name": "purchase",
+    "symbol": "/ˈpɜːtʃəs/",
+    "chn": "vt. 买,购买 n. 购买,采购;购买的东西,购买项目",
+    "example_en": "He made a purchase online for a new laptop.",
+    "example_cn": "他在网上购买了一台新笔记本电脑。",
+    "word_family": "purchaser（n. 购买者）, purchasing（n. 采购）",
+    "memory_tips": "记忆技巧：'purchase' 来自古法语 'purchacier'，意为 'to seek to obtain'。联想 'pur-'（为了） + 'chase'（追逐），表示 '为了获得而追逐'。",
+    "difficulty": "11",
+    "collocations": "make a purchase（进行购买）, purchase order（采购订单）, impulse purchase（冲动购买）",
+    "image_prompt": "一个人在网上购物，电脑屏幕显示购物车和产品，信用卡在旁边。",
+    "synonym_diff": {
+      "words": "buy, acquire, procure, shop, obtain",
+      "quick_guide": "购买用 purchase/buy/acquire/procure/shop，获得用 obtain。"
+    }
+  },
+  {
+    "name": "memorable",
+    "symbol": "/ˈmemərəbl/",
+    "chn": "adj.难忘的,值得纪念的",
+    "example_en": "The wedding was a memorable event for everyone.",
+    "example_cn": "婚礼对每个人来说都是难忘的事件。",
+    "word_family": "memory（n. 记忆）, memorize（v. 记住）",
+    "memory_tips": "记忆技巧：'memorable' 来自拉丁语 'memorabilis'，意为 'worth remembering'。联想 'memor'（记忆） + '-able'（能够），表示 '能够被记忆的'。",
+    "difficulty": "11",
+    "collocations": "memorable experience（难忘的经历）, memorable moment（难忘的时刻）",
+    "image_prompt": "一个婚礼场景，新娘新郎交换戒指，宾客微笑，背景装饰华丽。",
+    "synonym_diff": {
+      "words": "unforgettable, notable, remarkable, impressive, historic",
+      "quick_guide": "难忘的用 memorable/unforgettable，值得注意的用 notable/remarkable/impressive，历史的用 historic。"
+    }
+  },
+  {
+    "name": "slogan",
+    "symbol": "/ˈsləʊɡən/",
+    "chn": "n. 标语,口号",
+    "example_en": "The company's slogan is 'Just Do It'.",
+    "example_cn": "公司的口号是“Just Do It”。",
+    "word_family": "sloganeer（n. 口号制定者）",
+    "memory_tips": "记忆技巧：'slogan' 来自苏格兰盖尔语 'sluagh-ghairm'，意为 'battle cry'。联想 'slog'（艰苦工作） + 'an'，但表示 '口号'。",
+    "difficulty": "11",
+    "collocations": "advertising slogan（广告口号）, catchy slogan（ catchy 口号）, political slogan（政治口号）",
+    "image_prompt": "一个抗议队伍举着标语牌，上面有口号，人群聚集，城市背景。",
+    "synonym_diff": {
+      "words": "motto, catchphrase, tagline, cry, maxim",
+      "quick_guide": "口号用 slogan/motto/catchphrase/tagline，呼喊用 cry，格言用 maxim。"
+    }
+  },
+  {
+    "name": "teapot",
+    "symbol": "/ˈtiːpɒt/",
+    "chn": "n. 茶壶",
+    "example_en": "She poured tea from the teapot into cups.",
+    "example_cn": "她从茶壶倒茶到杯子里。",
+    "word_family": "tea（n. 茶）, pot（n. 壶）",
+    "memory_tips": "记忆技巧：'teapot' 是复合词，由 'tea'（茶） + 'pot'（壶）组成，直接表示 '茶壶'。联想泡茶用的壶。",
+    "difficulty": "11",
+    "collocations": "ceramic teapot（陶瓷茶壶）, teapot set（茶壶套装）",
+    "image_prompt": "一个传统茶壶在桌上，茶杯环绕，蒸汽升起，背景有花园。",
+    "synonym_diff": {
+      "words": "kettle, pot, urn, brewer, container",
+      "quick_guide": "茶壶用 teapot，烧水壶用 kettle，壶用 pot/urn，冲泡器用 brewer，容器用 container。"
+    }
+  },
+  {
+    "name": "get across",
+    "symbol": "/ɡet əˈkrɒs/",
+    "chn": "被传达,被理解,把…讲清楚",
+    "example_en": "He struggled to get his ideas across to the audience.",
+    "example_cn": "他努力让观众理解他的想法。",
+    "word_family": "get（v. 得到）, across（adv. 横过）",
+    "memory_tips": "记忆技巧：'get across' 是短语动词，字面意为 '横过'，比喻 '使观点横过到对方' 即 '传达'。联想沟通桥梁。",
+    "difficulty": "12",
+    "collocations": "get a message across（传达信息）, get the point across（讲清要点）",
+    "image_prompt": "一个演讲者在台上用手势强调观点，观众点头理解，背景有幻灯片。",
+    "synonym_diff": {
+      "words": "communicate, convey, express, transmit, clarify",
+      "quick_guide": "传达用 get across/communicate/convey/express/transmit，澄清用 clarify。"
+    }
+  },
+  {
+    "name": "brand",
+    "symbol": "/brænd/",
+    "chn": "n. 品牌;类型;烙印",
+    "example_en": "Nike is a well-known brand for sports equipment.",
+    "example_cn": "耐克是一个知名的运动装备品牌。",
+    "word_family": "branding（n. 品牌建设）, branded（adj. 品牌的）",
+    "memory_tips": "记忆技巧：'brand' 来自古英语 'brand'，意为 'fire' 或 'burning piece of wood'，引申为 '烙印' 表示所有权。联想牛烙印。",
+    "difficulty": "12",
+    "collocations": "brand identity（品牌识别）, brand loyalty（品牌忠诚度）, household brand（家喻户晓的品牌）",
+    "image_prompt": "一个商店陈列知名品牌产品，标志醒目，顾客浏览，现代装潢。",
+    "synonym_diff": {
+      "words": "label, trademark, make, type, stamp",
+      "quick_guide": "品牌用 brand/label/trademark，制造用 make，类型用 type，印章用 stamp。"
+    }
+  },
+  {
+    "name": "ambassador",
+    "symbol": "/æmˈbæsədə(r)/",
+    "chn": "n. 大使,代表",
+    "example_en": "The ambassador met with foreign leaders to discuss trade.",
+    "example_cn": "大使与外国领导人会面讨论贸易。",
+    "word_family": "ambassadorial（adj. 大使的）",
+    "memory_tips": "记忆技巧：'ambassador' 来自拉丁语 'ambactus'，意为 'servant' 或 'messenger'。联想 'ambass' 类似 'embassy'（大使馆）。",
+    "difficulty": "12",
+    "collocations": "brand ambassador（品牌大使）, ambassador to France（驻法国大使）",
+    "image_prompt": "一个大使在正式场合握手，穿着西装，背景有国旗和媒体。",
+    "synonym_diff": {
+      "words": "envoy, diplomat, representative, delegate, emissary",
+      "quick_guide": "大使用 ambassador/envoy/diplomat，代表用 representative/delegate/emissary。"
+    }
+  },
+  {
+    "name": "placement",
+    "symbol": "/ˈpleɪsmənt/",
+    "chn": "n. 放置;安置",
+    "example_en": "The placement of furniture in the room was optimal for space.",
+    "example_cn": "房间家具的放置对空间来说是最佳的。",
+    "word_family": "place（v. 放置）",
+    "memory_tips": "记忆技巧：'placement' 来自 'place'（放置） + '-ment'（名词后缀），表示 '放置的行为或结果'。",
+    "difficulty": "12",
+    "collocations": "job placement（工作安置）, product placement（产品植入）, placement test（分班测试）",
+    "image_prompt": "一个室内设计师在规划家具放置，蓝图和模型在桌，房间空旷。",
+    "synonym_diff": {
+      "words": "positioning, arrangement, location, installation, assignment",
+      "quick_guide": "放置用 placement/positioning/arrangement，位置用 location，安装用 installation，分配用 assignment。"
+    }
+  },
+  {
+    "name": "rating",
+    "symbol": "/ˈreɪtɪŋ/",
+    "chn": "n. 收视率;等级,级别",
+    "example_en": "The TV show has a high rating among viewers.",
+    "example_cn": "这个电视节目在观众中收视率高。",
+    "word_family": "rate（v. 评级）",
+    "memory_tips": "记忆技巧：'rating' 来自 'rate'（评级） + '-ing'，表示 '评级的結果'。联想电视收视率。",
+    "difficulty": "12",
+    "collocations": "credit rating（信用评级）, star rating（星级评分）, audience rating（观众评分）",
+    "image_prompt": "一个电视制作人查看收视率图表，屏幕显示数据，办公室忙碌。",
+    "synonym_diff": {
+      "words": "score, grade, evaluation, ranking, assessment",
+      "quick_guide": "评分用 rating/score/grade，评估用 evaluation/assessment，排名用 ranking。"
+    }
+  },
+  {
+    "name": "sponsor",
+    "symbol": "/ˈspɒnsə(r)/",
+    "chn": "vt. 赞助;主办;为慈善活动捐款;资助 n. 赞助商;为慈善活动捐款的人",
+    "example_en": "The company will sponsor the local sports team.",
+    "example_cn": "公司将赞助本地运动队。",
+    "word_family": "sponsorship（n. 赞助）",
+    "memory_tips": "记忆技巧：'sponsor' 来自拉丁语 'spondere'，意为 'to promise'。联想 'spon' 类似 'response'，但表示 '承诺资助'。",
+    "difficulty": "12",
+    "collocations": "corporate sponsor（企业赞助商）, sponsor an event（赞助活动）",
+    "image_prompt": "一个企业代表支票赞助运动队，队员穿着印有赞助商标志的服装，背景体育场。",
+    "synonym_diff": {
+      "words": "backer, patron, supporter, funder, promoter",
+      "quick_guide": "赞助商用 sponsor/backer/patron/supporter/funder，推广者用 promoter。"
+    }
+  },
+  {
+    "name": "absorb",
+    "symbol": "/əbˈzɔːb/",
+    "chn": "vt. 理解,掌握;吸收;吸引全部注意力",
+    "example_en": "The sponge can absorb a lot of water.",
+    "example_cn": "海绵能吸收很多水。",
+    "word_family": "absorption（n. 吸收）, absorbing（adj. 吸引人的）",
+    "memory_tips": "记忆技巧：'absorb' 来自拉丁语 'absorbere'，意为 'to swallow up'。联想 'ab-'（ away） + 'sorb'（吸收），表示 '吸收掉'。",
+    "difficulty": "12",
+    "collocations": "absorb information（吸收信息）, absorb shock（吸收冲击）, absorb light（吸收光）",
+    "image_prompt": "一个学生专注阅读书籍，吸收知识，图书馆安静，阳光从窗户射入。",
+    "synonym_diff": {
+      "words": "soak up, take in, assimilate, engross, captivate",
+      "quick_guide": "吸收用 absorb/soak up/take in/assimilate，吸引注意力用 engross/captivate。"
+    }
+  },
+  {
+    "name": "discount",
+    "symbol": "/ˈdɪskaʊnt/",
+    "chn": "n. 折扣 vt. 打折出售",
+    "example_en": "The store offers a 20% discount on all items.",
+    "example_cn": "商店所有商品打8折。",
+    "word_family": "discountable（adj. 可折扣的）",
+    "memory_tips": "记忆技巧：'discount' 来自拉丁语 'discomputare'，意为 'to deduct'。联想 'dis-'（ away） + 'count'（计算），表示 '计算掉一部分'。",
+    "difficulty": "12",
+    "collocations": "special discount（特别折扣）, discount rate（折扣率）, discount store（折扣店）",
+    "image_prompt": "一个商店橱窗显示“20% Off”折扣标志，顾客排队，商品琳琅满目。",
+    "synonym_diff": {
+      "words": "reduction, deduction, rebate, cut, allowance",
+      "quick_guide": "折扣用 discount/reduction/deduction/rebate，削减用 cut，津贴用 allowance。"
+    }
+  },
+  {
+    "name": "tailor",
+    "symbol": "/ˈteɪlə(r)/",
+    "chn": "vt. 专门制作,定做 n. 裁缝",
+    "example_en": "The suit was tailored to fit him perfectly.",
+    "example_cn": "这套西装是定做的，合身完美。",
+    "word_family": "tailoring（n. 裁缝业）",
+    "memory_tips": "记忆技巧：'tailor' 来自古法语 'taillour'，意为 'cutter'。联想 'tail'（尾巴）但表示 '裁缝'，记忆为 '剪裁尾巴'。",
+    "difficulty": "12",
+    "collocations": "tailor-made（定做的）, tailor a solution（定制解决方案）",
+    "image_prompt": "一个裁缝在工作室测量客户，布料和剪刀在旁，背景有缝纫机。",
+    "synonym_diff": {
+      "words": "customize, adapt, adjust, sew, fashion",
+      "quick_guide": "定做用 tailor/customize，适应用 adapt/adjust，缝纫用 sew，时尚用 fashion。"
+    }
+  },
+  {
+    "name": "brighten up",
+    "symbol": "/ˈbraɪtn ʌp/",
+    "chn": "(使)增添乐趣;(使) 明亮",
+    "example_en": "The flowers brighten up the room.",
+    "example_cn": "花朵使房间明亮起来。",
+    "word_family": "bright（adj. 明亮的）",
+    "memory_tips": "记忆技巧：'brighten up' 是短语动词，来自 'bright'（明亮） + 'up'（向上），表示 '使明亮' 或 '使快乐'。联想阳光使事物明亮。",
+    "difficulty": "13",
+    "collocations": "brighten up the day（让一天变得明亮）, brighten up with color（用色彩增添乐趣）",
+    "image_prompt": "一个房间添加鲜花和色彩后变得明亮快乐，阳光透过窗户，氛围温馨。",
+    "synonym_diff": {
+      "words": "lighten, cheer up, enliven, perk up, illuminate",
+      "quick_guide": "使明亮用 brighten up/lighten/illuminate，使快乐用 cheer up/enliven/perk up。"
+    }
+  },
+  {
+    "name": "housing",
+    "symbol": "/ˈhaʊzɪŋ/",
+    "chn": "n. 住房,住宅",
+    "example_en": "The city has a shortage of affordable housing.",
+    "example_cn": "城市缺乏经济适用房。",
+    "word_family": "house（n. 房子）",
+    "memory_tips": "记忆技巧：'housing' 来自 'house'（房子） + '-ing'，表示 '住房供应' 或 '住宅'。联想提供住所。",
+    "difficulty": "13",
+    "collocations": "housing market（住房市场）, public housing（公共住房）, housing development（住宅开发）",
+    "image_prompt": "一个城市 skyline 有各种住宅建筑，起重机在建新房，象征住房发展。",
+    "synonym_diff": {
+      "words": "accommodation, dwelling, residence, shelter, lodging",
+      "quick_guide": "住房用 housing/accommodation/dwelling/residence，庇护所用 shelter，住宿用 lodging。"
+    }
+  },
+  {
+    "name": "estate",
+    "symbol": "/ɪˈsteɪt/",
+    "chn": "n. 住宅区;(通常指农村的) 大片私有土地;个人财产,(尤指) 遗产",
+    "example_en": "He inherited a large estate from his grandfather.",
+    "example_cn": "他从祖父那里继承了一大片地产。",
+    "word_family": "real estate（n. 房地产）",
+    "memory_tips": "记忆技巧：'estate' 来自拉丁语 'status'，意为 'state' 或 'condition'。联想 'e-' + 'state'，表示 '状态' 引申为 '财产'。",
+    "difficulty": "13",
+    "collocations": "real estate agent（房地产经纪人）, estate planning（遗产规划）, housing estate（住宅区）",
+    "image_prompt": "一个豪华庄园，广阔土地和豪宅，继承文件在桌，象征遗产。",
+    "synonym_diff": {
+      "words": "property, land, assets, inheritance, manor",
+      "quick_guide": "地产用 estate/property/land/manor，资产用 assets，遗产用 inheritance。"
+    }
+  },
+  {
+    "name": "housing estate",
+    "symbol": "/ˈhaʊzɪŋ ɪˈsteɪt/",
+    "chn": "住宅区,住宅群",
+    "example_en": "They live in a modern housing estate on the outskirts of the city.",
+    "example_cn": "他们住在城市郊区的一个现代住宅区。",
+    "word_family": "housing（n. 住房）, estate（n. 地产）",
+    "memory_tips": "记忆技巧：'housing estate' 是复合词，由 'housing'（住房） + 'estate'（地产）组成，表示 '住房地产' 即 '住宅区'。",
+    "difficulty": "13",
+    "collocations": "new housing estate（新住宅区）, housing estate management（住宅区管理）",
+    "image_prompt": "一个规划整齐的住宅区，房屋相似，绿化带，家庭在散步。",
+    "synonym_diff": {
+      "words": "residential area, subdivision, development, community, neighborhood",
+      "quick_guide": "住宅区用 housing estate/residential area/subdivision/development，社区用 community/neighborhood。"
+    }
+  },
+  {
+    "name": "amuse",
+    "symbol": "/əˈmjuːz/",
+    "chn": "vt.(提供) 消遣;逗笑",
+    "example_en": "The clown amused the children at the party.",
+    "example_cn": "小丑在派对上逗笑了孩子们。",
+    "word_family": "amusement（n. 娱乐）, amusing（adj. 有趣的）",
+    "memory_tips": "记忆技巧：'amuse' 来自法语 'amuser'，意为 'to entertain'。联想 'a-'（ to） + 'muse'（缪斯），表示 '向缪斯寻求娱乐'。",
+    "difficulty": "13",
+    "collocations": "amuse oneself（自娱自乐）, amuse the audience（逗乐观众）",
+    "image_prompt": "一个小丑在儿童派对上表演，孩子们大笑，气球和礼物 around。",
+    "synonym_diff": {
+      "words": "entertain, delight, cheer, please, divert",
+      "quick_guide": "逗笑用 amuse/entertain/delight/cheer/please，转移注意力用 divert。"
+    }
+  },
+    {"name":"2"},
+  {
+    "name": "solidarity",
+    "symbol": "/ˌsɒlɪˈdærəti/",
+    "chn": "n. 团结,齐心协力",
+    "example_en": "The team showed great solidarity during the difficult times.",
+    "example_cn": "团队在困难时期展现了伟大的团结。",
+    "word_family": "solidarize (v. 团结一致), solidary (adj. 团结的)",
+    "memory_tips": "记忆技巧：拆分为 'solid'（坚固的） + 'arity'（类似 charity 慈善），联想为坚固的慈善即团结。词源来自法语 solidarité。",
+    "difficulty": "3",
+    "collocations": "show solidarity, in solidarity with, sense of solidarity",
+    "image_prompt": "一群人手臂挽着手臂，站在一起，背景有团队旗帜，表示团结一致。",
+    "synonym_diff": {
+      "words": "unity, cohesion, fellowship, support",
+      "quick_guide": "unity 强调整体统一，cohesion 强调内部粘合，fellowship 强调同伴情谊，solidarity 特指在困难中的相互支持。"
+    }
+  },
+  {
+    "name": "BCE",
+    "symbol": "/ˌbiː siː ˈiː/",
+    "chn": "abbr. 公元前",
+    "example_en": "The ancient civilization flourished around 2000 BCE.",
+    "example_cn": "古文明在公元前2000年左右繁荣。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：BCE 是 'Before Common Era' 的缩写，与 'BC'（Before Christ）同义，用于世俗语境。",
+    "difficulty": "2",
+    "collocations": "date in BCE, years BCE",
+    "image_prompt": "一个历史时间线图，标注着BCE的日期和古代事件。",
+    "synonym_diff": {
+      "words": "BC, Before Christ",
+      "quick_guide": "BCE 和 BC 都表示公元前，BCE 是中性术语，BC 基于基督教纪年。"
+    }
+  },
+  {
+    "name": "participate",
+    "symbol": "/pɑːˈtɪsɪpeɪt/",
+    "chn": "vi. 参加,参与",
+    "example_en": "She loves to participate in school activities.",
+    "example_cn": "她喜欢参加学校活动。",
+    "word_family": "participation (n. 参加,参与), participant (n. 参与者,参加者)",
+    "memory_tips": "记忆技巧：拆分为 'parti'（部分） + 'cipate'（类似 capture 捕获），联想为成为一部分即参与。词源来自拉丁语 participare。",
+    "difficulty": "2",
+    "collocations": "participate in, participate actively",
+    "image_prompt": "一个学生举起手在课堂上积极参与讨论，老师鼓励地微笑。",
+    "synonym_diff": {
+      "words": "join, take part, engage, involve",
+      "quick_guide": "join 强调加入团体，take part 和 participate 同义，engage 强调投入，involve 强调被包含。"
+    }
+  },
+  {
+    "name": "compete",
+    "symbol": "/kəmˈpiːt/",
+    "chn": "vi. 参加比赛;竞争",
+    "example_en": "Athletes compete for gold medals in the Olympics.",
+    "example_cn": "运动员在奥运会上争夺金牌。",
+    "word_family": "competition (n. 比赛), competitor (n. 竞争者;对手), competitive (adj. 有竞争力的)",
+    "memory_tips": "记忆技巧：拆分为 'com'（共同） + 'pete'（寻求），联想为共同寻求即竞争。词源来自拉丁语 competere。",
+    "difficulty": "3",
+    "collocations": "compete with, compete against, compete for",
+    "image_prompt": "运动员在跑道上奔跑竞争，观众欢呼，表示比赛场景。",
+    "synonym_diff": {
+      "words": "contest, rival, vie, struggle",
+      "quick_guide": "contest 强调正式比赛，rival 强调对手关系，vie 用于竞争资源，struggle 强调艰难竞争，compete 通用指竞争或比赛。"
+    }
+  },
+  {
+    "name": "racial",
+    "symbol": "/ˈreɪʃl/",
+    "chn": "adj. 种族的;种族间的",
+    "example_en": "The city promotes racial harmony through events.",
+    "example_cn": "这座城市通过活动促进种族和谐。",
+    "word_family": "race (n. 种族), racially (adv. 种族地)",
+    "memory_tips": "记忆技巧：拆分为 'race'（种族） + 'ial'（形容词后缀），直接联想。词源来自 race。",
+    "difficulty": "3",
+    "collocations": "racial discrimination, racial equality, racial group",
+    "image_prompt": "不同种族的人们在一起欢笑交流，背景有和谐标语。",
+    "synonym_diff": {
+      "words": "ethnic, cultural, tribal",
+      "quick_guide": "ethnic 强调文化或民族背景，cultural 强调文化特征，tribal 强调部落，racial 特指基于种族的。"
+    }
+  },
+  {
+    "name": "diverse",
+    "symbol": "/daɪˈvɜːs/",
+    "chn": "adj. 多种多样的,不同的",
+    "example_en": "The school has a diverse student population.",
+    "example_cn": "这所学校有多样化的学生群体。",
+    "word_family": "diversity (n. 多样性), diversify (v. 多样化)",
+    "memory_tips": "记忆技巧：拆分为 'di'（分开） + 'verse'（转），联想为转向不同方向即多样。词源来自拉丁语 diversus。",
+    "difficulty": "3",
+    "collocations": "diverse culture, diverse opinions, highly diverse",
+    "image_prompt": "一个教室里有不同背景的学生在合作学习，地图和旗帜显示多样性。",
+    "synonym_diff": {
+      "words": "varied, miscellaneous, heterogeneous, assorted",
+      "quick_guide": "varied 强调变化性，miscellaneous 强调混杂，heterogeneous 强调异质性，assorted 强调分类多样，diverse 强调广泛差异。"
+    }
+  },
+  {
+    "name": "joint",
+    "symbol": "/dʒɔɪnt/",
+    "chn": "adj. 联合的,共同的 n. 关节;接合处",
+    "example_en": "They made a joint effort to clean the park.",
+    "example_cn": "他们共同努力清洁公园。",
+    "word_family": "join (v. 参加), jointly (adv. 共同地)",
+    "memory_tips": "记忆技巧：拆分为 'join'（加入） + 't'，联想为加入点即关节或共同。词源来自古法语 joint。",
+    "difficulty": "3",
+    "collocations": "joint venture, joint effort, knee joint",
+    "image_prompt": "两个人一起抬一个箱子，表示共同努力；插画显示人体膝关节。",
+    "synonym_diff": {
+      "words": "combined, collective, shared, connected",
+      "quick_guide": "combined 强调合并，collective 强调集体，shared 强调共享，connected 强调连接，joint 强调共同行动或接合点。"
+    }
+  },
+  {
+    "name": "motivate",
+    "symbol": "/ˈməʊtɪveɪt/",
+    "chn": "vt. 激励,激发;成为…的动机,是…的原因",
+    "example_en": "The coach motivates the players to do their best.",
+    "example_cn": "教练激励球员尽力而为。",
+    "word_family": "motivation (n. 动力;诱因;积极性), motivated (adj. 有动机的;有积极性的)",
+    "memory_tips": "记忆技巧：拆分为 'motiv'（动机） + 'ate'（动词后缀），联想为给予动机。词源来自拉丁语 motivus。",
+    "difficulty": "3",
+    "collocations": "motivate students, motivate employees, highly motivated",
+    "image_prompt": "一个教练在场上激励运动员，运动员充满决心地训练。",
+    "synonym_diff": {
+      "words": "inspire, encourage, stimulate, drive",
+      "quick_guide": "inspire 强调鼓舞人心，encourage 强调鼓励，stimulate 强调刺激，drive 强调内在驱动，motivate 强调提供动机。"
+    }
+  },
+  {
+    "name": "motto",
+    "symbol": "/ˈmɒtəʊ/",
+    "chn": "n. 格言,座右铭",
+    "example_en": "Her motto is 'Never give up'.",
+    "example_cn": "她的座右铭是“永不放弃”。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：拆分为 'mot'（动机） + 'to'，联想为动机性语句。词源来自意大利语 motto。",
+    "difficulty": "2",
+    "collocations": "personal motto, school motto, live by a motto",
+    "image_prompt": "一个笔记本上写着励志格言，背景有阳光和书籍。",
+    "synonym_diff": {
+      "words": "saying, maxim, adage, slogan",
+      "quick_guide": "saying 泛指谚语，maxim 强调道德格言，adage 强调古老谚语，slogan 强调口号，motto 强调个人或组织座右铭。"
+    }
+  },
+  {
+    "name": "boundary",
+    "symbol": "/ˈbaʊndri/",
+    "chn": "n. 边界,分界线",
+    "example_en": "The river forms a natural boundary between the two countries.",
+    "example_cn": "这条河是两国之间的自然边界。",
+    "word_family": "bound (v. 限制), boundless (adj. 无限的)",
+    "memory_tips": "记忆技巧：拆分为 'bound'（限制） + 'ary'（地点后缀），联想为限制线。词源来自中古英语 boundary。",
+    "difficulty": "3",
+    "collocations": "cross the boundary, set boundaries, national boundary",
+    "image_prompt": "地图上标注国界线，河流作为自然分界，有旗帜和符号。",
+    "synonym_diff": {
+      "words": "border, limit, frontier, edge",
+      "quick_guide": "border 强调地理边界，limit 强调限度，frontier 强调边疆或新领域，edge 强调边缘，boundary 强调分界线或限制。"
+    }
+  },
+  {
+    "name": "demonstrate",
+    "symbol": "/ˈdemənstreɪt/",
+    "chn": "vt. 表现,表露;证实,证明;示范,演示 vi. 游行示威",
+    "example_en": "The scientist demonstrated the experiment to the class.",
+    "example_cn": "科学家向班级演示了实验。",
+    "word_family": "demonstration (n. 演示;示威), demonstrative (adj. 说明的)",
+    "memory_tips": "记忆技巧：拆分为 'de'（完全） + 'monstrate'（显示），联想为完全显示即演示。词源来自拉丁语 demonstrare。",
+    "difficulty": "4",
+    "collocations": "demonstrate how, demonstrate against, clearly demonstrate",
+    "image_prompt": "一个老师在实验室演示化学实验，学生围观学习；或人群举牌示威。",
+    "synonym_diff": {
+      "words": "show, prove, illustrate, exhibit",
+      "quick_guide": "show 通用显示，prove 强调证明，illustrate 强调图解说明，exhibit 强调展览，demonstrate 强调通过演示证明或示威。"
+    }
+  },
+  {
+    "name": "afterwards",
+    "symbol": "/ˈɑːftəwədz/",
+    "chn": "adv. 以后,后来",
+    "example_en": "We had dinner and afterwards watched a movie.",
+    "example_cn": "我们吃了晚餐，后来看了电影。",
+    "word_family": "after (prep. 之后), aftereffect (n. 后果)",
+    "memory_tips": "记忆技巧：拆分为 'after'（之后） + 'wards'（向），联想为向之后时间。词源来自古英语 æfterweard。",
+    "difficulty": "2",
+    "collocations": "soon afterwards, immediately afterwards",
+    "image_prompt": "一个时间线显示事件顺序，从晚餐到电影，箭头指示之后。",
+    "synonym_diff": {
+      "words": "later, subsequently, thereafter, next",
+      "quick_guide": "later 通用后来，subsequently 强调顺序之后，thereafter 正式用法，next 强调下一个，afterwards 强调在之后时间。"
+    }
+  },
+  {
+    "name": "proceed",
+    "symbol": "/prəˈsiːd/",
+    "chn": "vi. 接着做,继而做;继续从事(或进行);行进,前往",
+    "example_en": "After the break, we will proceed with the meeting.",
+    "example_cn": "休息后，我们将继续会议。",
+    "word_family": "procedure (n. 程序), proceeding (n. 进行;诉讼)",
+    "memory_tips": "记忆技巧：拆分为 'pro'（向前） + 'ceed'（走），联想向前走即继续。词源来自拉丁语 procedere。",
+    "difficulty": "4",
+    "collocations": "proceed to, proceed with, proceed carefully",
+    "image_prompt": "一个会议室内，人们从休息状态回到座位继续讨论。",
+    "synonym_diff": {
+      "words": "continue, advance, progress, go on",
+      "quick_guide": "continue 强调持续，advance 强调前进，progress 强调进展，go on 口语化继续，proceed 正式用法指继续或进行。"
+    }
+  },
+  {
+    "name": "flame",
+    "symbol": "/fleɪm/",
+    "chn": "n. 火焰,火舌",
+    "example_en": "The candle flame flickered in the wind.",
+    "example_cn": "蜡烛火焰在风中闪烁。",
+    "word_family": "flaming (adj. 燃烧的), flammable (adj. 易燃的)",
+    "memory_tips": "记忆技巧：拆分为 'flam'（火） + 'e'，联想为火。词源来自拉丁语 flamma。",
+    "difficulty": "2",
+    "collocations": "burst into flames, flame of passion, control the flame",
+    "image_prompt": "一个蜡烛燃烧着明亮的火焰，背景黑暗，表示温暖或危险。",
+    "synonym_diff": {
+      "words": "fire, blaze, inferno, light",
+      "quick_guide": "fire 通用火，blaze 强调大火，inferno 强调地狱般大火，light 强调光，flame 强调火焰本身。"
+    }
+  },
+  {
+    "name": "applaud",
+    "symbol": "/əˈplɔːd/",
+    "chn": "vt. & vi. 称赞,赞许;鼓掌",
+    "example_en": "The audience applauded after the performance.",
+    "example_cn": "观众在表演后鼓掌。",
+    "word_family": "applause (n. 鼓掌,掌声;喝彩)",
+    "memory_tips": "记忆技巧：拆分为 'ap'（向） + 'plaud'（击打），联想为击打手掌即鼓掌。词源来自拉丁语 applaudere。",
+    "difficulty": "3",
+    "collocations": "applaud loudly, applaud the effort, round of applause",
+    "image_prompt": "一个剧院场景，观众起立鼓掌，演员鞠躬致谢。",
+    "synonym_diff": {
+      "words": "clap, praise, commend, cheer",
+      "quick_guide": "clap 强调鼓掌动作，praise 强调赞扬，commend 正式称赞，cheer 强调欢呼，applaud 兼指鼓掌和赞许。"
+    }
+  },
+  {
+    "name": "track and field",
+    "symbol": "/træk ənd fiːld/",
+    "chn": "田径运动",
+    "example_en": "He excels in track and field events like running and jumping.",
+    "example_cn": "他在跑步和跳远等田径项目上表现出色。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：拆分为 'track'（跑道） + 'and' + 'field'（场地），联想为跑道和场地的运动。",
+    "difficulty": "3",
+    "collocations": "track and field athlete, track and field competition",
+    "image_prompt": "运动员在跑道上跑步或在沙坑跳远，体育场背景，表示田径运动。",
+    "synonym_diff": {
+      "words": "athletics, sports, running events",
+      "quick_guide": "athletics 泛指体育运动，sports 通用，running events 强调跑步项目，track and field 特指田径赛事。"
+    }
+  },
+  {
+    "name": "consistent",
+    "symbol": "/kənˈsɪstənt/",
+    "chn": "adj. 一致的,始终如一的;连续的",
+    "example_en": "Her consistent effort led to success.",
+    "example_cn": "她始终如一的努力导致了成功。",
+    "word_family": "consistency (n. 一致性), consistently (adv. 一贯地)",
+    "memory_tips": "记忆技巧：拆分为 'con'（共同） + 'sist'（站） + 'ent'，联想为站在一起即一致。词源来自拉丁语 consistere。",
+    "difficulty": "4",
+    "collocations": "consistent with, consistent performance, remain consistent",
+    "image_prompt": "一个图表显示稳定上升的趋势线，表示一致性；或个人每日坚持习惯。",
+    "synonym_diff": {
+      "words": "steady, uniform, constant, reliable",
+      "quick_guide": "steady 强调稳定，uniform 强调统一性，constant 强调恒定，reliable 强调可靠，consistent 强调行为或结果的一致性。"
+    }
+  },
+  {
+    "name": "call on sb to do sth",
+    "symbol": "",
+    "chn": "正式邀请某人做某事;请求某人做某事",
+    "example_en": "The teacher called on the student to answer the question.",
+    "example_cn": "老师邀请学生回答问题。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：短语记忆，'call on' 表示请求或拜访，联想为呼叫某人行动。",
+    "difficulty": "3",
+    "collocations": "call on someone to help, call on the government",
+    "image_prompt": "一个教室场景，老师指向学生邀请回答问题，学生思考。",
+    "synonym_diff": {
+      "words": "ask, request, invite, urge",
+      "quick_guide": "ask 通用请求，request 正式要求，invite 强调邀请，urge 强调敦促，call on 正式请求或邀请。"
+    }
+  },
+  {
+    "name": "humanity",
+    "symbol": "/hjuːˈmænəti/",
+    "chn": "n. (统称)人,人类;人性;人道,仁慈",
+    "example_en": "We must protect humanity from global threats.",
+    "example_cn": "我们必须保护人类免受全球威胁。",
+    "word_family": "human (n. 人), humane (adj. 人道的)",
+    "memory_tips": "记忆技巧：拆分为 'human'（人） + 'ity'（性质），联想为人的性质。词源来自拉丁语 humanitas。",
+    "difficulty": "4",
+    "collocations": "crimes against humanity, sense of humanity",
+    "image_prompt": "地球上有不同种族的人手拉手，表示人类团结；或慈善场景显示仁慈。",
+    "synonym_diff": {
+      "words": "mankind, humankind, human nature, compassion",
+      "quick_guide": "mankind 和 humankind 都指人类，human nature 指人性，compassion 指同情，humanity 兼指人类和仁慈。"
+    }
+  },
+  {
+    "name": "rank",
+    "symbol": "/ræŋk/",
+    "chn": "vi. & vt. 属于某等级,把…分等级;排列,使排成行 n. 地位,级别;等级;排,列;军衔",
+    "example_en": "He ranks among the top students in the class.",
+    "example_cn": "他在班级中排名前列。",
+    "word_family": "ranking (n. 排名), ranker (n. 列兵)",
+    "memory_tips": "记忆技巧：拆分为 'ran'（跑） + 'k'，联想为跑步比赛排名。词源来自古法语 ranc。",
+    "difficulty": "3",
+    "collocations": "high rank, military rank, rank first",
+    "image_prompt": "一个排行榜显示学生成绩排名；或士兵列队表示军衔。",
+    "synonym_diff": {
+      "words": "position, status, grade, class",
+      "quick_guide": "position 强调位置，status 强调社会地位，grade 强调等级分数，class 强调类别，rank 强调排序或级别。"
+    }
+  },
+  {
+    "name": "trend",
+    "symbol": "/trend/",
+    "chn": "n. 趋势,趋向",
+    "example_en": "There is a growing trend towards online shopping.",
+    "example_cn": "有一个日益增长的趋势朝向网购。",
+    "word_family": "trendy (adj. 流行的), trendsetter (n. 潮流引领者)",
+    "memory_tips": "记忆技巧：拆分为 't' + 'rend'（倾向），联想为倾向性趋势。词源来自古英语 trendan。",
+    "difficulty": "3",
+    "collocations": "current trend, follow the trend, set a trend",
+    "image_prompt": "一个图表显示上升趋势线，背景有购物袋和网络图标。",
+    "synonym_diff": {
+      "words": "tendency, direction, fashion, vogue",
+      "quick_guide": "tendency 强调倾向，direction 强调方向，fashion 和 vogue 强调时尚，trend 强调发展趋势。"
+    }
+  },
+  {
+    "name": "hurdle",
+    "symbol": "/ˈhɜːdl/",
+    "chn": "n. 跨栏赛;栏架;障碍",
+    "example_en": "She overcame many hurdles to achieve her dream.",
+    "example_cn": "她克服了许多障碍来实现梦想。",
+    "word_family": "hurdler (n. 跨栏运动员), hurdling (n. 跨栏赛)",
+    "memory_tips": "记忆技巧：拆分为 'hurd'（栏） + 'le'，联想为跨栏。词源来自古英语 hyrdel。",
+    "difficulty": "3",
+    "collocations": "clear a hurdle, face hurdles, hurdle race",
+    "image_prompt": "运动员跨过栏架在跑道上比赛；或人生障碍的隐喻插图。",
+    "synonym_diff": {
+      "words": "obstacle, barrier, challenge, impediment",
+      "quick_guide": "obstacle 通用障碍，barrier 强调屏障，challenge 强调挑战，impediment 强调阻碍，hurdle 特指跨栏或比喻障碍。"
+    }
+  },
+  {
+    "name": "election",
+    "symbol": "/ɪˈlekʃn/",
+    "chn": "n. 选举,推选;当选",
+    "example_en": "The election results were announced yesterday.",
+    "example_cn": "选举结果昨天宣布了。",
+    "word_family": "elect (v. 选举,推选;选择,决定), elective (adj. 选举的)",
+    "memory_tips": "记忆技巧：拆分为 'e'（出） + 'lect'（选择） + 'ion'，联想为选择出来。词源来自拉丁语 eligere。",
+    "difficulty": "3",
+    "collocations": "general election, win the election, election campaign",
+    "image_prompt": "投票箱和选票，人们排队投票，背景有选举海报。",
+    "synonym_diff": {
+      "words": "vote, polling, selection, appointment",
+      "quick_guide": "vote 强调投票动作，polling 强调投票过程，selection 强调选择，appointment 强调任命，election 强调正式选举。"
+    }
+  },
+  {
+    "name": "advent",
+    "symbol": "/ˈædvent/",
+    "chn": "n. (重要事件、人物等的)到来,出现",
+    "example_en": "The advent of the internet changed the world.",
+    "example_cn": "互联网的出现改变了世界。",
+    "word_family": "adventitious (adj. 外来的)",
+    "memory_tips": "记忆技巧：拆分为 'ad'（向） + 'vent'（来），联想为到来。词源来自拉丁语 adventus。",
+    "difficulty": "4",
+    "collocations": "advent of technology, advent season",
+    "image_prompt": "一个时间线显示互联网的出现，从旧技术到现代电脑。",
+    "synonym_diff": {
+      "words": "arrival, coming, emergence, onset",
+      "quick_guide": "arrival 强调到达，coming 强调来临，emergence 强调浮现，onset 强调开始，advent 强调重要事件到来。"
+    }
+  },
+  {
+    "name": "faith",
+    "symbol": "/feɪθ/",
+    "chn": "n. 信心;宗教信仰",
+    "example_en": "She has faith in her team's ability to win.",
+    "example_cn": "她对团队获胜的能力有信心。",
+    "word_family": "faithful (adj. 忠实的), faithfully (adv. 忠实地)",
+    "memory_tips": "记忆技巧：拆分为 'fai'（信任） + 'th'，联想为信任。词源来自拉丁语 fides。",
+    "difficulty": "3",
+    "collocations": "lose faith, keep faith, religious faith",
+    "image_prompt": "一个人双手合十祈祷，表示信心；或团队合作显示信任。",
+    "synonym_diff": {
+      "words": "trust, belief, confidence, religion",
+      "quick_guide": "trust 强调信任，belief 强调信念，confidence 强调自信，religion 强调宗教，faith 兼指信心和宗教信仰。"
+    }
+  },
+  {
+    "name": "ambition",
+    "symbol": "/æmˈbɪʃn/",
+    "chn": "n. 追求的目标,夙愿;野心,雄心,壮志",
+    "example_en": "His ambition is to become a doctor.",
+    "example_cn": "他的雄心是成为医生。",
+    "word_family": "ambitious (adj. 有野心的;有雄心的;有抱负的)",
+    "memory_tips": "记忆技巧：拆分为 'amb'（周围） + 'ition'（行动），联想为四处行动追求目标。词源来自拉丁语 ambitio。",
+    "difficulty": "4",
+    "collocations": "achieve ambition, personal ambition, full of ambition",
+    "image_prompt": "一个学生看着医学院海报，眼神 determined，表示雄心壮志。",
+    "synonym_diff": {
+      "words": "goal, aspiration, dream, drive",
+      "quick_guide": "goal 强调目标，aspiration 强调渴望，dream 强调梦想，drive 强调内驱力，ambition 强调强烈追求或野心。"
+    }
+  },
+  {
+    "name": "ascend",
+    "symbol": "/əˈsend/",
+    "chn": "vi. & vt. 上升,升高,登高",
+    "example_en": "The hikers ascended the mountain slowly.",
+    "example_cn": "徒步者慢慢登上山顶。",
+    "word_family": "ascent (n. 上升), ascending (adj. 上升的)",
+    "memory_tips": "记忆技巧：拆分为 'a'（向） + 'scend'（爬），联想向上爬。词源来自拉丁语 ascendere。",
+    "difficulty": "4",
+    "collocations": "ascend to, ascend the throne, gradually ascend",
+    "image_prompt": "登山者攀登陡峭山峰，绳索和装备，背景蓝天。",
+    "synonym_diff": {
+      "words": "rise, climb, mount, escalate",
+      "quick_guide": "rise 强调上升，climb 强调攀登，mount 强调登上，escalate 强调升级，ascend 正式用语指上升或登高。"
+    }
+  },
+  {
+    "name": "identical",
+    "symbol": "/aɪˈdentɪkl/",
+    "chn": "adj. 完全同样的",
+    "example_en": "The twins are identical in appearance.",
+    "example_cn": "这对双胞胎外貌完全相同。",
+    "word_family": "identity (n. 身份), identify (v. 识别)",
+    "memory_tips": "记忆技巧：拆分为 'ident'（相同） + 'ical'（形容词后缀），联想为相同的。词源来自拉丁语 identicus。",
+    "difficulty": "3",
+    "collocations": "identical to, identical twins, nearly identical",
+    "image_prompt": "两个一模一样的双胞胎站在一起，穿着相同衣服。",
+    "synonym_diff": {
+      "words": "same, duplicate, alike, matching",
+      "quick_guide": "same 强调相同，duplicate 强调复制品，alike 强调相似，matching 强调匹配，identical 强调完全一样。"
+    }
+  },
+  {
+    "name": "fellow",
+    "symbol": "/ˈfeləʊ/",
+    "chn": "adj. 同伴的,同情况的,同类的 n. 同辈,同类;男人,家伙",
+    "example_en": "He is a fellow student in my class.",
+    "example_cn": "他是我班上的同学。",
+    "word_family": "fellowship (n. 伙伴关系), fellowman (n. 同胞)",
+    "memory_tips": "记忆技巧：拆分为 'fell'（伙伴） + 'ow'，联想为伙伴。词源来自古英语 feolaga。",
+    "difficulty": "3",
+    "collocations": "fellow citizens, old fellow, research fellow",
+    "image_prompt": "一群学生在一起学习，表示同伴；或一个男人微笑打招呼。",
+    "synonym_diff": {
+      "words": "companion, peer, colleague, guy",
+      "quick_guide": "companion 强调同伴，peer 强调同龄人，colleague 强调同事，guy 口语化家伙，fellow 通用指同类人或家伙。"
+    }
+  },
+  {
+    "name": "relay",
+    "symbol": "/ˈriːleɪ/",
+    "chn": "n. 接力赛 vt. 转发(信息、消息等);播放,转播",
+    "example_en": "The team won the relay race.",
+    "example_cn": "团队赢了接力赛。",
+    "word_family": "relayer (n. 转播者)",
+    "memory_tips": "记忆技巧：拆分为 're'（再） + 'lay'（放），联想为再次放置即转发。词源来自古法语 relais。",
+    "difficulty": "3",
+    "collocations": "relay race, relay message, broadcast relay",
+    "image_prompt": "运动员传递接力棒在跑道上；或卫星转播信号。",
+    "synonym_diff": {
+      "words": "pass, transmit, broadcast, carry",
+      "quick_guide": "pass 强调传递，transmit 强调传输，broadcast 强调广播，carry 强调携带，relay 强调接力或转播。"
+    }
+  },
+  {
+    "name": "chest",
+    "symbol": "/tʃest/",
+    "chn": "n. 胸部;大箱子",
+    "example_en": "He felt pain in his chest after running.",
+    "example_cn": "跑步后他感到胸部疼痛。",
+    "word_family": "chesty (adj. 胸部发达的)",
+    "memory_tips": "记忆技巧：拆分为 'che' + 'st'，联想为胸腔或箱子。词源来自古英语 cest。",
+    "difficulty": "2",
+    "collocations": "chest pain, treasure chest, chest of drawers",
+    "image_prompt": "一个人捂着胸部表示不适；或一个古老宝箱打开显示宝藏。",
+    "synonym_diff": {
+      "words": "thorax, breast, box, trunk",
+      "quick_guide": "thorax 医学胸腔，breast 强调乳房，box 通用箱子，trunk 大行李箱，chest 兼指胸部和箱子。"
+    }
+  },
+  {
+    "name": "cheek",
+    "symbol": "/tʃiːk/",
+    "chn": "n. 面颊,脸颊",
+    "example_en": "She has rosy cheeks.",
+    "example_cn": "她有红润的面颊。",
+    "word_family": "cheeky (adj. 厚脸皮的)",
+    "memory_tips": "记忆技巧：拆分为 'chee' + 'k'，联想为脸颊。词源来自古英语 cece。",
+    "difficulty": "2",
+    "collocations": "cheek to cheek, turn the other cheek",
+    "image_prompt": "一个孩子微笑，特写红润脸颊；或两个人跳舞脸颊相贴。",
+    "synonym_diff": {
+      "words": "face, jowl, impudence",
+      "quick_guide": "face 泛指脸，jowl 强调下颌，impudence 强调厚颜，cheek 特指面颊或口语无礼。"
+    }
+  },
+  {
+    "name": "half-marathon",
+    "symbol": "/ˌhɑːf ˈmærəθən/",
+    "chn": "n. 半程马拉松赛跑",
+    "example_en": "She trained for months to run the half-marathon.",
+    "example_cn": "她训练了几个月来跑半程马拉松。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：拆分为 'half'（半） + 'marathon'（马拉松），直接联想。",
+    "difficulty": "3",
+    "collocations": "run a half-marathon, half-marathon event",
+    "image_prompt": "运动员在城市街道上跑步，标志显示半程马拉松距离。",
+    "synonym_diff": {
+      "words": "marathon, race, long-distance run",
+      "quick_guide": "marathon 全程马拉松，race 泛指比赛，long-distance run 长跑，half-marathon 特指半程马拉松。"
+    }
+  },
+  {
+    "name": "amateur",
+    "symbol": "/ˈæmətə(r)/",
+    "chn": "n. 业余运动员,业余爱好者;生手,外行 adj. 业余的",
+    "example_en": "He is an amateur photographer who loves nature.",
+    "example_cn": "他是一名热爱自然的业余摄影师。",
+    "word_family": "amateurish (adj. 业余的)",
+    "memory_tips": "记忆技巧：拆分为 'ama'（爱） + 'teur'（者），联想为爱好者。词源来自法语 amateur。",
+    "difficulty": "3",
+    "collocations": "amateur athlete, amateur radio, amateur night",
+    "image_prompt": "一个人用相机拍摄风景，表示业余爱好；或运动员非职业比赛。",
+    "synonym_diff": {
+      "words": "nonprofessional, hobbyist, novice, beginner",
+      "quick_guide": "nonprofessional 强调非职业，hobbyist 强调爱好者，novice 和 beginner 强调新手，amateur 兼指业余和生手。"
+    }
+  },
+  {
+    "name": "ankle",
+    "symbol": "/ˈæŋkl/",
+    "chn": "n. 踝,踝关节",
+    "example_en": "She twisted her ankle while playing basketball.",
+    "example_cn": "她在打篮球时扭伤了脚踝。",
+    "word_family": "anklet (n. 脚镯)",
+    "memory_tips": "记忆技巧：拆分为 'ank' + 'le'，联想为脚踝。词源来自古英语 ancleow。",
+    "difficulty": "2",
+    "collocations": "ankle injury, ankle brace, swollen ankle",
+    "image_prompt": "一个人坐着按摩脚踝，背景有篮球；或解剖图显示踝关节。",
+    "synonym_diff": {
+      "words": "joint, foot, limb",
+      "quick_guide": "joint 泛指关节，foot 强调脚，limb 强调肢体，ankle 特指踝关节。"
+    }
+  },
+  {
+    "name": "gradually",
+    "symbol": "/ˈɡrædʒuəli/",
+    "chn": "adv. 逐渐地,逐步地",
+    "example_en": "The weather gradually improved throughout the day.",
+    "example_cn": "天气在整个白天逐渐改善。",
+    "word_family": "gradual (adj. 逐渐的,逐步的,渐进的)",
+    "memory_tips": "记忆技巧：拆分为 'gradual'（逐渐的） + 'ly'（副词后缀），直接联想。词源来自拉丁语 gradualis。",
+    "difficulty": "3",
+    "collocations": "gradually increase, gradually become, learn gradually",
+    "image_prompt": "一个时间序列图显示温度逐渐上升；或植物慢慢生长。",
+    "synonym_diff": {
+      "words": "slowly, progressively, steadily, incrementally",
+      "quick_guide": "slowly 强调慢速，progressively 强调渐进，steadily 强调稳定，incrementally 强调增量，gradually 强调逐步变化。"
+    }
+  },
+  {
+    "name": "session",
+    "symbol": "/ˈseʃn/",
+    "chn": "n. 一段时间,一场;会议,开庭;学年",
+    "example_en": "The therapy session lasted for an hour.",
+    "example_cn": "治疗会话持续了一个小时。",
+    "word_family": "sessional (adj. 会议的)",
+    "memory_tips": "记忆技巧：拆分为 'sess'（坐） + 'ion'，联想为坐着进行的会议。词源来自拉丁语 sessio。",
+    "difficulty": "3",
+    "collocations": "training session, recording session, court session",
+    "image_prompt": "一个会议室人们开会；或学生学习小组会话。",
+    "synonym_diff": {
+      "words": "meeting, period, sitting, term",
+      "quick_guide": "meeting 强调会议，period 强调时期，sitting 强调开庭，term 强调学期，session 强调一段时间或会话。"
+    }
+  },
+  {
+    "name": "limit",
+    "symbol": "/ˈlɪmɪt/",
+    "chn": "n. 限度,限制;极限,限量;界限 vt. 限制,限定;限量,减量",
+    "example_en": "There is a speed limit on this road.",
+    "example_cn": "这条路上有速度限制。",
+    "word_family": "limitation (n. 限制), limited (adj. 有限的), limitless (adj. 无限制的,无界限的)",
+    "memory_tips": "记忆技巧：拆分为 'lim'（界限） + 'it'，联想为限制。词源来自拉丁语 limes。",
+    "difficulty": "3",
+    "collocations": "set a limit, within limits, limit access",
+    "image_prompt": "路标显示速度限制；或图表有上限线。",
+    "synonym_diff": {
+      "words": "restriction, boundary, cap, constraint",
+      "quick_guide": "restriction 强调约束，boundary 强调边界，cap 强调上限，constraint 强调制约，limit 通用指限度或限制。"
+    }
+  },
+  {
+    "name": "marathon",
+    "symbol": "/ˈmærəθən/",
+    "chn": "n. 马拉松赛跑;马拉松式的活动(或工作)",
+    "example_en": "Running a marathon requires intense training.",
+    "example_cn": "跑马拉松需要高强度训练。",
+    "word_family": "marathoner (n. 马拉松运动员)",
+    "memory_tips": "记忆技巧：来自希腊地名 Marathon，联想为长距离赛跑。",
+    "difficulty": "3",
+    "collocations": "run a marathon, marathon session, marathon race",
+    "image_prompt": "运动员在城市马拉松比赛中跑步，观众 cheering。",
+    "synonym_diff": {
+      "words": "long-distance race, endurance event, lengthy task",
+      "quick_guide": "long-distance race 长跑比赛，endurance event 耐力事件，lengthy task 漫长任务，marathon 特指马拉松或比喻长时间活动。"
+    }
+  },
+  {
+    "name": "chairman",
+    "symbol": "/ˈtʃeəmən/",
+    "chn": "n. (委员会的)委员长, 主席;(会议的) 主席,主持人",
+    "example_en": "The chairman opened the meeting with a speech.",
+    "example_cn": "主席以演讲开场会议。",
+    "word_family": "chair (n. 椅子;主席), chairperson (n. 主席)",
+    "memory_tips": "记忆技巧：拆分为 'chair'（椅子） + 'man'（人），联想为主席位的人。",
+    "difficulty": "3",
+    "collocations": "company chairman, elected chairman, chairman of the board",
+    "image_prompt": "一个会议室内，主席坐在首位发言，与会者倾听。",
+    "synonym_diff": {
+      "words": "president, leader, head, moderator",
+      "quick_guide": "president 强调总统或会长，leader 强调领导者，head 强调头目，moderator 强调调解人，chairman 强调会议或委员会主席。"
+    }
+  },
+  {
+    "name": "constitution",
+    "symbol": "/ˌkɒnstɪˈtjuːʃn/",
+    "chn": "n. 体质,身体素质;宪法,章程",
+    "example_en": "She has a strong constitution and rarely gets sick.",
+    "example_cn": "她体质强健，很少生病。",
+    "word_family": "constitutional (adj. 宪法的;体质的)",
+    "memory_tips": "记忆技巧：拆分为 'con'（共同） + 'stitut'（建立） + 'ion'，联想为共同建立的文件即宪法。词源来自拉丁语 constituere。",
+    "difficulty": "4",
+    "collocations": "written constitution, physical constitution",
+    "image_prompt": "一个人锻炼身体表示强健体质；或宪法文件展示。",
+    "synonym_diff": {
+      "words": "charter, health, makeup, framework",
+      "quick_guide": "charter 强调宪章，health 强调健康，makeup 强调组成，framework 强调框架，constitution 兼指宪法和体质。"
+    }
+  },
+  {
+    "name": "pour",
+    "symbol": "/pɔː(r)/",
+    "chn": "vt. & vi. 倒,斟;倾倒,倒出;涌流,倾泻;下大雨",
+    "example_en": "She poured tea into the cup.",
+    "example_cn": "她把茶倒入杯中。",
+    "word_family": "pourer (n. 倾倒者), pouring (adj. 倾盆的)",
+    "memory_tips": "记忆技巧：拆分为 'p' + 'our'，联想为倾倒。词源来自古法语 purer。",
+    "difficulty": "2",
+    "collocations": "pour out, pour down, pour concrete",
+    "image_prompt": "一个人倒水从壶到杯；或大雨倾泻场景。",
+    "synonym_diff": {
+      "words": "decant, flow, stream, spill",
+      "quick_guide": "decant 强调小心倾倒，flow 强调流动，stream 强调流泻，spill 强调溢出，pour 通用指倒或涌流。"
+    }
+  },
+  {
+    "name": "walk on air",
+    "symbol": "",
+    "chn": "欢天喜地,得意扬扬",
+    "example_en": "After hearing the good news, he was walking on air.",
+    "example_cn": "听到好消息后，他欢天喜地。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：短语记忆，联想为走路像在空气中一样轻快，表示高兴。",
+    "difficulty": "3",
+    "collocations": "be walking on air",
+    "image_prompt": "一个人跳跃欢笑，背景有彩虹和云朵，表示极度快乐。",
+    "synonym_diff": {
+      "words": "elated, overjoyed, thrilled, ecstatic",
+      "quick_guide": "elated 兴高采烈，overjoyed 非常高兴，thrilled 激动，ecstatic 狂喜，walk on air 口语化表示欢天喜地。"
+    }
+  },
+  {
+    "name": "keep sth in perspective",
+    "symbol": "",
+    "chn": "正确客观地看待",
+    "example_en": "It's important to keep problems in perspective.",
+    "example_cn": "正确看待问题很重要。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：短语记忆，'perspective' 表示视角，联想为保持正确视角。",
+    "difficulty": "4",
+    "collocations": "keep things in perspective",
+    "image_prompt": "一个人用望远镜看远方，表示客观视角；或平衡 scales。",
+    "synonym_diff": {
+      "words": "objectivity, balance, proportion, viewpoint",
+      "quick_guide": "objectivity 强调客观，balance 强调平衡，proportion 强调比例，viewpoint 强调观点，keep in perspective 短语表示客观看待。"
+    }
+  },
+  {
+    "name": "celebrity",
+    "symbol": "/səˈlebrəti/",
+    "chn": "n. 名人;名望",
+    "example_en": "The celebrity attended the charity event.",
+    "example_cn": "这位名人参加了慈善活动。",
+    "word_family": "celebrate (v. 庆祝), celebrated (adj. 著名的)",
+    "memory_tips": "记忆技巧：拆分为 'celebr'（庆祝） + 'ity'（状态），联想为被庆祝的人。词源来自拉丁语 celebritas。",
+    "difficulty": "3",
+    "collocations": "international celebrity, celebrity status",
+    "image_prompt": "红毯上名人微笑挥手，粉丝和相机围绕。",
+    "synonym_diff": {
+      "words": "star, fame, personality, renown",
+      "quick_guide": "star 强调明星，fame 强调名声，personality 强调人物，renown 强调声誉，celebrity 强调名人身份。"
+    }
+  },
+  {
+    "name": "opponent",
+    "symbol": "/əˈpəʊnənt/",
+    "chn": "n. 对手,竞争者;反对者",
+    "example_en": "He respected his opponent in the debate.",
+    "example_cn": "他尊重辩论中的对手。",
+    "word_family": "oppose (v. 反对,抵制), opposed (adj. 反对的,截然不同的), opposing (adj. 相反的)",
+    "memory_tips": "记忆技巧：拆分为 'op'（对抗） + 'ponent'（放置），联想为对抗者。词源来自拉丁语 opponere。",
+    "difficulty": "3",
+    "collocations": "political opponent, fierce opponent",
+    "image_prompt": "两个棋手对弈，表示对手；或辩论场景。",
+    "synonym_diff": {
+      "words": "rival, adversary, competitor, enemy",
+      "quick_guide": "rival 强调竞争者，adversary 强调敌手，competitor 强调比赛对手，enemy 强调敌人，opponent 通用指对手或反对者。"
+    }
+  },
+  {
+    "name": "humility",
+    "symbol": "/hjuːˈmɪləti/",
+    "chn": "n. 谦逊,谦虚",
+    "example_en": "His humility made him well-liked by everyone.",
+    "example_cn": "他的谦逊让他深受大家喜爱。",
+    "word_family": "humble (adj. 谦逊的)",
+    "memory_tips": "记忆技巧：拆分为 'hum'（地） + 'ility'（性质），联想为接地气的性质。词源来自拉丁语 humilitas。",
+    "difficulty": "4",
+    "collocations": "show humility, sense of humility",
+    "image_prompt": "一个人低头接受奖项，表示谦逊；或帮助他人场景。",
+    "synonym_diff": {
+      "words": "modesty, meekness, unpretentiousness, lowliness",
+      "quick_guide": "modesty 强调谦逊，meekness 强调温顺，unpretentiousness 强调不张扬，lowliness 强调低下，humility 强调谦卑态度。"
+    }
+  },
+  {
+    "name": "grace",
+    "symbol": "/ɡreɪs/",
+    "chn": "n. 高雅,文雅;优美;风度,体面",
+    "example_en": "She moved with grace on the dance floor.",
+    "example_cn": "她在舞池中优雅地移动。",
+    "word_family": "graceful (adj. 优美的,优雅的), gracefully (adv. 优美地;优雅地;雅致地)",
+    "memory_tips": "记忆技巧：拆分为 'g' + 'race'（赛跑），但实际来自拉丁语 gratia，联想为优雅。",
+    "difficulty": "3",
+    "collocations": "with grace, fall from grace, saving grace",
+    "image_prompt": "芭蕾舞者优雅表演；或社交场合得体行为。",
+    "synonym_diff": {
+      "words": "elegance, poise, charm, dignity",
+      "quick_guide": "elegance 强调优雅，poise 强调镇定，charm 强调魅力，dignity 强调尊严，grace 强调优美或风度。"
+    }
+  },
+  {
+    "name": "dignity",
+    "symbol": "/ˈdɪɡnəti/",
+    "chn": "n. 尊严;自尊;高贵",
+    "example_en": "He maintained his dignity even in difficult times.",
+    "example_cn": "即使在困难时期，他也保持了尊严。",
+    "word_family": "dignified (adj. 高贵的)",
+    "memory_tips": "记忆技巧：拆分为 'dign'（价值） + 'ity'（状态），联想为有价值的状态。词源来自拉丁语 dignitas。",
+    "difficulty": "4",
+    "collocations": "human dignity, with dignity, lose dignity",
+    "image_prompt": "一个人站立挺拔，表情自豪，表示尊严；或皇家仪式。",
+    "synonym_diff": {
+      "words": "self-respect, honor, nobility, prestige",
+      "quick_guide": "self-respect 强调自尊，honor 强调荣誉，nobility 强调高贵，prestige 强调威望，dignity 强调尊严或体面。"
+    }
+  },
+  {
+    "name": "bobsleigh",
+    "symbol": "/ˈbɒbsleɪ/",
+    "chn": "n. 大雪橇(供两人或两人以上比赛用)",
+    "example_en": "The bobsleigh team raced down the icy track.",
+    "example_cn": "大雪橇团队在冰道上竞速。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：拆分为 'bob'（摆动） + 'sleigh'（雪橇），联想为摆动雪橇。",
+    "difficulty": "4",
+    "collocations": "bobsleigh race, Olympic bobsleigh",
+    "image_prompt": "运动员乘坐大雪橇在冰道滑行，速度很快。",
+    "synonym_diff": {
+      "words": "sled, toboggan, luge",
+      "quick_guide": "sled 通用雪橇，toboggan 平底雪橇，luge 单人雪橇，bobsleigh 特指大雪橇比赛。"
+    }
+  },
+  {
+    "name": "unselfish",
+    "symbol": "/ʌnˈselfɪʃ/",
+    "chn": "adj. 无私的,忘我的",
+    "example_en": "Her unselfish actions helped many people.",
+    "example_cn": "她无私的行为帮助了很多人。",
+    "word_family": "unselfishly (adv. 无私地), unselfishness (n. 无私)",
+    "memory_tips": "记忆技巧：拆分为 'un'（不） + 'selfish'（自私的），直接联想。",
+    "difficulty": "3",
+    "collocations": "unselfish love, unselfish behavior",
+    "image_prompt": "一个人分享食物给他人，表示无私；或志愿者工作。",
+    "synonym_diff": {
+      "words": "selfless, altruistic, generous, philanthropic",
+      "quick_guide": "selfless 同义无私，altruistic 强调利他，generous 强调慷慨，philanthropic 强调慈善，unselfish 强调不自私。"
+    }
+  },
+  {
+    "name": "idiom",
+    "symbol": "/ˈɪdiəm/",
+    "chn": "n. 习语,成语",
+    "example_en": "Break a leg' is an idiom meaning good luck.",
+    "example_cn": "“Break a leg”是一个意为好运的习语。",
+    "word_family": "idiomatic (adj. 地道的)",
+    "memory_tips": "记忆技巧：拆分为 'idio'（个人） + 'm'，联想为个人表达方式。词源来自希腊语 idioma。",
+    "difficulty": "4",
+    "collocations": "common idiom, understand idioms",
+    "image_prompt": "一本书打开显示习语列表，如“rain cats and dogs”。",
+    "synonym_diff": {
+      "words": "phrase, expression, saying, proverb",
+      "quick_guide": "phrase 强调短语，expression 强调表达，saying 强调谚语，proverb 强调谚语，idiom 特指习语或成语。"
+    }
+  },
+  {
+    "name": "Find one’s way into",
+    "symbol": "",
+    "chn": "偶然来到,无意中处于",
+    "example_en": "The lost puppy found its way into our garden.",
+    "example_cn": "迷路的小狗无意中来到了我们的花园。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：短语记忆，联想为找到路径进入。",
+    "difficulty": "3",
+    "collocations": "find one's way into something",
+    "image_prompt": "一只小狗穿过篱�进入花园，表示偶然来到。",
+    "synonym_diff": {
+      "words": "stumble upon, end up in, accidentally enter",
+      "quick_guide": "stumble upon 偶然发现，end up in 最终处于，accidentally enter 意外进入，find one's way into 强调无意中到达。"
+    }
+  },
+  {
+    "name": "league",
+    "symbol": "/liːɡ/",
+    "chn": "n. 联赛;等级,级别",
+    "example_en": "He plays in the professional football league.",
+    "example_cn": "他在职业足球联赛中比赛。",
+    "word_family": "leaguer (n. 联赛队员)",
+    "memory_tips": "记忆技巧：拆分为 'lea' + 'gue'，联想为联盟。词源来自拉丁语 liga。",
+    "difficulty": "3",
+    "collocations": "baseball league, in a league of its own",
+    "image_prompt": "运动员在球场上比赛，背景有联赛标志；或等级图表。",
+    "synonym_diff": {
+      "words": "association, division, level, category",
+      "quick_guide": "association 强调协会，division 强调分部，level 强调水平，category 强调类别，league 强调联赛或等级。"
+    }
+  },
+  {
+    "name": "opposing",
+    "symbol": "/əˈpəʊzɪŋ/",
+    "chn": "adj. 对抗的;相反的",
+    "example_en": "The opposing teams shook hands before the game.",
+    "example_cn": "对抗的团队在赛前握手。",
+    "word_family": "oppose (v. 反对,抵制), opposed (adj. 反对的,截然不同的), opponent (n. 对手,反对者)",
+    "memory_tips": "记忆技巧：拆分为 'op'（对抗） + 'posing'（放置），联想为对抗的。词源来自拉丁语 opponere。",
+    "difficulty": "3",
+    "collocations": "opposing views, opposing force",
+    "image_prompt": "两个运动队对峙，表示对抗；或箭头指向相反方向。",
+    "synonym_diff": {
+      "words": "conflicting, contrary, antagonistic, rival",
+      "quick_guide": "conflicting 强调冲突，contrary 强调相反，antagonistic 强调敌对，rival 强调竞争，opposing 强调对抗或相反。"
+    }
+  },
+  {
+    "name": "net",
+    "symbol": "/net/",
+    "chn": "n. (the net) 球网;网,网状物",
+    "example_en": "The ball hit the net and went out.",
+    "example_cn": "球击中球网出界了。",
+    "word_family": "network (n. 网络), netting (n. 网)",
+    "memory_tips": "记忆技巧：拆分为 'n' + 'et'，联想为网。词源来自古英语 net。",
+    "difficulty": "2",
+    "collocations": "fishing net, internet, net profit",
+    "image_prompt": "网球网在球场上；或渔网在水中。",
+    "synonym_diff": {
+      "words": "web, mesh, grid, internet",
+      "quick_guide": "web 强调蜘蛛网，mesh 强调网孔，grid 强调网格，internet 强调互联网，net 通用指网或净利。"
+    }
+  },
+  {
+    "name": "move the goalposts",
+    "symbol": "",
+    "chn": "改变条件(或规则)",
+    "example_en": "They moved the goalposts during the project, making it harder.",
+    "example_cn": "他们在项目中改变了规则，使其更困难。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：短语来自足球，联想为移动球门柱改变规则。",
+    "difficulty": "4",
+    "collocations": "move the goalposts unexpectedly",
+    "image_prompt": "足球场上球门柱被移动，表示规则改变；或商业会议变更条款。",
+    "synonym_diff": {
+      "words": "change rules, shift criteria, alter conditions",
+      "quick_guide": "change rules 改变规则，shift criteria 改变标准，alter conditions 改变条件，move the goalposts 口语化表示不公地改变规则。"
+    }
+  },
+  {
+    "name": "insurance",
+    "symbol": "/ɪnˈʃʊərəns; ɪnˈʃɔːrəns/",
+    "chn": "n. 保险业;保险;保险费",
+    "example_en": "She has health insurance through her job.",
+    "example_cn": "她通过工作有健康保险。",
+    "word_family": "insure (v. 保险), insured (adj. 已保险的)",
+    "memory_tips": "记忆技巧：拆分为 'in'（入） + 'sure'（确保） + 'ance'，联想为确保安全。词源来自拉丁语 securus。",
+    "difficulty": "3",
+    "collocations": "life insurance, insurance policy, insurance company",
+    "image_prompt": "一个人签署保险文件；或保险卡和医疗符号。",
+    "synonym_diff": {
+      "words": "coverage, assurance, protection, policy",
+      "quick_guide": "coverage 强调覆盖范围，assurance 强调保证，protection 强调保护，policy 强调保单，insurance 强调保险制度。"
+    }
+  },
+  {
+    "name": "salesman",
+    "symbol": "/ˈseɪlzmən/",
+    "chn": "n. 售货员,推销员",
+    "example_en": "The salesman demonstrated the new product.",
+    "example_cn": "推销员演示了新产品。",
+    "word_family": "sales (n. 销售), salesperson (n. 销售员)",
+    "memory_tips": "记忆技巧：拆分为 'sales'（销售） + 'man'（人），直接联想。",
+    "difficulty": "2",
+    "collocations": "car salesman, door-to-door salesman",
+    "image_prompt": "一个推销员在商店介绍产品，顾客倾听。",
+    "synonym_diff": {
+      "words": "seller, representative, agent, vendor",
+      "quick_guide": "seller 强调卖家，representative 强调代表，agent 强调代理商，vendor 强调小贩，salesman 强调男性推销员。"
+    }
+  },
+  {
+    "name": "complain",
+    "symbol": "/kəmˈpleɪn/",
+    "chn": "vi. & vt. 抱怨,投诉",
+    "example_en": "Customers often complain about poor service.",
+    "example_cn": "顾客经常抱怨服务差。",
+    "word_family": "complaint (n. 抱怨,牢骚,投诉)",
+    "memory_tips": "记忆技巧：拆分为 'com'（共同） + 'plain'（平坦），但实际来自拉丁语 complangere，联想为诉苦。",
+    "difficulty": "3",
+    "collocations": "complain about, complain to management",
+    "image_prompt": "一个顾客在服务台抱怨，经理记录；或不满表情。",
+    "synonym_diff": {
+      "words": "grumble, moan, whine, protest",
+      "quick_guide": "grumble 强调嘟囔，moan 强调呻吟抱怨，whine 强调哀诉，protest 强调抗议，complain 通用指抱怨或投诉。"
+    }
+  },
+  {
+    "name": "score an own goal",
+    "symbol": "",
+    "chn": "进乌龙球;无意中做对自己不利的事",
+    "example_en": "By arguing publicly, he scored an own goal for his campaign.",
+    "example_cn": "通过公开争论，他为自己的竞选进了乌龙球。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：短语来自足球，联想为自己进球门失误。",
+    "difficulty": "4",
+    "collocations": "score an own goal accidentally",
+    "image_prompt": "足球运动员误将球踢入自家球门；或商业决策失误隐喻。",
+    "synonym_diff": {
+      "words": "self-sabotage, blunder, mistake, faux pas",
+      "quick_guide": "self-sabotage 强调自我破坏，blunder 强调大错，mistake 强调错误，faux pas 强调失礼，score an own goal 比喻无意中损害自己。"
+    }
+  },
+  {
+    "name": "unintentionally",
+    "symbol": "/ˌʌnɪnˈtenʃənəli/",
+    "chn": "adv. 无意地,非故意地",
+    "example_en": "She unintentionally offended him with her comment.",
+    "example_cn": "她无意中用评论冒犯了他。",
+    "word_family": "unintentional (adj. 无意的), intend (v. 打算,计划,想要), intention (n. 意图,目的), intentional (adj. 故意的,有意的,存心的)",
+    "memory_tips": "记忆技巧：拆分为 'un'（不） + 'intentional'（故意的） + 'ly'，直接联想。",
+    "difficulty": "4",
+    "collocations": "unintentionally cause, unintentionally hurt",
+    "image_prompt": "一个人不小心打翻杯子，表示无意；或抱歉表情。",
+    "synonym_diff": {
+      "words": "accidentally, inadvertently, unknowingly, unwittingly",
+      "quick_guide": "accidentally 强调意外，inadvertently 强调疏忽，unknowingly 强调不知情，unwittingly 强调无意，unintentionally 强调非故意。"
+    }
+  },
+  {
+    "name": "council",
+    "symbol": "/ˈkaʊnsl/",
+    "chn": "n. 政务委员会,地方议会;市政服务机构;委员会",
+    "example_en": "The city council approved the new park plan.",
+    "example_cn": "市议会批准了新公园计划。",
+    "word_family": "councillor (n. 议员)",
+    "memory_tips": "记忆技巧：拆分为 'coun'（一起） + 'cil'（呼叫），联想为召集会议。词源来自拉丁语 concilium。",
+    "difficulty": "3",
+    "collocations": "town council, council meeting",
+    "image_prompt": "议会室内议员投票；或市政厅建筑。",
+    "synonym_diff": {
+      "words": "committee, board, assembly, panel",
+      "quick_guide": "committee 强调委员会，board 强调董事会，assembly 强调集会，panel 专家 panel，council 强调政务议会。"
+    }
+  },
+  {
+    "name": "backfire",
+    "symbol": "/ˌbækˈfaɪə(r)/",
+    "chn": "vi. 产生事与愿违的不良(或危险)后果",
+    "example_en": "His plan to save money backfired when he lost his job.",
+    "example_cn": "他省钱的计划事与愿违，当他失业时。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：拆分为 'back'（回） + 'fire'（火），联想为回火即反效果。",
+    "difficulty": "4",
+    "collocations": "backfire on someone, plan backfires",
+    "image_prompt": "一个人尝试修车却导致问题恶化，表示事与愿违。",
+    "synonym_diff": {
+      "words": "rebound, boomerang, misfire, fail",
+      "quick_guide": "rebound 强调弹回，boomerang 强调回旋镖效应，misfire 强调失误，fail 强调失败，backfire 强调产生反效果。"
+    }
+  },
+  {
+    "name": "ballpark",
+    "symbol": "/ˈbɔːlpɑːk/",
+    "chn": "n. 棒球场;变动范围",
+    "example_en": "Give me a ballpark figure for the cost.",
+    "example_cn": "给我一个成本的大致数字。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：拆分为 'ball'（球） + 'park'（公园），联想为棒球场。",
+    "difficulty": "3",
+    "collocations": "in the ballpark, ballpark estimate",
+    "image_prompt": "棒球场全景；或商务会议讨论大致数字。",
+    "synonym_diff": {
+      "words": "stadium, range, approximation, estimate",
+      "quick_guide": "stadium 强调体育场，range 强调范围，approximation 强调近似值，estimate 强调估计，ballpark 强调大致范围或棒球场。"
+    }
+  },
+  {
+    "name": "in the ballpark",
+    "symbol": "",
+    "chn": "差不多",
+    "example_en": "Your guess is in the ballpark of the actual number.",
+    "example_cn": "你的猜测与实际数字差不多。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：短语来自棒球场，联想为在范围内即差不多。",
+    "difficulty": "3",
+    "collocations": "be in the ballpark",
+    "image_prompt": "一个靶心，箭头在中心附近，表示接近正确。",
+    "synonym_diff": {
+      "words": "approximately, roughly, close, near",
+      "quick_guide": "approximately 强调大约，roughly 强调粗略，close 强调接近，near 强调附近，in the ballpark 口语化表示差不多。"
+    }
+  },
+  {
+    "name": "a ballpark estimate",
+    "symbol": "",
+    "chn": "大致的估计",
+    "example_en": "We need a ballpark estimate before detailed planning.",
+    "example_cn": "在详细规划前，我们需要一个大致的估计。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：短语记忆，结合 ballpark 范围。",
+    "difficulty": "3",
+    "collocations": "give a ballpark estimate",
+    "image_prompt": "一个图表显示大致数字范围，而不是精确值。",
+    "synonym_diff": {
+      "words": "rough estimate, approximate figure, guess, approximation",
+      "quick_guide": "rough estimate 粗略估计，approximate figure 近似数字，guess 猜测，approximation 近似值，a ballpark estimate 强调大致估计。"
+    }
+  },
+  {
+    "name": "venue",
+    "symbol": "/ˈvenjuː/",
+    "chn": "n. 活动场地",
+    "example_en": "The concert venue was packed with fans.",
+    "example_cn": "音乐会场地挤满了粉丝。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：拆分为 'ven'（来） + 'ue'，联想为来的地方。词源来自拉丁语 venire。",
+    "difficulty": "3",
+    "collocations": "event venue, wedding venue",
+    "image_prompt": "一个大型场馆内举办音乐会，灯光和人群。",
+    "synonym_diff": {
+      "words": "location, site, place, setting",
+      "quick_guide": "location 强调位置，site 强调地点，place 通用地方，setting 强调环境，venue 强调活动场地。"
+    }
+  },
+  {
+    "name": "curveball",
+    "symbol": "/ˈkɜːvbɔːl/",
+    "chn": "n. 曲线球",
+    "example_en": "The pitcher threw a curveball that surprised the batter.",
+    "example_cn": "投手投了一个曲线球，让击球手惊讶。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：拆分为 'curve'（曲线） + 'ball'（球），直接联想。",
+    "difficulty": "4",
+    "collocations": "throw a curveball",
+    "image_prompt": "棒球投手投出曲线球，球路径弯曲。",
+    "synonym_diff": {
+      "words": "breaking ball, trick pitch, surprise",
+      "quick_guide": "breaking ball 变化球，trick pitch 技巧投球，surprise 惊喜，curveball 特指曲线球或比喻意外。"
+    }
+  },
+  {
+    "name": "throw sb a curveball",
+    "symbol": "",
+    "chn": "给某人出难题",
+    "example_en": "The difficult question threw him a curveball during the interview.",
+    "example_cn": "这个困难的问题在面试中给他出了难题。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：短语来自棒球，联想为投曲线球让对手难接。",
+    "difficulty": "4",
+    "collocations": "throw someone a curveball",
+    "image_prompt": "面试官提出棘手问题，求职者惊讶；或棒球隐喻。",
+    "synonym_diff": {
+      "words": "challenge, surprise, stump, baffle",
+      "quick_guide": "challenge 挑战，surprise 使惊讶，stump 难住，baffle 使困惑，throw a curveball 比喻出难题。"
+    }
+  },
+  {
+    "name": "handle",
+    "symbol": "/ˈhændl/",
+    "chn": "vt. 处理,应付;控制,操纵 n. 把手,拉手;柄",
+    "example_en": "She can handle pressure well.",
+    "example_cn": "她能很好地处理压力。",
+    "word_family": "handler (n. 处理者), handling (n. 处理)",
+    "memory_tips": "记忆技巧：拆分为 'hand'（手） + 'le'，联想用手处理。词源来自古英语 handle。",
+    "difficulty": "3",
+    "collocations": "handle the situation, door handle",
+    "image_prompt": "一个人冷静处理危机；或门上的把手。",
+    "synonym_diff": {
+      "words": "manage, deal with, control, grip",
+      "quick_guide": "manage 强调管理，deal with 应对，control 控制，grip 抓紧，handle 通用指处理或手柄。"
+    }
+  },
+  {
+    "name": "three strikes and you are out",
+    "symbol": "",
+    "chn": "三振出局",
+    "example_en": "In baseball, three strikes and you are out.",
+    "example_cn": "在棒球中，三振出局。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：短语来自棒球规则，联想为三次失误即出局。",
+    "difficulty": "3",
+    "collocations": "three strikes rule",
+    "image_prompt": "棒球裁判做出出局手势；或规则图表。",
+    "synonym_diff": {
+      "words": "out, failed, terminated, dismissed",
+      "quick_guide": "out 出局，failed 失败，terminated 终止，dismissed 解散，three strikes and you are out 强调规则性出局。"
+    }
+  },
+  {
+    "name": "fist",
+    "symbol": "/fɪst/",
+    "chn": "n. 拳,拳头",
+    "example_en": "He clenched his fist in anger.",
+    "example_cn": "他愤怒地握紧拳头。",
+    "word_family": "fisted (adj. 握拳的)",
+    "memory_tips": "记忆技巧：拆分为 'f' + 'ist'，联想为拳头。词源来自古英语 fyst。",
+    "difficulty": "2",
+    "collocations": "clench fist, raise fist",
+    "image_prompt": "一个人握紧拳头，表示决心或愤怒。",
+    "synonym_diff": {
+      "words": "punch, hand, grip",
+      "quick_guide": "punch 强调击打，hand 手，grip 抓，fist 特指拳头。"
+    }
+  },
+  {
+    "name": "waist",
+    "symbol": "/weɪst/",
+    "chn": "n. 腰,腰部;(衣服的) 腰部",
+    "example_en": "She wore a belt around her waist.",
+    "example_cn": "她在腰部系了一条腰带。",
+    "word_family": "waistline (n. 腰围)",
+    "memory_tips": "记忆技巧：拆分为 'wai' + 'st'，联想为腰部。词源来自古英语 wæst。",
+    "difficulty": "2",
+    "collocations": "small waist, waist size",
+    "image_prompt": "一个人测量腰围；或衣服腰部设计。",
+    "synonym_diff": {
+      "words": "midriff, torso, middle",
+      "quick_guide": "midriff 强调中腹部，torso 强调躯干，middle 中间，waist 特指腰部。"
+    }
+  },
+  {
+    "name": "below the belt",
+    "symbol": "",
+    "chn": "不公正的,伤人的",
+    "example_en": "His comment was below the belt and hurt her feelings.",
+    "example_cn": "他的评论不公正，伤害了她的感情。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：短语来自拳击，联想为击打腰带以下违规。",
+    "difficulty": "4",
+    "collocations": "hit below the belt",
+    "image_prompt": "拳击手违规击打；或一个人被言语伤害。",
+    "synonym_diff": {
+      "words": "unfair, hurtful, dirty, unethical",
+      "quick_guide": "unfair 不公，hurtful 伤人，dirty 肮脏，unethical 不道德，below the belt 比喻不公正手段。"
+    }
+  },
+  {
+    "name": "cruel",
+    "symbol": "/ˈkruːəl/",
+    "chn": "adj. 刻毒伤人的,残酷的",
+    "example_en": "It was cruel to leave the animal outside in the cold.",
+    "example_cn": "把动物留在外面寒冷中是残酷的。",
+    "word_family": "cruelty (n. (尤指蓄意的)残酷,残忍,残暴), cruelly (adv. 残酷地,残暴地)",
+    "memory_tips": "记忆技巧：拆分为 'cru'（ raw） + 'el'，联想为原始残酷。词源来自拉丁语 crudelis。",
+    "difficulty": "3",
+    "collocations": "cruel joke, cruel treatment",
+    "image_prompt": "一个动物在寒冷中颤抖，表示残酷；或 bully 场景。",
+    "synonym_diff": {
+      "words": "brutal, harsh, mean, savage",
+      "quick_guide": "brutal 强调野蛮，harsh 严厉，mean 卑鄙，savage 野蛮，cruel 强调刻毒残酷。"
+    }
+  },
+  {
+    "name": "remark",
+    "symbol": "/rɪˈmɑːk/",
+    "chn": "n. 谈论,言论 vi. & vt. 说起,评论",
+    "example_en": "She made a remark about the weather.",
+    "example_cn": "她评论了天气。",
+    "word_family": "remarkable (adj. 显著的)",
+    "memory_tips": "记忆技巧：拆分为 're'（再） + 'mark'（标记），联想为再次标记即评论。词源来自法语 remarquer。",
+    "difficulty": "3",
+    "collocations": "casual remark, remark on something",
+    "image_prompt": "两个人聊天，一个发表评论；或社交媒体评论。",
+    "synonym_diff": {
+      "words": "comment, statement, observation, note",
+      "quick_guide": "comment 强调评论，statement 强调陈述，observation 强调观察，note 强调笔记，remark 通用指言论或说起。"
+    }
+  },
+  {
+    "name": "towel",
+    "symbol": "/ˈtaʊəl/",
+    "chn": "n. 毛巾,抹布,纸巾",
+    "example_en": "He dried his hair with a towel.",
+    "example_cn": "他用毛巾擦干头发。",
+    "word_family": "toweled (adj. 用毛巾擦的)",
+    "memory_tips": "记忆技巧：拆分为 'tow' + 'el'，联想为毛巾。词源来自古法语 toaille。",
+    "difficulty": "2",
+    "collocations": "bath towel, paper towel",
+    "image_prompt": "一个人洗完澡用毛巾擦身；或厨房抹布。",
+    "synonym_diff": {
+      "words": "cloth, rag, wipe",
+      "quick_guide": "cloth 布，rag 破布，wipe 擦拭物，towel 特指毛巾或纸巾。"
+    }
+  },
+  {
+    "name": "throw in the towel",
+    "symbol": "",
+    "chn": "认输,承认失败",
+    "example_en": "After struggling for years, he threw in the towel and quit.",
+    "example_cn": "挣扎多年后，他认输放弃了。",
+    "word_family": "",
+    "memory_tips": "记忆技巧：短语来自拳击，联想为扔毛巾表示认输。",
+    "difficulty": "4",
+    "collocations": "throw in the towel early",
+    "image_prompt": "拳击手扔毛巾认输；或一个人放弃任务。",
+    "synonym_diff": {
+      "words": "surrender, give up, quit, concede",
+      "quick_guide": "surrender 投降，give up 放弃，quit 退出，concede 承认失败，throw in the towel 口语化认输。"
+    }
+  },
+  {
+    "name": "literally",
+    "symbol": "/ˈlɪtərəli/",
+    "chn": "adv. 真正地,确实地;按字面,字面上",
+    "example_en": "I was literally freezing cold.",
+    "example_cn": "我确实冷得要冻僵了。",
+    "word_family": "literal (adj. 字面意义的)",
+    "memory_tips": "记忆技巧：拆分为 'literal'（字面的） + 'ly'，直接联想。词源来自拉丁语 littera。",
+    "difficulty": "4",
+    "collocations": "literally true, literally means",
+    "image_prompt": "一个人颤抖在雪中，表示字面冷；或书页显示字面意思。",
+    "synonym_diff": {
+      "words": "actually, really, precisely, verbatim",
+      "quick_guide": "actually 实际上，really 真实地，precisely 精确地，verbatim 逐字地，literally 强调字面或确实。"
+    }
+  },
+  {
+    "name": "iron",
+    "symbol": "/ˈaɪən/",
+    "chn": "n. 铁;熨斗",
+    "example_en": "The bridge is made of iron.",
+    "example_cn": "这座桥是铁制的。",
+    "word_family": "irony (n. 讽刺), ironclad (adj. 坚固的)",
+    "memory_tips": "记忆技巧：拆分为 'ir' + 'on'，联想为铁。词源来自古英语 iren。",
+    "difficulty": "2",
+    "collocations": "cast iron, iron ore, electric iron",
+    "image_prompt": "金属铁块或桥梁结构；或熨斗熨衣服。",
+    "synonym_diff": {
+      "words": "metal, steel, press",
+      "quick_guide": "metal 金属，steel 钢，press 压，iron 特指铁或熨斗。"
+    }
+  },
+    {"name":"3"},
+  {
+    "name": "surgeon",
+    "symbol": "/ˈsɜːdʒən/",
+    "chn": "n. 外科医生",
+    "example_en": "The surgeon performed a complex heart surgery.",
+    "example_cn": "外科医生进行了一次复杂的心脏手术。",
+    "word_family": "surgery (n. 外科手术), surgical (adj. 外科的)",
+    "memory_tips": "记忆技巧：surgeon 源自 surgery（手术），后缀 -eon 表示‘从事的人’，联想为‘做手术的人’。词源来自希腊语 kheirourgos。",
+    "difficulty": "3",
+    "collocations": "perform surgery, cardiac surgeon, consult a surgeon",
+    "image_prompt": "一位外科医生在手术室中，穿着蓝色手术服，戴着手套和口罩，正在使用手术器械进行心脏手术。",
+    "synonym_diff": {
+      "words": "doctor, physician, medic",
+      "quick_guide": "surgeon 特指进行外科手术的医生，physician 是内科医生，doctor 是通用术语 for medical practitioners."
+    }
+  },
+  {
+    "name": "physician",
+    "symbol": "/fɪˈzɪʃn/",
+    "chn": "n. 医师,内科医生",
+    "example_en": "The physician examined the patient's symptoms.",
+    "example_cn": "医师检查了患者的症状。",
+    "word_family": "physical (adj. 身体的), physiology (n. 生理学)",
+    "memory_tips": "记忆技巧：physician 来自 physics（自然，身体），后缀 -ian 表示‘专家’，联想为‘治疗身体的专家’。词源来自拉丁语 physica。",
+    "difficulty": "3",
+    "collocations": "family physician, consult a physician, physician assistant",
+    "image_prompt": "一位内科医生在诊所里，用听诊器为患者检查，桌上放着医疗文件和处方笺。",
+    "synonym_diff": {
+      "words": "doctor, surgeon, medic",
+      "quick_guide": "physician 通常指内科医生，不进行手术；surgeon 是外科医生；doctor 是泛指所有医生。"
+    }
+  },
+  {
+    "name": "chemist",
+    "symbol": "/ˈkemɪst/",
+    "chn": "n. 药剂师,药商;化学家",
+    "example_en": "The chemist developed a new formula in the lab.",
+    "example_cn": "化学家在实验室里开发了一种新配方。",
+    "word_family": "chemical (adj. 化学的), chemistry (n. 化学)",
+    "memory_tips": "记忆技巧：chemist 来自 chemistry（化学），后缀 -ist 表示‘从事的人’，联想为‘研究化学的人’。词源来自阿拉伯语 al-kīmiyā。",
+    "difficulty": "2",
+    "collocations": "research chemist, pharmaceutical chemist, chemist shop",
+    "image_prompt": "一位化学家在实验室中，穿着白大褂，拿着烧杯和试管，周围有化学仪器和 shelves of chemicals。",
+    "synonym_diff": {
+      "words": "pharmacist, scientist, druggist",
+      "quick_guide": "chemist 在英式英语中可指药剂师，在美式英语多指化学家；pharmacist 特指药剂师，scientist 是科学家泛称。"
+    }
+  },
+  {
+    "name": "dentist",
+    "symbol": "/ˈdentɪst/",
+    "chn": "n. 牙科医生",
+    "example_en": "The dentist cleaned my teeth during the check-up.",
+    "example_cn": "牙科医生在检查时清洁了我的牙齿。",
+    "word_family": "dental (adj. 牙齿的), dentistry (n. 牙科学)",
+    "memory_tips": "记忆技巧：dentist 来自 dental（牙齿的），后缀 -ist 表示‘专家’，联想为‘牙齿专家’。词源来自拉丁语 dens。",
+    "difficulty": "2",
+    "collocations": "visit the dentist, dental appointment, orthodontist",
+    "image_prompt": "一位牙科医生在牙科诊所中，戴着口罩和手套，使用牙科工具为患者检查牙齿，背景有牙椅和灯光。",
+    "synonym_diff": {
+      "words": "orthodontist, dental surgeon, oral hygienist",
+      "quick_guide": "dentist 泛指牙科医生，orthodontist 是正畸专家，dental surgeon 进行牙科手术，oral hygienist 是口腔卫生师。"
+    }
+  },
+  {
+    "name": "specialize",
+    "symbol": "/ˈspeʃəlaɪz/",
+    "chn": "vi.专门研究(或从事),专攻",
+    "example_en": "He chose to specialize in computer science.",
+    "example_cn": "他选择专攻计算机科学。",
+    "word_family": "specialized (adj. 特殊的), specialist (n. 专家)",
+    "memory_tips": "记忆技巧：specialize 来自 special（特殊的），后缀 -ize 表示‘使成为’，联想为‘使成为专门的’。词源来自拉丁语 specialis。",
+    "difficulty": "3",
+    "collocations": "specialize in, specialize at, highly specialized",
+    "image_prompt": "一位学者在图书馆中，专注地阅读专业书籍，桌上堆满了论文和笔记本电脑，屏幕显示代码或图表。",
+    "synonym_diff": {
+      "words": "focus, concentrate, major in",
+      "quick_guide": "specialize 强调在特定领域深入专业，focus 和 concentrate 更通用指集中注意力，major in 用于学术专业选择。"
+    }
+  },
+  {
+    "name": "gene",
+    "symbol": "/dʒiːn/",
+    "chn": "n. 基因",
+    "example_en": "Scientists study genes to understand heredity.",
+    "example_cn": "科学家研究基因以理解遗传。",
+    "word_family": "genetic (adj. 遗传的), genetics (n. 遗传学)",
+    "memory_tips": "记忆技巧：gene 来自希腊语 genos（种族），联想为‘遗传的基本单位’。常见词根 gen- 表示‘生产’或‘起源’。",
+    "difficulty": "4",
+    "collocations": "gene therapy, gene expression, dominant gene",
+    "image_prompt": "一位科学家在实验室中，观察DNA双螺旋模型，显微镜下显示细胞结构，背景有基因序列图。",
+    "synonym_diff": {
+      "words": "DNA, chromosome, allele",
+      "quick_guide": "gene 是遗传单位，DNA 是分子物质，chromosome 是基因的载体，allele 是基因的变异形式。"
+    }
+  },
+  {
+    "name": "game-changing",
+    "symbol": "/ˈgeɪm tʃeɪndʒɪŋ/",
+    "chn": "adj. 改变游戏规则的(指彻底改变事态发展的)",
+    "example_en": "The invention was game-changing for the industry.",
+    "example_cn": "这个发明对行业来说是改变游戏规则的。",
+    "word_family": "game-changer (n. 改变游戏规则的人或物)",
+    "memory_tips": "记忆技巧：game-changing 复合词，来自 game（游戏）和 changing（改变），联想为‘彻底改变局势的’。常用于商业或科技语境。",
+    "difficulty": "3",
+    "collocations": "game-changing technology, game-changing idea, game-changing event",
+    "image_prompt": "一个创新产品发布会的场景，演讲者手持新设备，观众惊讶鼓掌，背景有动态图表和灯光效果。",
+    "synonym_diff": {
+      "words": "revolutionary, transformative, groundbreaking",
+      "quick_guide": "game-changing 强调彻底改变规则，revolutionary 指革命性的，transformative 指变革性的，groundbreaking 指开创性的。"
+    }
+  },
+  {
+    "name": "genome",
+    "symbol": "/ˈdʒiːnəʊm/",
+    "chn": "n. 基因组,染色体组",
+    "example_en": "The human genome project mapped all human genes.",
+    "example_cn": "人类基因组计划绘制了所有人类基因。",
+    "word_family": "genomic (adj. 基因组的), genomics (n. 基因组学)",
+    "memory_tips": "记忆技巧：genome 来自 gene（基因）和 -ome（整体），联想为‘基因的整体集合’。词源来自希腊语 genos。",
+    "difficulty": "5",
+    "collocations": "human genome, genome sequencing, genome editing",
+    "image_prompt": "一个科学实验室中，研究人员分析DNA序列数据，大屏幕显示基因组图谱，试管和仪器围绕。",
+    "synonym_diff": {
+      "words": "DNA, chromosome, genetic code",
+      "quick_guide": "genome 指整个基因集合，DNA 是分子，chromosome 是结构单元，genetic code 是编码信息。"
+    }
+  },
+  {
+    "name": "cell",
+    "symbol": "/sel/",
+    "chn": "n. 细胞",
+    "example_en": "The cell divides during mitosis.",
+    "example_cn": "细胞在有丝分裂期间分裂。",
+    "word_family": "cellular (adj. 细胞的), cell biology (n. 细胞生物学)",
+    "memory_tips": "记忆技巧：cell 来自拉丁语 cella（小房间），联想为‘生物的基本单位像小房间’。",
+    "difficulty": "2",
+    "collocations": "cell membrane, stem cell, blood cell",
+    "image_prompt": "显微镜下的细胞分裂图像，显示细胞核和细胞质，背景有科学实验室的仪器。",
+    "synonym_diff": {
+      "words": "unit, organism, microbe",
+      "quick_guide": "cell 是生物基本单位，unit 可泛指单元，organism 指整个生物体，microbe 指微生物。"
+    }
+  },
+  {
+    "name": "being",
+    "symbol": "/ˈbiːɪŋ/",
+    "chn": "n. 生物;存在;身心",
+    "example_en": "Human beings are capable of great creativity.",
+    "example_cn": "人类能够具有伟大的创造力。",
+    "word_family": "human being (n. 人类), beings (pl. 生物)",
+    "memory_tips": "记忆技巧：being 来自 be（存在），后缀 -ing 表示状态，联想为‘存在的实体’。词源来自古英语 bēon。",
+    "difficulty": "2",
+    "collocations": "human being, living being, spiritual being",
+    "image_prompt": "多样化的人类和动物在自然环境中互动，象征生命的存在，背景有地球和星空。",
+    "synonym_diff": {
+      "words": "creature, entity, existence",
+      "quick_guide": "being 泛指生物或存在，creature 指动物或生物，entity 指实体，existence 指存在状态。"
+    }
+  },
+  {
+    "name": "lifespan",
+    "symbol": "/ˈlaɪfspæn/",
+    "chn": "n. 寿命,有效期",
+    "example_en": "The average lifespan of a butterfly is short.",
+    "example_cn": "蝴蝶的平均寿命很短。",
+    "word_family": "life (n. 生命), span (n. 跨度)",
+    "memory_tips": "记忆技巧：lifespan 复合词，来自 life（生命）和 span（跨度），联想为‘生命的长度’。",
+    "difficulty": "3",
+    "collocations": "average lifespan, extend lifespan, product lifespan",
+    "image_prompt": "一个时间轴图表，显示从出生到老年的生命阶段，背景有钟表和自然元素如树木生长。",
+    "synonym_diff": {
+      "words": "longevity, lifetime, duration",
+      "quick_guide": "lifespan 指生物或事物的寿命，longevity 指长寿，lifetime 指一生时间，duration 指持续时间。"
+    }
+  },
+  {
+    "name": "affect",
+    "symbol": "/əˈfekt/",
+    "chn": "vt. 影响;侵袭,使感染;深深打动",
+    "example_en": "The weather can affect your mood.",
+    "example_cn": "天气会影响你的情绪。",
+    "word_family": "affection (n. 喜爱), effect (n. 影响)",
+    "memory_tips": "记忆技巧：affect 来自拉丁语 afficere（影响），前缀 af- 表示‘向’，词根 fic- 表示‘做’，联想为‘对...做影响’。注意与 effect 区别。",
+    "difficulty": "3",
+    "collocations": "affect negatively, affect deeply, affect the outcome",
+    "image_prompt": "一个人站在雨中，表情 thoughtful，周围环境灰暗，象征天气对情绪的影响。",
+    "synonym_diff": {
+      "words": "influence, impact, effect",
+      "quick_guide": "affect 是动词指影响，influence 可名可动指间接影响，impact 强调强烈影响，effect 是名词指结果。"
+    }
+  },
+  {
+    "name": "contract",
+    "symbol": "/kənˈtrækt/ vt., /ˈkɒntrækt/ n.",
+    "chn": "vt. 感染疾病;与…订立合同(或契约);(使)收缩 n. 合同,合约",
+    "example_en": "She contracted the flu from her colleague.",
+    "example_cn": "她从同事那里感染了流感。",
+    "word_family": "contract (n. 合同), contraction (n. 收缩)",
+    "memory_tips": "记忆技巧：contract 来自拉丁语 contrahere（拉在一起），前缀 con- 表示‘一起’，词根 tract- 表示‘拉’，联想为‘签订合同’或‘收缩’。",
+    "difficulty": "3",
+    "collocations": "sign a contract, contract a disease, muscle contract",
+    "image_prompt": "一个人在医院中打喷嚏，象征感染疾病，同时另一场景有商务人士签署文件，代表合同。",
+    "synonym_diff": {
+      "words": "agree, shrink, infect",
+      "quick_guide": "contract 作动词可指感染或收缩，作名词指合同；agree 指同意，shrink 指缩小，infect 指感染。"
+    }
+  },
+  {
+    "name": "virus",
+    "symbol": "/ˈvaɪrəs/",
+    "chn": "n. 病毒;(计算机程序中的)病毒",
+    "example_en": "The virus spread quickly through the population.",
+    "example_cn": "病毒在人群中快速传播。",
+    "word_family": "viral (adj. 病毒的), virology (n. 病毒学)",
+    "memory_tips": "记忆技巧：virus 来自拉丁语 virus（毒液），联想为‘微小有害的实体’。计算机病毒比喻生物病毒。",
+    "difficulty": "3",
+    "collocations": "computer virus, flu virus, fight the virus",
+    "image_prompt": "一个放大镜下的病毒粒子图像，同时有电脑屏幕显示警告弹窗，象征生物和计算机病毒。",
+    "synonym_diff": {
+      "words": "germ, pathogen, malware",
+      "quick_guide": "virus 指生物或计算机病毒，germ 泛指微生物，pathogen 指致病源，malware 特指恶意软件。"
+    }
+  },
+  {
+    "name": "cancer",
+    "symbol": "/ˈkænsə(r)/",
+    "chn": "n. 癌症;邪恶,毒瘤",
+    "example_en": "Early detection can help treat cancer effectively.",
+    "example_cn": "早期检测有助于有效治疗癌症。",
+    "word_family": "cancerous (adj. 癌性的), oncology (n. 肿瘤学)",
+    "memory_tips": "记忆技巧：cancer 来自拉丁语 cancer（螃蟹），因肿瘤形状像螃蟹爪，联想为‘恶性生长’。",
+    "difficulty": "3",
+    "collocations": "lung cancer, cancer treatment, fight cancer",
+    "image_prompt": "一个医疗场景，医生和患者讨论X光片，显示肿瘤，背景有希望和支持符号如丝带。",
+    "synonym_diff": {
+      "words": "tumor, malignancy, disease",
+      "quick_guide": "cancer 指癌症疾病，tumor 指肿块（可良性或恶性），malignancy 指恶性性质，disease 是疾病泛称。"
+    }
+  },
+  {
+    "name": "identify",
+    "symbol": "/aɪˈdentɪfaɪ/",
+    "chn": "vt. 找到,发现;确认,认出;显示,说明身份",
+    "example_en": "Can you identify the bird by its song?",
+    "example_cn": "你能通过歌声认出这只鸟吗？",
+    "word_family": "identity (n. 身份), identification (n. 识别), identical (adj. 相同的)",
+    "memory_tips": "记忆技巧：identify 来自拉丁语 identitas（同一性），前缀 iden- 表示‘相同’，联想为‘确认相同’。",
+    "difficulty": "3",
+    "collocations": "identify with, identify the problem, identify yourself",
+    "image_prompt": "一个人用望远镜观察鸟类，笔记本上记录特征，象征识别和确认过程。",
+    "synonym_diff": {
+      "words": "recognize, detect, determine",
+      "quick_guide": "identify 强调确认身份或特性，recognize 指认出已知事物，detect 指探测发现，determine 指确定。"
+    }
+  },
+  {
+    "name": "relate",
+    "symbol": "/rɪˈleɪt/",
+    "chn": "vi. & vt.联系,使有联系;叙述,讲述",
+    "example_en": "The story relates to ancient myths.",
+    "example_cn": "这个故事与古代神话有关。",
+    "word_family": "related (adj. 有联系的), relation (n. 关系)",
+    "memory_tips": "记忆技巧：relate 来自拉丁语 relatus（带回），前缀 re- 表示‘回’，词根 lat- 表示‘带’，联想为‘带回联系’。",
+    "difficulty": "3",
+    "collocations": "relate to, relate a story, closely related",
+    "image_prompt": "一个人坐在篝火旁讲故事，听众 engaged，背景有古代符号，象征叙述和联系。",
+    "synonym_diff": {
+      "words": "connect, associate, tell",
+      "quick_guide": "relate 可指联系或讲述，connect 指连接，associate 指关联，tell 指讲述故事。"
+    }
+  },
+  {
+    "name": "means",
+    "symbol": "/miːnz/",
+    "chn": "n.(pl. means)方法,方式;财富,钱财",
+    "example_en": "Education is a means to achieve success.",
+    "example_cn": "教育是实现成功的一种方式。",
+    "word_family": "mean (v. 意味), meaning (n. 意义)",
+    "memory_tips": "记忆技巧：means 来自 mean（意味），复数形式表示‘方法’或‘财富’，联想为‘达到目的的手段’。",
+    "difficulty": "3",
+    "collocations": "by means of, means of transport, financial means",
+    "image_prompt": "一个道路分叉口，有各种交通工具和金钱符号，象征方法选择和资源。",
+    "synonym_diff": {
+      "words": "method, way, resources",
+      "quick_guide": "means 指方法或财富，method 指系统方法，way 指方式，resources 指资源。"
+    }
+  },
+  {
+    "name": "delete",
+    "symbol": "/dɪˈliːt/",
+    "chn": "vt. 删去,删除",
+    "example_en": "Please delete the unnecessary files from the computer.",
+    "example_cn": "请从电脑中删除不必要的文件。",
+    "word_family": "deletion (n. 删除)",
+    "memory_tips": "记忆技巧：delete 来自拉丁语 deletus（摧毁），前缀 de- 表示‘ away’，词根 let- 表示‘摧毁’，联想为‘移除’。",
+    "difficulty": "2",
+    "collocations": "delete key, delete permanently, delete account",
+    "image_prompt": "一个人操作电脑，手指按删除键，屏幕显示文件被移除的动画。",
+    "synonym_diff": {
+      "words": "remove, erase, cancel",
+      "quick_guide": "delete 指数字或文本删除，remove 指物理移除，erase 指擦除，cancel 指取消。"
+    }
+  },
+  {
+    "name": "restore",
+    "symbol": "/rɪˈstɔː(r)/",
+    "chn": "vt. 恢复;修复;使复原,使复位",
+    "example_en": "They worked to restore the old building to its original glory.",
+    "example_cn": "他们努力修复这座老建筑，恢复其原有辉煌。",
+    "word_family": "restoration (n. 恢复), restorative (adj. 恢复的)",
+    "memory_tips": "记忆技巧：restore 来自拉丁语 restaurare（重建），前缀 re- 表示‘ again’，词根 stor- 表示‘站立’，联想为‘再次建立’。",
+    "difficulty": "3",
+    "collocations": "restore peace, restore data, restore health",
+    "image_prompt": "工匠修复古画或建筑，使用工具和材料，背景有 before-and-after 对比。",
+    "synonym_diff": {
+      "words": "recover, renew, rehabilitate",
+      "quick_guide": "restore 强调恢复原状，recover 指找回或康复，renew 指更新，rehabilitate 指康复或修复。"
+    }
+  },
+  {
+    "name": "ultimately",
+    "symbol": "/ˈʌltɪmətli/",
+    "chn": "adv. 最终;根本上",
+    "example_en": "Ultimately, hard work leads to success.",
+    "example_cn": "最终，努力工作会导致成功。",
+    "word_family": "ultimate (adj. 最终的), ultimatum (n. 最后通牒)",
+    "memory_tips": "记忆技巧：ultimately 来自 ultimate（最终的），后缀 -ly 表示副词，联想为‘到最后’。词源来自拉丁语 ultimatus。",
+    "difficulty": "3",
+    "collocations": "ultimately responsible, ultimately decide, ultimately lead to",
+    "image_prompt": "一个路径图，显示从起点到终点的旅程，象征最终结果或根本原因。",
+    "synonym_diff": {
+      "words": "finally, eventually, fundamentally",
+      "quick_guide": "ultimately 强调最终结果或根本原因，finally 指时间顺序最后，eventually 指最终发生，fundamentally 指基本地。"
+    }
+  },
+  {
+    "name": "abnormal",
+    "symbol": "/æbˈnɔːml/",
+    "chn": "adj. 反常的,畸形的",
+    "example_en": "The test results showed abnormal levels of sugar.",
+    "example_cn": "测试结果显示糖水平异常。",
+    "word_family": "normal (adj. 正常的), abnormality (n. 异常)",
+    "memory_tips": "记忆技巧：abnormal 前缀 ab- 表示‘ away from’，normal 表示‘正常’，联想为‘偏离正常’。",
+    "difficulty": "3",
+    "collocations": "abnormal behavior, abnormal growth, abnormal condition",
+    "image_prompt": "一个医疗图表显示异常数据点，医生皱眉分析，背景有正常与异常对比图。",
+    "synonym_diff": {
+      "words": "unusual, atypical, anomalous",
+      "quick_guide": "abnormal 指偏离正常标准，unusual 指不常见，atypical 指非典型，anomalous 指异常现象。"
+    }
+  },
+  {
+    "name": "weapon",
+    "symbol": "/ˈwepən/",
+    "chn": "n. 武器,手段;兵器",
+    "example_en": "The soldier carried a powerful weapon.",
+    "example_cn": "士兵携带了一种强大的武器。",
+    "word_family": "weaponry (n. 武器总称), weaponize (v. 武器化)",
+    "memory_tips": "记忆技巧：weapon 来自古英语 wæpen（武器），联想为‘用于攻击或防御的工具’。",
+    "difficulty": "2",
+    "collocations": "nuclear weapon, weapon of mass destruction, use a weapon",
+    "image_prompt": "一个历史博物馆中的武器展示，包括古代和现代武器，背景有战争或和平符号。",
+    "synonym_diff": {
+      "words": "arm, tool, instrument",
+      "quick_guide": "weapon 指武器或斗争手段，arm 可指武器或手臂，tool 指工具，instrument 指仪器或工具。"
+    }
+  },
+  {
+    "name": "fundamental",
+    "symbol": "/ˌfʌndəˈmentl/",
+    "chn": "adj. 十分重大的,根本的;基础的,基本的 n.基本规律,根本法则,基础",
+    "example_en": "Respect is fundamental to a healthy relationship.",
+    "example_cn": "尊重是健康关系的基础。",
+    "word_family": "fundamentally (adv. 根本地), fundamentals (n. 基本原则)",
+    "memory_tips": "记忆技巧：fundamental 来自拉丁语 fundamentum（基础），词根 fund- 表示‘底部’，联想为‘基本的或根本的’。",
+    "difficulty": "4",
+    "collocations": "fundamental right, fundamental change, fundamental principle",
+    "image_prompt": "一个金字塔结构，基础层标有“基本法则”，上层建筑象征衍生概念，背景有书籍或教育元素。",
+    "synonym_diff": {
+      "words": "basic, essential, primary",
+      "quick_guide": "fundamental 强调根本或基础，basic 指简单的基咄，essential 指必不可少的，primary 指首要的。"
+    }
+  },
+  {
+    "name": "pace",
+    "symbol": "/peɪs/",
+    "chn": "n. 发生的速度,节奏;步速;快节奏 vi. &vt. 来回踱步,走来走去;确定速度,调整节奏",
+    "example_en": "She walked at a slow pace through the park.",
+    "example_cn": "她以慢速穿过公园。",
+    "word_family": "pacemaker (n. 起搏器), pacing (n. 步调)",
+    "memory_tips": "记忆技巧：pace 来自拉丁语 passus（步骤），联想为‘步伐或节奏’。",
+    "difficulty": "3",
+    "collocations": "keep pace with, set the pace, pace yourself",
+    "image_prompt": "一个人在人行道上散步，手表显示时间，象征节奏和速度，背景有城市或自然景观。",
+    "synonym_diff": {
+      "words": "speed, rhythm, tempo",
+      "quick_guide": "pace 指步速或节奏，speed 指速度，rhythm 指韵律，tempo 指音乐或活动节奏。"
+    }
+  },
+  {
+    "name": "arise",
+    "symbol": "/əˈraɪz/",
+    "chn": "vi. (arose, arisen) 发生,出现;(由…)引起,(因…) 产生",
+    "example_en": "Problems can arise when communication is poor.",
+    "example_cn": "当沟通不畅时，问题会出现。",
+    "word_family": "arising (adj. 出现的), rise (v. 上升)",
+    "memory_tips": "记忆技巧：arise 来自古英语 arīsan（升起），前缀 a- 表示‘ out’，词根 rise 表示‘上升’，联想为‘出现或产生’。",
+    "difficulty": "3",
+    "collocations": "arise from, arise out of, when the need arises",
+    "image_prompt": "一个场景显示问题气泡从讨论中冒出，象征问题的出现和原因，背景有团队会议。",
+    "synonym_diff": {
+      "words": "occur, emerge, originate",
+      "quick_guide": "arise 指出现或产生，occur 指发生，emerge 指浮现，originate 指起源。"
+    }
+  },
+  {
+    "name": "restrict",
+    "symbol": "/rɪˈstrɪkt/",
+    "chn": "vt. 限制,限定;束缚,妨碍;约束,管束",
+    "example_en": "The law restricts the use of plastic bags.",
+    "example_cn": "法律限制塑料袋的使用。",
+    "word_family": "restriction (n. 限制), restrictive (adj. 限制性的)",
+    "memory_tips": "记忆技巧：restrict 来自拉丁语 restringere（绑紧），前缀 re- 表示‘ back’，词根 strict- 表示‘紧’，联想为‘限制’。",
+    "difficulty": "3",
+    "collocations": "restrict access, restrict movement, restrict growth",
+    "image_prompt": "一个禁止符号覆盖在塑料袋上，象征限制和约束，背景有环保标志。",
+    "synonym_diff": {
+      "words": "limit, constrain, confine",
+      "quick_guide": "restrict 指施加限制，limit 指设定界限，constrain 指强制约束，confine 指 confined 空间限制。"
+    }
+  },
+  {
+    "name": "prohibit",
+    "symbol": "/prəˈhɪbɪt/",
+    "chn": "vt.(尤指法令)禁止;使不可能",
+    "example_en": "Smoking is prohibited in public places.",
+    "example_cn": "公共场所禁止吸烟。",
+    "word_family": "prohibition (n. 禁止), prohibitive (adj. 禁止的)",
+    "memory_tips": "记忆技巧：prohibit 来自拉丁语 prohibere（阻止），前缀 pro- 表示‘ forth’，词根 hib- 表示‘持有’，联想为‘禁止’。",
+    "difficulty": "3",
+    "collocations": "prohibit by law, prohibit entry, prohibit smoking",
+    "image_prompt": "一个禁止吸烟标志在公共场所，如餐厅或公园，有人遵守规则，背景有法律文档。",
+    "synonym_diff": {
+      "words": "ban, forbid, prevent",
+      "quick_guide": "prohibit 指正式禁止，ban 指官方禁令，forbid 指个人禁止，prevent 指阻止发生。"
+    }
+  },
+  {
+    "name": "resistance",
+    "symbol": "/rɪˈzɪstəns/",
+    "chn": "n. 抵抗力;抵制,反对;抵抗,反抗",
+    "example_en": "The body's resistance to infection is important for health.",
+    "example_cn": "身体对感染的抵抗力对健康很重要。",
+    "word_family": "resistant (adj. 抵抗的), resist (v. 抵制)",
+    "memory_tips": "记忆技巧：resistance 来自 resist（抵抗），后缀 -ance 表示名词，联想为‘抵抗的能力或行为’。",
+    "difficulty": "3",
+    "collocations": "antibiotic resistance, resistance movement, electrical resistance",
+    "image_prompt": "一个免疫系统攻击病毒的示意图，同时有抗议者举牌，象征生物和政治抵抗。",
+    "synonym_diff": {
+      "words": "opposition, immunity, defiance",
+      "quick_guide": "resistance 指抵抗或反对，opposition 指对立，immunity 指免疫力，defiance 指违抗。"
+    }
+  },
+  {
+    "name": "flu",
+    "symbol": "/fluː/",
+    "chn": "n. 流行性感冒,流感",
+    "example_en": "She stayed home because she had the flu.",
+    "example_cn": "她因患流感而呆在家里。",
+    "word_family": "influenza (n. 流感), flu-like (adj. 类流感的)",
+    "memory_tips": "记忆技巧：flu 是 influenza 的缩写，来自意大利语 influenza（影响），联想为‘流行性感冒’。",
+    "difficulty": "2",
+    "collocations": "catch the flu, flu season, flu vaccine",
+    "image_prompt": "一个人躺在床上，额头上放湿毛巾，床边有药和体温计，象征流感症状。",
+    "synonym_diff": {
+      "words": "cold, virus, influenza",
+      "quick_guide": "flu 指流行性感冒，cold 指普通感冒，virus 指病毒，influenza 是 flu 的正式术语。"
+    }
+  },
+  {
+    "name": "characteristic",
+    "symbol": "/ˌkærəktəˈrɪstɪk/",
+    "chn": "n. 特征,特点 adj. 典型的,独特的",
+    "example_en": "Kindness is a characteristic of a good leader.",
+    "example_cn": "善良是好领导的一个特征。",
+    "word_family": "character (n. 性格), characterize (v. 以...为特征)",
+    "memory_tips": "记忆技巧：characteristic 来自 character（性格），后缀 -istic 表示‘相关的’，联想为‘特征性的’。",
+    "difficulty": "3",
+    "collocations": "key characteristic, characteristic feature, characteristic behavior",
+    "image_prompt": "一个维恩图显示不同人物的特征重叠，象征典型特点和独特性。",
+    "synonym_diff": {
+      "words": "trait, feature, quality",
+      "quick_guide": "characteristic 指典型特征，trait 指个性特质，feature 指特点，quality 指品质。"
+    }
+  },
+  {
+    "name": "wrestle",
+    "symbol": "/ˈresl/",
+    "chn": "vi. & vt.奋力对付,努力处理;摔跤",
+    "example_en": "He had to wrestle with a difficult decision.",
+    "example_cn": "他不得不努力处理一个艰难的决定。",
+    "word_family": "wrestling (n. 摔跤), wrestler (n. 摔跤选手)",
+    "memory_tips": "记忆技巧：wrestle 来自古英语 wrǣstlian（扭斗），联想为‘搏斗或努力解决’。",
+    "difficulty": "3",
+    "collocations": "wrestle with, wrestle match, wrestle control",
+    "image_prompt": "一个摔跤手在垫子上搏斗，同时有一个人深思问题，象征 physical and mental struggle。",
+    "synonym_diff": {
+      "words": "struggle, grapple, fight",
+      "quick_guide": "wrestle 指摔跤或努力处理，struggle 指挣扎，grapple 指扭打，fight 指打架。"
+    }
+  },
+  {
+    "name": "debate",
+    "symbol": "/dɪˈbeɪt/",
+    "chn": "vt. & vi. 讨论,辩论;仔细考虑,思考 n. 讨论,争论;辩论",
+    "example_en": "The students debated the topic of climate change.",
+    "example_cn": "学生们辩论了气候变化的主题。",
+    "word_family": "debater (n. 辩论者), debatable (adj. 可辩论的)",
+    "memory_tips": "记忆技巧：debate 来自拉丁语 debattere（打击），前缀 de- 表示‘ down’，词根 bat- 表示‘打’，联想为‘言语上的打击’。",
+    "difficulty": "3",
+    "collocations": "heated debate, debate team, under debate",
+    "image_prompt": "一个辩论赛场景，演讲者站在 podium 上，观众鼓掌，背景有话题海报。",
+    "synonym_diff": {
+      "words": "discuss, argue, deliberate",
+      "quick_guide": "debate 指正式辩论，discuss 指讨论，argue 指争论，deliberate 指慎重考虑。"
+    }
+  },
+  {
+    "name": "finding",
+    "symbol": "/ˈfaɪndɪŋ/",
+    "chn": "n. 调查发现,调研结果",
+    "example_en": "The research findings were published in a journal.",
+    "example_cn": "调研结果发表在一本期刊上。",
+    "word_family": "find (v. 发现), findings (pl. 发现物)",
+    "memory_tips": "记忆技巧：finding 来自 find（发现），后缀 -ing 表示名词，联想为‘发现的结果’。",
+    "difficulty": "3",
+    "collocations": "key findings, research findings, finding of fact",
+    "image_prompt": "一个科学家在实验室记录数据，论文图表显示发现结果，背景有显微镜和书籍。",
+    "synonym_diff": {
+      "words": "discovery, result, conclusion",
+      "quick_guide": "finding 指调研发现，discovery 指新发现，result 指结果，conclusion 指结论。"
+    }
+  },
+  {
+    "name": "ripe",
+    "symbol": "/raɪp/",
+    "chn": "adj. 成熟的;时机成熟的",
+    "example_en": "The apples are ripe and ready to pick.",
+    "example_cn": "苹果成熟了，可以采摘了。",
+    "word_family": "ripen (v. 成熟), ripeness (n. 成熟度)",
+    "memory_tips": "记忆技巧：ripe 来自古英语 rīpe（成熟的），联想为‘水果成熟或时机成熟’。",
+    "difficulty": "2",
+    "collocations": "ripe for, ripe age, ripe fruit",
+    "image_prompt": "一棵果树挂满成熟水果，农民采摘，象征成熟和时机。",
+    "synonym_diff": {
+      "words": "mature, ready, developed",
+      "quick_guide": "ripe 指水果成熟或时机成熟，mature 指人或事物成熟，ready 指准备好，developed 指发展成熟。"
+    }
+  },
+  {
+    "name": "withdraw",
+    "symbol": "/wɪðˈdrɔː/",
+    "chn": "vi. & vt. (withdrew,withdrawn) 脱离(社会),不与人交往;(使)撤离;(使)退出;停止提供",
+    "example_en": "He decided to withdraw from the competition.",
+    "example_cn": "他决定退出比赛。",
+    "word_family": "withdrawal (n. 撤退), withdrawn (adj. 孤僻的)",
+    "memory_tips": "记忆技巧：withdraw 来自 with（ back）和 draw（拉），联想为‘拉回或退出’。",
+    "difficulty": "3",
+    "collocations": "withdraw money, withdraw support, withdraw troops",
+    "image_prompt": "一个人从ATM机取钱，同时有另一个场景显示人从社交活动退出，象征撤离和退出。",
+    "synonym_diff": {
+      "words": "retreat, remove, exit",
+      "quick_guide": "withdraw 指退出或撤离，retreat 指撤退，remove 指移除，exit 指离开。"
+    }
+  },
+  {
+    "name": "equip",
+    "symbol": "/ɪˈkwɪp/",
+    "chn": "vt. 配备;使有能力",
+    "example_en": "The school will equip students with digital skills.",
+    "example_cn": "学校将使学生具备数字技能。",
+    "word_family": "equipment (n. 设备), equipped (adj. 配备的)",
+    "memory_tips": "记忆技巧：equip 来自法语 équiper（装备），联想为‘提供装备或能力’。",
+    "difficulty": "3",
+    "collocations": "equip with, fully equipped, equip for",
+    "image_prompt": "一个教室充满电脑和技术工具，老师指导学生，象征配备和能力培养。",
+    "synonym_diff": {
+      "words": "furnish, supply, prepare",
+      "quick_guide": "equip 指配备装备或能力，furnish 指提供家具，supply 指供应，prepare 指准备。"
+    }
+  },
+  {
+    "name": "artificial",
+    "symbol": "/ˌɑːtɪˈfɪʃl/",
+    "chn": "adj. 人工的,人造的;人为的;虚假的",
+    "example_en": "Artificial intelligence is changing the world.",
+    "example_cn": "人工智能正在改变世界。",
+    "word_family": "artificially (adv. 人工地), artificiality (n. 人工性)",
+    "memory_tips": "记忆技巧：artificial 来自 artefact（人工制品），词根 art- 表示‘艺术’或‘技巧’，联想为‘人造的’。",
+    "difficulty": "3",
+    "collocations": "artificial light, artificial sweetener, artificial grass",
+    "image_prompt": "一个机器人或AI界面，背景有工厂生产线上的人造产品，象征人工和科技。",
+    "synonym_diff": {
+      "words": "synthetic, man-made, fake",
+      "quick_guide": "artificial 指人工或人造，synthetic 指化学合成，man-made 指人为制造，fake 指假冒。"
+    }
+  },
+  {
+    "name": "limb",
+    "symbol": "/lɪm/",
+    "chn": "n. 肢,臂,腿",
+    "example_en": "The accident injured his limb.",
+    "example_cn": "事故伤到了他的肢体。",
+    "word_family": "limbless (adj. 无肢的), limbs (pl. 四肢)",
+    "memory_tips": "记忆技巧：limb 来自古英语 lim（肢体），联想为‘身体的部分如臂或腿’。",
+    "difficulty": "3",
+    "collocations": "upper limb, lower limb, lose a limb",
+    "image_prompt": "一个人体解剖图，突出显示手臂和腿，象征肢体结构。",
+    "synonym_diff": {
+      "words": "arm, leg, appendage",
+      "quick_guide": "limb 泛指四肢，arm 指手臂，leg 指腿，appendage 指附属肢。"
+    }
+  },
+  {
+    "name": "rubber",
+    "symbol": "/ˈrʌbə(r)/",
+    "chn": "n. 橡胶;橡皮",
+    "example_en": "The tires are made of rubber.",
+    "example_cn": "轮胎是由橡胶制成的。",
+    "word_family": "rubbery (adj. 橡胶似的), rubberize (v. 涂橡胶)",
+    "memory_tips": "记忆技巧：rubber 来自 rub（摩擦），因橡皮用于擦除，联想为‘橡胶材料’。",
+    "difficulty": "2",
+    "collocations": "rub band, rubber stamp, rubber duck",
+    "image_prompt": "一个橡皮擦和轮胎并置，象征橡胶的用途，背景有工厂或学校场景。",
+    "synonym_diff": {
+      "words": "eraser, latex, elastic",
+      "quick_guide": "rubber 指橡胶或橡皮，eraser 特指橡皮擦，latex 指乳胶，elastic 指弹性材料。"
+    }
+  },
+  {
+    "name": "outgoing",
+    "symbol": "/ˌaʊtˈɡəʊɪŋ/",
+    "chn": "adj. 外向的",
+    "example_en": "She is very outgoing and makes friends easily.",
+    "example_cn": "她非常外向，容易交朋友。",
+    "word_family": "outgoings (n. 支出), outgoingness (n. 外向性)",
+    "memory_tips": "记忆技巧：outgoing 复合词，来自 out（外）和 going（去），联想为‘向外社交的’。",
+    "difficulty": "2",
+    "collocations": "outgoing personality, outgoing mail, outgoing call",
+    "image_prompt": "一个活泼的人在聚会上微笑交谈，周围有朋友，象征外向性格。",
+    "synonym_diff": {
+      "words": "extroverted, sociable, friendly",
+      "quick_guide": "outgoing 指性格外向，extroverted 是心理学术语，sociable 指善社交，friendly 指友好。"
+    }
+  },
+  {
+    "name": "grateful",
+    "symbol": "/ˈɡreɪtfl/",
+    "chn": "adj. 感激的,表示感谢的",
+    "example_en": "I am grateful for your help.",
+    "example_cn": "我感谢你的帮助。",
+    "word_family": "gratefully (adv. 感激地), gratitude (n. 感激之情)",
+    "memory_tips": "记忆技巧：grateful 来自 grace（恩惠），后缀 -ful 表示‘充满’，联想为‘充满感激的’。",
+    "difficulty": "2",
+    "collocations": "deeply grateful, grateful to, grateful for",
+    "image_prompt": "一个人收到礼物或帮助后，微笑表达感谢，背景有心形或感谢卡。",
+    "synonym_diff": {
+      "words": "thankful, appreciative, obliged",
+      "quick_guide": "grateful 指感激，thankful 指感谢，appreciative 指欣赏性的感谢，obliged 指受惠感激。"
+    }
+  },
+  {
+    "name": "disabled",
+    "symbol": "/dɪsˈeɪbld/",
+    "chn": "adj. 有残疾的,丧失能力的",
+    "example_en": "The building has access for disabled people.",
+    "example_cn": "这座建筑有残疾人通道。",
+    "word_family": "disable (v. 使残疾), disability (n. 残疾)",
+    "memory_tips": "记忆技巧：disabled 前缀 dis- 表示‘ not’，able 表示‘能力’，联想为‘没有能力的’。",
+    "difficulty": "2",
+    "collocations": "disabled person, disabled access, learning disabled",
+    "image_prompt": "一个 wheelchair user 使用斜坡进入建筑，象征无障碍设施和包容。",
+    "synonym_diff": {
+      "words": "handicapped, impaired, challenged",
+      "quick_guide": "disabled 指残疾的，handicapped 较老式，impaired 指功能受损，challenged 指有挑战的委婉语。"
+    }
+  },
+  {
+    "name": "conventional",
+    "symbol": "/kənˈvenʃənl/",
+    "chn": "adj. 传统的,习惯的;依照惯例的,遵循习俗的",
+    "example_en": "They chose a conventional wedding ceremony.",
+    "example_cn": "他们选择了一个传统的婚礼仪式。",
+    "word_family": "convention (n. 惯例), conventionally (adv. 常规地)",
+    "memory_tips": "记忆技巧：conventional 来自 convention（惯例），后缀 -al 表示形容词，联想为‘遵循惯例的’。",
+    "difficulty": "3",
+    "collocations": "conventional wisdom, conventional method, conventional war",
+    "image_prompt": "一个传统婚礼场景，有礼服、戒指和仪式，象征惯例和习俗。",
+    "synonym_diff": {
+      "words": "traditional, customary, standard",
+      "quick_guide": "conventional 指常规或传统，traditional 指历史悠久传统，customary 指习俗性的，standard 指标准。"
+    }
+  },
+  {
+    "name": "disturb",
+    "symbol": "/dɪˈstɜːb/",
+    "chn": "vt. 使不安;打扰;搅乱",
+    "example_en": "Please do not disturb me while I am working.",
+    "example_cn": "请在我工作时不要打扰我。",
+    "word_family": "disturbing (adj. 令人不安的), disturbed (adj. 心烦意乱的)",
+    "memory_tips": "记忆技巧：disturb 来自拉丁语 disturbare（搅乱），前缀 dis- 表示‘ apart’，词根 turb- 表示‘混乱’，联想为‘打扰’。",
+    "difficulty": "3",
+    "collocations": "disturb the peace, disturb sleep, deeply disturb",
+    "image_prompt": "一个人在学习时被敲门声打扰，表情 annoyed，背景有“请勿打扰”标志。",
+    "synonym_diff": {
+      "words": "interrupt, bother, upset",
+      "quick_guide": "disturb 指打扰或使不安，interrupt 指中断，bother 指烦扰，upset 指使难过。"
+    }
+  },
+  {
+    "name": "adjust",
+    "symbol": "/əˈdʒʌst/",
+    "chn": "vt. & vi. 调整,调节;适应,习惯;整理",
+    "example_en": "You need to adjust the settings on your phone.",
+    "example_cn": "你需要调整手机上的设置。",
+    "word_family": "adjustment (n. 调整), adjustable (adj. 可调整的)",
+    "memory_tips": "记忆技巧：adjust 来自拉丁语 adiuxtare（使接近），前缀 ad- 表示‘ to’，词根 just- 表示‘正确’，联想为‘调整到正确’。",
+    "difficulty": "3",
+    "collocations": "adjust to, adjust settings, adjust quickly",
+    "image_prompt": "一个人调节 thermostat 或相机镜头，象征调整和适应。",
+    "synonym_diff": {
+      "words": "adapt, modify, regulate",
+      "quick_guide": "adjust 指微小调整或适应，adapt 指适应新环境，modify 指修改，regulate 指 regulate 控制调节。"
+    }
+  },
+  {
+    "name": "evidence",
+    "symbol": "/ˈevɪdəns/",
+    "chn": "n. 证据,证明;物证,人证 vt. 证明,表明",
+    "example_en": "There is evidence that supports the theory.",
+    "example_cn": "有证据支持这个理论。",
+    "word_family": "evident (adj. 明显的), evidently (adv. 明显地)",
+    "memory_tips": "记忆技巧：evidence 来自拉丁语 evidentia（明显），前缀 e- 表示‘ out’，词根 vid- 表示‘看’，联想为‘看得见的证据’。",
+    "difficulty": "3",
+    "collocations": "strong evidence, evidence-based, give evidence",
+    "image_prompt": "一个侦探查看指纹和文件，象征证据收集和证明，背景有法庭场景。",
+    "synonym_diff": {
+      "words": "proof, testimony, indication",
+      "quick_guide": "evidence 指证据或证明，proof 指确凿证据，testimony 指证词，indication 指迹象。"
+    }
+  },
+  {
+    "name": "examine",
+    "symbol": "/ɪɡˈzæmɪn/",
+    "chn": "vt. 检查,检验;审查,调查;考,测试;审问",
+    "example_en": "The doctor will examine your injury.",
+    "example_cn": "医生会检查你的伤势。",
+    "word_family": "examination (n. 检查), examiner (n. 检查者)",
+    "memory_tips": "记忆技巧：examine 来自拉丁语 examinare（称重），前缀 ex- 表示‘ out’，词根 amin- 表示‘驱动’，联想为‘仔细检查’。",
+    "difficulty": "3",
+    "collocations": "examine carefully, examine the evidence, medical examine",
+    "image_prompt": "医生用 stethoscope 检查患者，同时有另一个场景显示学生考试，象征检查和测试。",
+    "synonym_diff": {
+      "words": "inspect, scrutinize, test",
+      "quick_guide": "examine 指仔细检查，inspect 指官方检查，scrutinize 指细致审查，test 指测试。"
+    }
+  },
+  {
+    "name": "severe",
+    "symbol": "/sɪˈvɪə(r)/",
+    "chn": "adj. 十分严重的,极为恶劣的;严厉的;艰难的",
+    "example_en": "The storm caused severe damage.",
+    "example_cn": "风暴造成了严重破坏。",
+    "word_family": "severely (adv. 严重地), severity (n. 严重性)",
+    "memory_tips": "记忆技巧：severe 来自拉丁语 severus（严厉），联想为‘严重或严厉’。",
+    "difficulty": "3",
+    "collocations": "severe pain, severe weather, severe punishment",
+    "image_prompt": "一个灾难场景，如风暴后的破坏，象征严重性，背景有警告标志。",
+    "synonym_diff": {
+      "words": "serious, harsh, extreme",
+      "quick_guide": "severe 指十分严重或严厉，serious 指严肃严重，harsh 指苛刻，extreme 指极端。"
+    }
+  },
+  {
+    "name": "anxiety",
+    "symbol": "/æŋˈzaɪəti/",
+    "chn": "n. 焦虑;担心;渴望",
+    "example_en": "She felt anxiety before the exam.",
+    "example_cn": "她在考试前感到焦虑。",
+    "word_family": "anxious (adj. 焦虑的), anxiously (adv. 焦虑地)",
+    "memory_tips": "记忆技巧：anxiety 来自拉丁语 anxietas（焦虑），词根 anx- 表示‘烦恼’，联想为‘焦虑情绪’。",
+    "difficulty": "3",
+    "collocations": "anxiety disorder, feeling of anxiety, reduce anxiety",
+    "image_prompt": "一个人紧张地等待结果，手抖或踱步，象征焦虑和担心。",
+    "synonym_diff": {
+      "words": "worry, fear, stress",
+      "quick_guide": "anxiety 指持续焦虑，worry 指担心，fear 指恐惧，stress 指压力。"
+    }
+  },
+  {
+    "name": "infection",
+    "symbol": "/ɪnˈfekʃn/",
+    "chn": "n. 传染,感染",
+    "example_en": "The wound led to an infection.",
+    "example_cn": "伤口导致了感染。",
+    "word_family": "infect (v. 传染), infectious (adj. 传染性的)",
+    "memory_tips": "记忆技巧：infection 来自拉丁语 inficere（感染），前缀 in- 表示‘ into’，词根 fic- 表示‘做’，联想为‘传入疾病’。",
+    "difficulty": "3",
+    "collocations": "bacterial infection, prevent infection, spread infection",
+    "image_prompt": "一个医疗场景，医生处理感染伤口，背景有细菌放大图，象征传染和感染。",
+    "synonym_diff": {
+      "words": "contagion, disease, inflammation",
+      "quick_guide": "infection 指微生物感染，contagion 指接触传染，disease 指疾病，inflammation 指炎症。"
+    }
+  },
+    {"name":"4"},
+  {
+    "name": "castle",
+    "symbol": "/ˈkɑːsl/",
+    "chn": "n. 城堡",
+    "example_en": "The medieval castle stands proudly on the hill.",
+    "example_cn": "中世纪的城堡自豪地矗立在小山上。",
+    "word_family": "castled (adj. 有城堡的), castle-like (adj. 像城堡的)",
+    "memory_tips": "记忆技巧：'castle' 发音类似 'kɑːsl'，联想为巨大的石制建筑。词源来自拉丁语 'castellum'，意为堡垒。",
+    "difficulty": "2",
+    "collocations": "build a castle, castle in the air, visit a castle",
+    "image_prompt": "一座中世纪城堡坐落在绿色小山上，有高塔和旗帜飘扬，天空中有云朵。",
+    "synonym_diff": {
+      "words": "fortress, palace, stronghold, chateau",
+      "quick_guide": "城堡指中世纪防御建筑，堡垒更军事化，宫殿是皇家住所，庄园是乡村别墅。"
+    }
+  },
+  {
+    "name": "input",
+    "symbol": "/ˈɪnpʊt/",
+    "chn": "n. 输入的信息;投入 vt. 输入(信息)",
+    "example_en": "Please input your password to access the system.",
+    "example_cn": "请输入密码以访问系统。",
+    "word_family": "inputter (n. 输入者), inputting (v. 输入)",
+    "memory_tips": "记忆技巧：'input' 拆分为 'in'（进入） + 'put'（放置），联想为放入信息。词源来自计算机术语。",
+    "difficulty": "3",
+    "collocations": "input data, keyboard input, user input",
+    "image_prompt": "一个人正在电脑键盘上打字，屏幕上显示输入框和光标闪烁。",
+    "synonym_diff": {
+      "words": "enter, insert, type, key in",
+      "quick_guide": "输入信息用 input/enter，插入物体用 insert，打字用 type/key in。"
+    }
+  },
+  {
+    "name": "capacity",
+    "symbol": "/kəˈpæsəti/",
+    "chn": "n. 领悟能力;容量,容积;职位,职责;生产量",
+    "example_en": "The hall has a capacity of 500 people.",
+    "example_cn": "这个大厅可容纳500人。",
+    "word_family": "capable (adj. 有能力的), incapacity (n. 无能力)",
+    "memory_tips": "记忆技巧：'capacity' 来自拉丁语 'capacitas'，意为容纳能力。联想为容器能装多少。",
+    "difficulty": "3",
+    "collocations": "full capacity, mental capacity, capacity building",
+    "image_prompt": "一个大型会议厅坐满了人，演讲者在台上，显示容量极限。",
+    "synonym_diff": {
+      "words": "ability, volume, capability, competence",
+      "quick_guide": "容量指物理空间用 volume，能力用 ability/capability，职位用 role。"
+    }
+  },
+  {
+    "name": "analyse",
+    "symbol": "/ˈænəlaɪz/",
+    "chn": "vt. 分析",
+    "example_en": "Scientists analyse data to find patterns.",
+    "example_cn": "科学家分析数据以发现模式。",
+    "word_family": "analysis (n. 分析), analytical (adj. 分析的)",
+    "memory_tips": "记忆技巧：'analyse' 拆分为 'ana'（向上） + 'lyse'（松开），联想为拆解事物。词源来自希腊语。",
+    "difficulty": "4",
+    "collocations": "analyse results, critically analyse, analyse a problem",
+    "image_prompt": "一个科学家在实验室里看着显微镜和图表，进行数据分析。",
+    "synonym_diff": {
+      "words": "examine, study, evaluate, inspect",
+      "quick_guide": "分析用 analyse/examine，研究用 study，评估用 evaluate，检查用 inspect。"
+    }
+  },
+  {
+    "name": "massive",
+    "symbol": "/ˈmæsɪv/",
+    "chn": "adj. 巨大的,大而重的;非常严重的",
+    "example_en": "They built a massive bridge over the river.",
+    "example_cn": "他们在河上建了一座巨大的桥。",
+    "word_family": "mass (n. 大量), massively (adv. 大规模地)",
+    "memory_tips": "记忆技巧：'massive' 来自 'mass'（大量），联想为体积或规模很大。",
+    "difficulty": "3",
+    "collocations": "massive attack, massive success, massive structure",
+    "image_prompt": "一座巨大的钢铁桥横跨河流，周围有小型车辆和人物对比显示规模。",
+    "synonym_diff": {
+      "words": "huge, enormous, gigantic, immense",
+      "quick_guide": "巨大用 massive/huge，极其大同义，但 massive 强调重量或规模，enormous 强调异常大。"
+    }
+  },
+  {
+    "name": "network",
+    "symbol": "/ˈnetwɜːk/",
+    "chn": "n. 网络,网状系统;关系网,人际网;(互联)网络",
+    "example_en": "She expanded her professional network through conferences.",
+    "example_cn": "她通过会议扩展了职业关系网。",
+    "word_family": "networking (n. 联网), networked (adj. 联网的)",
+    "memory_tips": "记忆技巧：'network' 拆分为 'net'（网） + 'work'（工作），联想为 interconnected system。词源来自英语。",
+    "difficulty": "3",
+    "collocations": "computer network, social network, network security",
+    "image_prompt": "一个人在使用笔记本电脑，屏幕上显示社交网络连接图，有节点和线条。",
+    "synonym_diff": {
+      "words": "web, grid, system, interconnection",
+      "quick_guide": "网络指连接系统用 network/web，网格用 grid，系统用 system。"
+    }
+  },
+  {
+    "name": "coin",
+    "symbol": "/kɔɪn/",
+    "chn": "vt. 创造(新词语)",
+    "example_en": "Shakespeare coined many words still used today.",
+    "example_cn": "莎士比亚创造了许多至今仍在使用的词语。",
+    "word_family": "coiner (n. 造词者), coinage (n. 造词)",
+    "memory_tips": "记忆技巧：'coin' 原意硬币，引申为铸造新词，联想为 minting words。词源来自拉丁语 'cuneus'。",
+    "difficulty": "4",
+    "collocations": "coin a phrase, coin a term, newly coined",
+    "image_prompt": "一个作家在书房里写作，纸上写有新创造的词语，旁边有硬币隐喻。",
+    "synonym_diff": {
+      "words": "invent, create, devise, originate",
+      "quick_guide": "创造词语用 coin/invent，发明物体用 create，设计用 devise，起源用 originate。"
+    }
+  },
+  {
+    "name": "breakthrough",
+    "symbol": "/ˈbreɪkθruː/",
+    "chn": "n. 重大进展,突破 adj. 突破性的",
+    "example_en": "The research team made a breakthrough in cancer treatment.",
+    "example_cn": "研究团队在癌症治疗上取得了突破。",
+    "word_family": "breakthroughs (pl. n. 突破), break through (v. 突破)",
+    "memory_tips": "记忆技巧：'breakthrough' 拆分为 'break'（打破） + 'through'（通过），联想为突破障碍。",
+    "difficulty": "4",
+    "collocations": "scientific breakthrough, major breakthrough, breakthrough technology",
+    "image_prompt": "科学家在实验室庆祝，手持试管和图表，显示突破性发现。",
+    "synonym_diff": {
+      "words": "advance, innovation, discovery, milestone",
+      "quick_guide": "突破用 breakthrough/advance，创新用 innovation，发现用 discovery，里程碑用 milestone。"
+    }
+  },
+  {
+    "name": "finance",
+    "symbol": "/ˈfaɪnæns; faɪˈnæns/",
+    "chn": "n. 财政,金融;资金;财力,财务管理 vt. 提供资金",
+    "example_en": "The government finances public projects through taxes.",
+    "example_cn": "政府通过税收为公共项目提供资金。",
+    "word_family": "financial (adj. 财政的), financier (n. 金融家)",
+    "memory_tips": "记忆技巧：'finance' 来自法语 'financer'，意为管理金钱。联想为 money matters。",
+    "difficulty": "4",
+    "collocations": "personal finance, corporate finance, finance minister",
+    "image_prompt": "一个商务人士在办公室查看财务报表和图表，有货币符号。",
+    "synonym_diff": {
+      "words": "funding, economics, investment, banking",
+      "quick_guide": "财政管理用 finance，资金提供用 funding，经济学用 economics，投资用 investment。"
+    }
+  },
+  {
+    "name": "autonomous",
+    "symbol": "/ɔːˈtɒnəməs/",
+    "chn": "adj. 自主的,有自主权的;自治的",
+    "example_en": "The robot is autonomous and can make decisions on its own.",
+    "example_cn": "这个机器人是自主的，可以自行做出决定。",
+    "word_family": "autonomy (n. 自治), automatically (adv. 自动地)",
+    "memory_tips": "记忆技巧：'autonomous' 拆分为 'auto'（自动） + 'nomous'（法律），联想为自我 governing。词源来自希腊语。",
+    "difficulty": "5",
+    "collocations": "autonomous vehicle, autonomous region, autonomous system",
+    "image_prompt": "一个自动驾驶汽车在道路上行驶，内部有传感器和计算机显示自主决策。",
+    "synonym_diff": {
+      "words": "independent, self-governing, self-directed, sovereign",
+      "quick_guide": "自主用 autonomous/independent，自治用 self-governing，主权用 sovereign。"
+    }
+  },
+  {
+    "name": "domestic",
+    "symbol": "/dəˈmestɪk/",
+    "chn": "adj. 家庭的,家用的;本国的,国内的",
+    "example_en": "She prefers domestic travel over international trips.",
+    "example_cn": "她更喜欢国内旅行而不是国际旅行。",
+    "word_family": "domestically (adv. 国内地), domesticate (v. 驯养)",
+    "memory_tips": "记忆技巧：'domestic' 来自拉丁语 'domesticus'，意为家庭的。联想为 home-related。",
+    "difficulty": "3",
+    "collocations": "domestic violence, domestic market, domestic chores",
+    "image_prompt": "一个家庭在客厅里进行日常活动，如清洁和看电视，显示家庭场景。",
+    "synonym_diff": {
+      "words": "home, internal, national, household",
+      "quick_guide": "家庭的用 domestic/home，国内的用 internal/national，家用物品用 household。"
+    }
+  },
+  {
+    "name": "threaten",
+    "symbol": "/ˈθretn/",
+    "chn": "vt. 危及,对…构成威胁;威胁,恐吓",
+    "example_en": "Pollution threatens the health of marine life.",
+    "example_cn": "污染威胁着海洋生物的健康。",
+    "word_family": "threat (n. 威胁), threatening (adj. 威胁的)",
+    "memory_tips": "记忆技巧：'threaten' 来自 'threat'，联想为发出危险信号。词源来自古英语。",
+    "difficulty": "4",
+    "collocations": "threaten security, threaten to do, threaten someone",
+    "image_prompt": "一个环境污染的场景，如垃圾漂浮在海洋中，鱼类看起来 distressed。",
+    "synonym_diff": {
+      "words": "endanger, menace, intimidate, jeopardize",
+      "quick_guide": "威胁用 threaten/menace，危及用 endanger/jeopardize，恐吓用 intimidate。"
+    }
+  },
+  {
+    "name": "commit",
+    "symbol": "/kəˈmɪt/",
+    "chn": "vt. 犯(罪);承诺,保证;花(钱或时间) vi. 全身心投入,忠于",
+    "example_en": "He committed himself to learning the piano.",
+    "example_cn": "他全身心投入学习钢琴。",
+    "word_family": "commitment (n. 承诺), committed (adj. 投入的)",
+    "memory_tips": "记忆技巧：'commit' 拆分为 'com'（共同） + 'mit'（发送），联想为交付或投入。词源来自拉丁语。",
+    "difficulty": "4",
+    "collocations": "commit a crime, commit to, commit resources",
+    "image_prompt": "一个人坚定地练习钢琴，琴键上手指移动，显示专注和投入。",
+    "synonym_diff": {
+      "words": "pledge, dedicate, perform, carry out",
+      "quick_guide": "承诺用 commit/pledge，投入用 dedicate，执行为 perform/carry out。"
+    }
+  },
+  {
+    "name": "crime",
+    "symbol": "/kraɪm/",
+    "chn": "n. 罪,罪行;犯罪活动",
+    "example_en": "The police are investigating the crime scene.",
+    "example_cn": "警方正在调查犯罪现场。",
+    "word_family": "criminal (adj. 犯罪的 n. 罪犯), criminology (n. 犯罪学)",
+    "memory_tips": "记忆技巧：'crime' 来自拉丁语 'crimen'，意为指控。联想为 illegal act。",
+    "difficulty": "3",
+    "collocations": "commit a crime, crime rate, organized crime",
+    "image_prompt": "一个侦探在犯罪现场调查，有警戒线和证据标记。",
+    "synonym_diff": {
+      "words": "offense, sin, felony, wrongdoing",
+      "quick_guide": "罪行用 crime/offense，重罪用 felony，道德罪用 sin，不当行为用 wrongdoing。"
+    }
+  },
+  {
+    "name": "murder",
+    "symbol": "/ˈmɜːdə(r)/",
+    "chn": "vt. & n. 谋杀,凶杀",
+    "example_en": "The novel revolves around a murder mystery.",
+    "example_cn": "这部小说围绕一个谋杀谜案展开。",
+    "word_family": "murderer (n. 凶手), murderous (adj. 凶杀的)",
+    "memory_tips": "记忆技巧：'murder' 发音类似 'merder'，联想为 violent killing。词源来自古英语。",
+    "difficulty": "4",
+    "collocations": "commit murder, murder case, attempted murder",
+    "image_prompt": "一个侦探小说封面，显示阴影和凶器，营造神秘氛围。",
+    "synonym_diff": {
+      "words": "homicide, assassination, killing, slaughter",
+      "quick_guide": "谋杀用 murder/homicide，暗杀用 assassination，杀戮用 killing/slaughter。"
+    }
+  },
+  {
+    "name": "urge",
+    "symbol": "/ɜːdʒ/",
+    "chn": "vt. 敦促,催促;大力推荐,竭力主张;驱赶,鞭策 n. 冲动,强烈的欲望",
+    "example_en": "I urge you to consider this opportunity carefully.",
+    "example_cn": "我敦促你仔细考虑这个机会。",
+    "word_family": "urgent (adj. 紧急的), urgency (n. 紧迫性)",
+    "memory_tips": "记忆技巧：'urge' 来自拉丁语 'urgere'，意为推挤。联想为强烈推动。",
+    "difficulty": "4",
+    "collocations": "urge on, feel an urge, urge someone to do",
+    "image_prompt": "一个人急切地劝说朋友，手势强调，显示敦促的场景。",
+    "synonym_diff": {
+      "words": "encourage, persuade, impulse, desire",
+      "quick_guide": "敦促用 urge/encourage，劝说用 persuade，冲动用 impulse，欲望用 desire。"
+    }
+  },
+  {
+    "name": "pose",
+    "symbol": "/pəʊz/",
+    "chn": "vt. 造成,产生;提问,质询 vi. 摆好姿势 n. 姿势",
+    "example_en": "The new policy poses a challenge to small businesses.",
+    "example_cn": "新政策对小企业构成了挑战。",
+    "word_family": "position (n. 位置), poseur (n. 装模作样的人)",
+    "memory_tips": "记忆技巧：'pose' 来自法语 'poser'，意为放置。联想为摆姿势或提出问题。",
+    "difficulty": "4",
+    "collocations": "pose a threat, pose for a photo, strike a pose",
+    "image_prompt": "一个模特在摄影棚摆姿势，灯光聚焦，显示优雅姿态。",
+    "synonym_diff": {
+      "words": "present, ask, posture, stance",
+      "quick_guide": "造成用 pose/present，提问用 ask，姿势用 posture/stance。"
+    }
+  },
+  {
+    "name": "apparently",
+    "symbol": "/əˈpærəntli/",
+    "chn": "adv. 显然,可见",
+    "example_en": "Apparently, he forgot about the meeting.",
+    "example_cn": "显然，他忘记了会议。",
+    "word_family": "apparent (adj. 明显的), appear (v. 出现)",
+    "memory_tips": "记忆技巧：'apparently' 来自 'apparent'，联想为看起来明显。词源来自拉丁语。",
+    "difficulty": "3",
+    "collocations": "seem apparently, apparently so, apparently not",
+    "image_prompt": "一个人耸肩表示无奈，背景有日历显示错过会议，表达明显的事情。",
+    "synonym_diff": {
+      "words": "obviously, evidently, seemingly, clearly",
+      "quick_guide": "显然用 apparently/obviously，明显地用 evidently/clearly，表面上用 seemingly。"
+    }
+  },
+  {
+    "name": "warning",
+    "symbol": "/ˈwɔːnɪŋ/",
+    "chn": "n. 警告,先兆;警戒",
+    "example_en": "The weather forecast issued a storm warning.",
+    "example_cn": "天气预报发布了风暴警告。",
+    "word_family": "warn (v. 警告), warningly (adv. 警告地)",
+    "memory_tips": "记忆技巧：'warning' 来自 'warn'，联想为提前通知危险。",
+    "difficulty": "3",
+    "collocations": "give a warning, early warning, warning sign",
+    "image_prompt": "一个手机屏幕显示天气警告通知，有风暴图标和文字。",
+    "synonym_diff": {
+      "words": "alert, caution, notice, signal",
+      "quick_guide": "警告用 warning/alert，谨慎用 caution，通知用 notice，信号用 signal。"
+    }
+  },
+  {
+    "name": "demand",
+    "symbol": "/dɪˈmɑːnd/",
+    "chn": "vt. 需要;强烈要求 n. 要求,所需之物;需求,需要",
+    "example_en": "The workers demand better working conditions.",
+    "example_cn": "工人们要求更好的工作条件。",
+    "word_family": "demanding (adj. 要求高的), demander (n. 要求者)",
+    "memory_tips": "记忆技巧：'demand' 拆分为 'de'（加强） + 'mand'（命令），联想为强烈命令。词源来自拉丁语。",
+    "difficulty": "3",
+    "collocations": "meet demand, on demand, demand for",
+    "image_prompt": "一群抗议者举着标语，要求权益，显示强烈要求的场景。",
+    "synonym_diff": {
+      "words": "request, require, claim, need",
+      "quick_guide": "要求用 demand/request，需要用 require/need，声称用 claim。"
+    }
+  },
+  {
+    "name": "victim",
+    "symbol": "/ˈvɪktɪm/",
+    "chn": "n. 受害者,牺牲品;受骗者;祭品",
+    "example_en": "She was a victim of online fraud.",
+    "example_cn": "她是网络诈骗的受害者。",
+    "word_family": "victimize (v. 受害), victimization (n. 受害)",
+    "memory_tips": "记忆技巧：'victim' 来自拉丁语 'victima'，意为祭品。联想为受苦的人。",
+    "difficulty": "3",
+    "collocations": "fall victim to, help victims, crime victim",
+    "image_prompt": "一个人坐在电脑前，表情沮丧，屏幕显示诈骗邮件，表示受害。",
+    "synonym_diff": {
+      "words": "sufferer, prey, casualty, martyr",
+      "quick_guide": "受害者用 victim/sufferer，猎物用 prey，伤亡者用 casualty，殉道者用 martyr。"
+    }
+  },
+  {
+    "name": "greedy",
+    "symbol": "/ˈɡriːdi/",
+    "chn": "adj. 贪心的,贪婪的",
+    "example_en": "The greedy child took all the cookies.",
+    "example_cn": "那个贪心的孩子拿走了所有的饼干。",
+    "word_family": "greed (n. 贪婪), greedily (adv. 贪婪地)",
+    "memory_tips": "记忆技巧：'greedy' 来自 'greed'，联想为过度渴望。词源来自古英语。",
+    "difficulty": "3",
+    "collocations": "greedy for, greedy person, greedy behavior",
+    "image_prompt": "一个孩子抱着一堆饼干，眼神渴望，其他孩子看着，显示贪婪。",
+    "synonym_diff": {
+      "words": "avaricious, covetous, selfish, gluttonous",
+      "quick_guide": "贪婪用 greedy/avaricious，嫉妒的用 covetous，自私用 selfish，贪食用 gluttonous。"
+    }
+  },
+  {
+    "name": "recognition",
+    "symbol": "/ˌrekəɡˈnɪʃn/",
+    "chn": "n. 识别,认出;承认,认可;赞誉,赏识",
+    "example_en": "He received recognition for his charitable work.",
+    "example_cn": "他因慈善工作受到认可。",
+    "word_family": "recognize (v. 认可), recognizable (adj. 可识别的)",
+    "memory_tips": "记忆技巧：'recognition' 拆分为 're'（再） + 'cognition'（认识），联想为再次认识。词源来自拉丁语。",
+    "difficulty": "4",
+    "collocations": "gain recognition, facial recognition, public recognition",
+    "image_prompt": "一个人在颁奖台上接受奖杯，观众鼓掌，表示认可和赞誉。",
+    "synonym_diff": {
+      "words": "acknowledgment, identification, appreciation, credit",
+      "quick_guide": "认出用 recognition/identification，承认用 acknowledgment，赏识用 appreciation/credit。"
+    }
+  },
+  {
+    "name": "database",
+    "symbol": "/ˈdeɪtəbeɪs/",
+    "chn": "n. 数据库",
+    "example_en": "The company maintains a large customer database.",
+    "example_cn": "公司维护着一个大型客户数据库。",
+    "word_family": "data (n. 数据), based (adj. 基于)",
+    "memory_tips": "记忆技巧：'database' 拆分为 'data'（数据） + 'base'（基础），联想为数据存储基础。",
+    "difficulty": "4",
+    "collocations": "access the database, database management, online database",
+    "image_prompt": "一个服务器机房，有闪烁的灯光和线路，屏幕上显示数据表。",
+    "synonym_diff": {
+      "words": "repository, archive, bank, storage",
+      "quick_guide": "数据库用 database/repository，档案用 archive，存储库用 bank/storage。"
+    }
+  },
+  {
+    "name": "alternative",
+    "symbol": "/ɔːlˈtɜːnətɪv/",
+    "chn": "n. 可供选择的事物 adj. 可供替代的;非传统的",
+    "example_en": "We need to consider alternative energy sources.",
+    "example_cn": "我们需要考虑替代能源。",
+    "word_family": "alternate (v. 交替), alternatively (adv. 或者)",
+    "memory_tips": "记忆技巧：'alternative' 来自 'alternate'，联想为其他选择。词源来自拉丁语。",
+    "difficulty": "4",
+    "collocations": "alternative medicine, alternative option, no alternative",
+    "image_prompt": "太阳能电池板和风力涡轮机在田野中，显示替代能源场景。",
+    "synonym_diff": {
+      "words": "option, choice, substitute, different",
+      "quick_guide": "选择用 alternative/option，替代物用 substitute，不同的用 different。"
+    }
+  },
+  {
+    "name": "hacker",
+    "symbol": "/ˈhækə(r)/",
+    "chn": "n. 黑客",
+    "example_en": "The hacker breached the security system.",
+    "example_cn": "黑客突破了安全系统。",
+    "word_family": "hack (v. 黑客攻击), hacking (n. 黑客行为)",
+    "memory_tips": "记忆技巧：'hacker' 来自 'hack'，原意劈砍，引申为计算机入侵。联想为 digital intruder。",
+    "difficulty": "4",
+    "collocations": "computer hacker, ethical hacker, hacker attack",
+    "image_prompt": "一个戴兜帽的人在黑暗房间中操作电脑，屏幕显示代码和防火墙警告。",
+    "synonym_diff": {
+      "words": "cracker, cybercriminal, intruder, programmer",
+      "quick_guide": "黑客用 hacker/cracker，网络罪犯用 cybercriminal，入侵者用 intruder，程序员用 programmer。"
+    }
+  },
+  {
+    "name": "theft",
+    "symbol": "/θeft/",
+    "chn": "n. 偷窃,偷窃罪",
+    "example_en": "The theft of the painting was reported to the police.",
+    "example_cn": "画作的偷窃被报告给了警方。",
+    "word_family": "thief (n. 盗贼), thieve (v. 偷窃)",
+    "memory_tips": "记忆技巧：'theft' 来自 'thieve'，联想为 stealing。词源来自古英语。",
+    "difficulty": "3",
+    "collocations": "commit theft, identity theft, prevent theft",
+    "image_prompt": "一个博物馆展示空画框，警卫在调查，表示偷窃事件。",
+    "synonym_diff": {
+      "words": "robbery, burglary, larceny, stealing",
+      "quick_guide": "偷窃用 theft/larceny，抢劫用 robbery，入室盗窃用 burglary， stealing 是通用词。"
+    }
+  },
+  {
+    "name": "drone",
+    "symbol": "/drəʊn/",
+    "chn": "n. 无人驾驶飞机",
+    "example_en": "The drone captured aerial footage of the landscape.",
+    "example_cn": "无人机拍摄了景观的空中镜头。",
+    "word_family": "droning (adj. 嗡嗡声的), drone technology (n. 无人机技术)",
+    "memory_tips": "记忆技巧：'drone' 原意嗡嗡声，引申为无人机。联想为 flying device。词源来自古英语。",
+    "difficulty": "4",
+    "collocations": "fly a drone, drone camera, military drone",
+    "image_prompt": "一个无人机在空中飞行，下方是美丽风景，操作员手持控制器。",
+    "synonym_diff": {
+      "words": "UAV, quadcopter, unmanned aircraft, flying robot",
+      "quick_guide": "无人机用 drone/UAV，四轴飞行器用 quadcopter，无人驾驶飞机用 unmanned aircraft。"
+    }
+  },
+  {
+    "name": "distribution",
+    "symbol": "/ˌdɪstrɪˈbjuːʃn/",
+    "chn": "n. 分发;分配,分布",
+    "example_en": "The distribution of food to needy families is ongoing.",
+    "example_cn": "向贫困家庭分发食物正在进行中。",
+    "word_family": "distribute (v. 分发), distributive (adj. 分布的)",
+    "memory_tips": "记忆技巧：'distribution' 拆分为 'dis'（分开） + 'tribute'（给予），联想为分发给多人。词源来自拉丁语。",
+    "difficulty": "4",
+    "collocations": "wealth distribution, distribution network, product distribution",
+    "image_prompt": "志愿者在仓库中分配食品箱，有卡车准备运输，显示分发场景。",
+    "synonym_diff": {
+      "words": "allocation, dispersal, spread, delivery",
+      "quick_guide": "分发用 distribution/delivery，分配用 allocation，传播用 dispersal/spread。"
+    }
+  },
+  {
+    "name": "predict",
+    "symbol": "/prɪˈdɪkt/",
+    "chn": "vt. 预言,预告",
+    "example_en": "Experts predict that temperatures will rise due to climate change.",
+    "example_cn": "专家预测由于气候变化，温度将上升。",
+    "word_family": "prediction (n. 预言), predictable (adj. 可预测的)",
+    "memory_tips": "记忆技巧：'predict' 拆分为 'pre'（前） + 'dict'（说），联想为提前说出。词源来自拉丁语。",
+    "difficulty": "4",
+    "collocations": "predict the future, accurately predict, weather predict",
+    "image_prompt": "一个气象学家站在地图前，指向温度图表，进行预测。",
+    "synonym_diff": {
+      "words": "forecast, foresee, anticipate, prophesy",
+      "quick_guide": "预测用 predict/forecast，预见用 foresee，预期用 anticipate，预言用 prophesy。"
+    }
+  },
+  {
+    "name": "decrease",
+    "symbol": "/dɪˈkriːs/ vt. & vi. 减少,降低 /ˈdiːkriːs/ n. 减少,降低",
+    "chn": "vt. & vi. 减少,降低 n. 减少,降低",
+    "example_en": "The company plans to decrease its carbon emissions.",
+    "example_cn": "公司计划减少碳排放。",
+    "word_family": "decreasing (adj. 减少的), decreaseingly (adv. 减少地)",
+    "memory_tips": "记忆技巧：'decrease' 拆分为 'de'（向下） + 'crease'（生长），联想为减少。词源来自拉丁语。",
+    "difficulty": "3",
+    "collocations": "decrease in, significant decrease, gradually decrease",
+    "image_prompt": "一个图表显示下降趋势，如碳排放量减少，有向下箭头。",
+    "synonym_diff": {
+      "words": "reduce, diminish, decline, drop",
+      "quick_guide": "减少用 decrease/reduce，减小用 diminish，下降用 decline/drop。"
+    }
+  },
+  {
+    "name": "deny",
+    "symbol": "/dɪˈnaɪ/",
+    "chn": "vt. 否认,否定;拒绝承认,拒绝接受",
+    "example_en": "He denied any involvement in the incident.",
+    "example_cn": "他否认与事件有任何牵连。",
+    "word_family": "denial (n. 否认), deniable (adj. 可否认的)",
+    "memory_tips": "记忆技巧：'deny' 来自拉丁语 'denegare'，意为拒绝。联想为 say no。",
+    "difficulty": "4",
+    "collocations": "deny access, deny responsibility, firmly deny",
+    "image_prompt": "一个人 shaking head 坚决否认，背景有问号表示质疑。",
+    "synonym_diff": {
+      "words": "refute, reject, contradict, disclaim",
+      "quick_guide": "否认用 deny/refute，拒绝用 reject，反驳用 contradict，放弃权利用 disclaim。"
+    }
+  },
+  {
+    "name": "quantity",
+    "symbol": "/ˈkwɒntəti/",
+    "chn": "n. 数量;大量",
+    "example_en": "We ordered a large quantity of supplies for the event.",
+    "example_cn": "我们为活动订购了大量物资。",
+    "word_family": "quantitative (adj. 数量的), quantify (v. 量化)",
+    "memory_tips": "记忆技巧：'quantity' 来自拉丁语 'quantitas'，意为多少。联想为 amount。",
+    "difficulty": "3",
+    "collocations": "in quantity, quantity over quality, exact quantity",
+    "image_prompt": "一个仓库堆满箱子，工人清点数量，显示大量物品。",
+    "synonym_diff": {
+      "words": "amount, volume, number, magnitude",
+      "quick_guide": "数量用 quantity/amount，体积用 volume，数字用 number，大小用 magnitude。"
+    }
+  },
+  {
+    "name": "airline",
+    "symbol": "/ˈeəlaɪn/",
+    "chn": "n. 航空公司",
+    "example_en": "The airline offers flights to over 100 destinations.",
+    "example_cn": "这家航空公司提供飞往100多个目的地的航班。",
+    "word_family": "airliner (n. 客机), air (n. 空气)",
+    "memory_tips": "记忆技巧：'airline' 拆分为 'air'（空气） + 'line'（线路），联想为空中运输线。",
+    "difficulty": "2",
+    "collocations": "international airline, airline ticket, airline industry",
+    "image_prompt": "一架飞机在天空飞行，尾部有航空公司标志，机场背景。",
+    "synonym_diff": {
+      "words": "carrier, aviation company, flight service",
+      "quick_guide": "航空公司用 airline/carrier，航空业用 aviation company。"
+    }
+  },
+  {
+    "name": "threat",
+    "symbol": "/θret/",
+    "chn": "n. 构成威胁的人(或事物);威胁,恐吓;凶兆",
+    "example_en": "Climate change is a serious threat to biodiversity.",
+    "example_cn": "气候变化对生物多样性构成严重威胁。",
+    "word_family": "threaten (v. 威胁), threatening (adj. 威胁的)",
+    "memory_tips": "记忆技巧：'threat' 来自古英语 'þreat'，意为压力。联想为 danger。",
+    "difficulty": "3",
+    "collocations": "pose a threat, under threat, security threat",
+    "image_prompt": "一个地球图标被火焰包围，表示环境威胁，如气候变化。",
+    "synonym_diff": {
+      "words": "danger, risk, peril, menace",
+      "quick_guide": "威胁用 threat/menace，危险用 danger/risk，危难用 peril。"
+    }
+  },
+  {
+    "name": "spy",
+    "symbol": "/spaɪ/",
+    "chn": "vi. 从事间谍活动 vt. 突然看见 n. 间谍",
+    "example_en": "The spy gathered intelligence for the government.",
+    "example_cn": "间谍为政府收集情报。",
+    "word_family": "spying (n. 间谍活动), spyware (n. 间谍软件)",
+    "memory_tips": "记忆技巧：'spy' 发音类似 'spai'，联想为秘密观察。词源来自古法语。",
+    "difficulty": "4",
+    "collocations": "spy on, secret spy, spy agency",
+    "image_prompt": "一个穿着 trench coat 的人用望远镜观察远处，阴影中隐藏。",
+    "synonym_diff": {
+      "words": "agent, informant, snoop, observer",
+      "quick_guide": "间谍用 spy/agent，告密者用 informant，窥探用 snoop，观察者用 observer。"
+    }
+  },
+  {
+    "name": "illegal",
+    "symbol": "/ɪˈliːɡl/",
+    "chn": "adj. 不合法的,非法的",
+    "example_en": "It is illegal to park here without a permit.",
+    "example_cn": "没有许可在这里停车是违法的。",
+    "word_family": "illegally (adv. 非法地), legality (n. 合法性)",
+    "memory_tips": "记忆技巧：'illegal' 拆分为 'il'（不） + 'legal'（合法），联想为 not legal。词源来自拉丁语。",
+    "difficulty": "3",
+    "collocations": "illegal activity, illegal immigration, illegal download",
+    "image_prompt": "一个禁止停车标志，有红圈和斜线，表示非法行为。",
+    "synonym_diff": {
+      "words": "unlawful, illicit, criminal, forbidden",
+      "quick_guide": "非法用 illegal/unlawful，违法的用 illicit/criminal，禁止的用 forbidden。"
+    }
+  },
+  {
+    "name": "monitor",
+    "symbol": "/ˈmɒnɪtə(r)/",
+    "chn": "vt. 监视,跟踪调查;监听 n. 显示屏;监测器;班长",
+    "example_en": "Teachers monitor students' progress throughout the year.",
+    "example_cn": "老师全年监视学生的进展。",
+    "word_family": "monitoring (n. 监视), monitorial (adj. 班长的)",
+    "memory_tips": "记忆技巧：'monitor' 来自拉丁语 'monere'，意为警告。联想为观察和报告。",
+    "difficulty": "3",
+    "collocations": "monitor closely, computer monitor, heart monitor",
+    "image_prompt": "一个教师在看学生考试，桌上有监控屏幕，显示监视场景。",
+    "synonym_diff": {
+      "words": "watch, observe, screen, supervise",
+      "quick_guide": "监视用 monitor/watch，观察用 observe，屏幕用 screen，监督用 supervise。"
+    }
+  },
+  {
+    "name": "licence",
+    "symbol": "/ˈlaɪsns/",
+    "chn": "n. 许可证,执照",
+    "example_en": "You need a driver's licence to operate a vehicle.",
+    "example_cn": "你需要驾驶执照来操作车辆。",
+    "word_family": "license (v. 许可), licensed (adj. 有执照的)",
+    "memory_tips": "记忆技巧：'licence' 来自拉丁语 'licentia'，意为自由。联想为官方许可。",
+    "difficulty": "3",
+    "collocations": "driving licence, business licence, licence plate",
+    "image_prompt": "一个人手持驾驶执照，背景有汽车和道路。",
+    "synonym_diff": {
+      "words": "permit, certification, authorization, ticket",
+      "quick_guide": "执照用 licence/permit，认证用 certification，授权用 authorization。"
+    }
+  },
+  {
+    "name": "stadium",
+    "symbol": "/ˈsteɪdiəm/",
+    "chn": "n. 体育场,运动场",
+    "example_en": "The new stadium can seat over 50,000 fans.",
+    "example_cn": "新体育场可容纳超过5万名粉丝。",
+    "word_family": "stadia (pl. n. 体育场), stadium-sized (adj. 体育场大小的)",
+    "memory_tips": "记忆技巧：'stadium' 来自希腊语 'stadion'，意为赛跑场地。联想为大型运动场所。",
+    "difficulty": "2",
+    "collocations": "football stadium, Olympic stadium, stadium concert",
+    "image_prompt": "一个大型体育场满座，进行足球比赛，灯光璀璨。",
+    "synonym_diff": {
+      "words": "arena, ground, field, coliseum",
+      "quick_guide": "体育场用 stadium/arena，场地用 ground/field，竞技场用 coliseum。"
+    }
+  },
+  {
+    "name": "highlight",
+    "symbol": "/ˈhaɪlaɪt/",
+    "chn": "n. 最好(或最精彩)的部分 vt. 突出,强调;使醒目",
+    "example_en": "The highlight of the trip was visiting the ancient ruins.",
+    "example_cn": "旅行的亮点是参观古代遗迹。",
+    "word_family": "highlighter (n. 荧光笔), highlighting (n. 突出)",
+    "memory_tips": "记忆技巧：'highlight' 拆分为 'high'（高） + 'light'（光），联想为照亮重点部分。",
+    "difficulty": "3",
+    "collocations": "main highlight, highlight text, highlight reel",
+    "image_prompt": "一个游客在遗迹前拍照，阳光照耀，显示旅行亮点。",
+    "synonym_diff": {
+      "words": "emphasize, feature, accent, spotlight",
+      "quick_guide": "突出用 highlight/emphasize，特色用 feature，重音用 accent，聚光灯用 spotlight。"
+    }
+  },
+  {
+    "name": "capsule",
+    "symbol": "/ˈkæpsjuːl/",
+    "chn": "n. 小塑料容器;(装药的)胶囊;太空舱",
+    "example_en": "She took a vitamin capsule with breakfast.",
+    "example_cn": "她早餐时服用了一粒维生素胶囊。",
+    "word_family": "encapsulate (v. 封装), capsular (adj. 胶囊的)",
+    "memory_tips": "记忆技巧：'capsule' 来自拉丁语 'capsula'，意为小盒子。联想为密封容器。",
+    "difficulty": "4",
+    "collocations": "time capsule, space capsule, capsule hotel",
+    "image_prompt": "一只手拿着药胶囊和水杯，背景有药品包装。",
+    "synonym_diff": {
+      "words": "pill, pod, container, module",
+      "quick_guide": "胶囊用 capsule/pill，豆荚用 pod，容器用 container，模块用 module。"
+    }
+  },
+  {
+    "name": "bury",
+    "symbol": "/ˈberi/",
+    "chn": "vt. 埋藏;埋葬;覆盖;遮盖;使陷入",
+    "example_en": "They decided to bury the time capsule in the garden.",
+    "example_cn": "他们决定将时间胶囊埋在花园里。",
+    "word_family": "burial (n. 埋葬), buried (adj. 埋藏的)",
+    "memory_tips": "记忆技巧：'bury' 发音类似 'berry'，联想为埋入地下。词源来自古英语。",
+    "difficulty": "3",
+    "collocations": "bury the dead, bury oneself in, bury a secret",
+    "image_prompt": "几个人在花园中挖坑埋时间胶囊，有铲子和泥土。",
+    "synonym_diff": {
+      "words": "inter, entomb, hide, conceal",
+      "quick_guide": "埋葬用 bury/inter，埋藏用 entomb，隐藏用 hide/conceal。"
+    }
+  },
+  {
+    "name": "fountain",
+    "symbol": "/ˈfaʊntən/",
+    "chn": "n. 喷泉,涌流;喷水池;源泉,丰富来源",
+    "example_en": "The fountain in the park is a popular gathering spot.",
+    "example_cn": "公园里的喷泉是一个受欢迎的聚集点。",
+    "word_family": "fountainhead (n. 源泉), fountain pen (n. 自来水笔)",
+    "memory_tips": "记忆技巧：'fountain' 来自拉丁语 'fons'，意为泉水。联想为水流喷射。",
+    "difficulty": "3",
+    "collocations": "water fountain, fountain of youth, drinking fountain",
+    "image_prompt": "一个城市公园中的喷泉，水花四溅，人们围绕休息。",
+    "synonym_diff": {
+      "words": "spring, well, spout, source",
+      "quick_guide": "喷泉用 fountain/spring，井用 well，喷口用 spout，源泉用 source。"
+    }
+  },
+  {
+    "name": "contemporary",
+    "symbol": "/kənˈtemprəri/",
+    "chn": "adj. 当代的,现代的;属同时期的,同一时代的 n. 同代人,同辈人",
+    "example_en": "Contemporary art often challenges traditional norms.",
+    "example_cn": "当代艺术常常挑战传统规范。",
+    "word_family": "contemporaneous (adj. 同时期的), contemporarily (adv. 当代地)",
+    "memory_tips": "记忆技巧：'contemporary' 拆分为 'con'（共同） + 'temporary'（时间），联想为同一时代。词源来自拉丁语。",
+    "difficulty": "4",
+    "collocations": "contemporary literature, contemporary issues, contemporary design",
+    "image_prompt": "一个现代艺术画廊，展示抽象绘画和雕塑，观众在欣赏。",
+    "synonym_diff": {
+      "words": "modern, current, present-day, coeval",
+      "quick_guide": "当代用 contemporary/modern，当前的用 current/present-day，同时代的用 coeval。"
+    }
+  },
+  {
+    "name": "seed",
+    "symbol": "/siːd/",
+    "chn": "n. 种子;起源,起因",
+    "example_en": "Plant the seeds in fertile soil for best growth.",
+    "example_cn": "将种子种在肥沃土壤中以获得最佳生长。",
+    "word_family": "seedy (adj. 多种子的), seedling (n. 幼苗)",
+    "memory_tips": "记忆技巧：'seed' 发音类似 'see'd'，联想为植物起始点。词源来自古英语。",
+    "difficulty": "2",
+    "collocations": "plant seeds, seed money, go to seed",
+    "image_prompt": "一只手将种子撒入土壤中，阳光照射，有新芽萌发。",
+    "synonym_diff": {
+      "words": "germ, pit, origin, source",
+      "quick_guide": "种子用 seed/germ，果核用 pit，起源用 origin/source。"
+    }
+  },
+  {
+    "name": "wheat",
+    "symbol": "/wiːt/",
+    "chn": "n. 小麦,小麦粒",
+    "example_en": "Wheat is a staple crop in many countries.",
+    "example_cn": "小麦是许多国家的主要作物。",
+    "word_family": "wheaten (adj. 小麦的), wheatfield (n. 麦田)",
+    "memory_tips": "记忆技巧：'wheat' 发音类似 'weet'，联想为谷物。词源来自古英语。",
+    "difficulty": "2",
+    "collocations": "wheat flour, wheat field, harvest wheat",
+    "image_prompt": "一片金黄色的麦田，农民在收割，有麦穗特写。",
+    "synonym_diff": {
+      "words": "grain, cereal, barley, oats",
+      "quick_guide": "小麦用 wheat，谷物用 grain/cereal，大麦用 barley，燕麦用 oats。"
+    }
+  },
+  {
+    "name": "muscular",
+    "symbol": "/ˈmʌskjələ(r)/",
+    "chn": "adj. 肌肉的;强壮的",
+    "example_en": "He has a muscular build from years of training.",
+    "example_cn": "他经过多年训练，拥有强壮的体格。",
+    "word_family": "muscle (n. 肌肉), musculature (n. 肌肉系统)",
+    "memory_tips": "记忆技巧：'muscular' 来自 'muscle'，联想为肌肉发达。词源来自拉丁语。",
+    "difficulty": "4",
+    "collocations": "muscular system, muscular pain, muscular man",
+    "image_prompt": "一个健美运动员展示肌肉，在健身房举重。",
+    "synonym_diff": {
+      "words": "brawny, strong, powerful, athletic",
+      "quick_guide": "肌肉的用 muscular/brawny，强壮的用 strong/powerful，运动的用 athletic。"
+    }
+  },
+  {
+    "name": "conclude",
+    "symbol": "/kənˈkluːd/",
+    "chn": "vt. & vi. 断定,推断出;达成,订立;(使)结束,终止",
+    "example_en": "The meeting will conclude with a summary of key points.",
+    "example_cn": "会议将以关键点总结结束。",
+    "word_family": "conclusion (n. 结论), conclusive (adj. 决定性的)",
+    "memory_tips": "记忆技巧：'conclude' 拆分为 'con'（共同） + 'clude'（关闭），联想为共同关闭或结束。词源来自拉丁语。",
+    "difficulty": "4",
+    "collocations": "conclude an agreement, conclude that, to conclude",
+    "image_prompt": "一个会议室内，人们握手达成协议，图表显示总结。",
+    "synonym_diff": {
+      "words": "finish, end, deduce, infer",
+      "quick_guide": "结束用 conclude/finish，推断用 deduce/infer，终止用 end。"
+    }
+  },
+  {
+    "name": "justified",
+    "symbol": "/ˈdʒʌstɪfaɪd/",
+    "chn": "adj. 合乎情理的,事出有因的;有正当理由的",
+    "example_en": "His anger was justified given the circumstances.",
+    "example_cn": "鉴于情况，他的愤怒是合乎情理的。",
+    "word_family": "justify (v. 证明), justification (n. 理由)",
+    "memory_tips": "记忆技巧：'justified' 来自 'justify'，联想为有正当理由。词源来自拉丁语。",
+    "difficulty": "4",
+    "collocations": "fully justified, morally justified, justified text",
+    "image_prompt": "一个人 explaining their point with reason, 周围有听众 nodding 同意。",
+    "synonym_diff": {
+      "words": "warranted, valid, reasonable, rightful",
+      "quick_guide": "合理的用 justified/warranted，有效的用 valid，正当的用 reasonable/rightful。"
+    }
+  },
+  {
+    "name": "superiority",
+    "symbol": "/suːˌpɪəriˈɒrəti/",
+    "chn": "n. 优越感(性),优势",
+    "example_en": "The team's superiority was evident in their performance.",
+    "example_cn": "团队的优越性在他们的表现中显而易见。",
+    "word_family": "superior (adj. 优越的), superiorely (adv. 优越地)",
+    "memory_tips": "记忆技巧：'superiority' 来自 'superior'，联想为更高 quality。词源来自拉丁语。",
+    "difficulty": "5",
+    "collocations": "sense of superiority, technological superiority, moral superiority",
+    "image_prompt": "一个团队站在领奖台上，高举奖杯，显示优势和胜利。",
+    "synonym_diff": {
+      "words": "advantage, dominance, excellence, supremacy",
+      "quick_guide": "优越性用 superiority/advantage，统治用 dominance，卓越用 excellence，至高无上用 supremacy。"
+    }
+  },
+  {
+    "name": "virtual",
+    "symbol": "/ˈvɜːtʃuəl/",
+    "chn": "adj. 虚拟的,模拟的;很接近的,事实上的",
+    "example_en": "Virtual reality allows users to experience immersive environments.",
+    "example_cn": "虚拟现实让用户体验沉浸式环境。",
+    "word_family": "virtually (adv. 几乎), virtualize (v. 虚拟化)",
+    "memory_tips": "记忆技巧：'virtual' 来自 'virtue'，原意美德，引申为模拟现实。联想为 digital simulation。",
+    "difficulty": "4",
+    "collocations": "virtual world, virtual meeting, virtual assistant",
+    "image_prompt": "一个人戴VR头显，伸手触摸虚拟物体，周围有数字环境。",
+    "synonym_diff": {
+      "words": "simulated, digital, online, near",
+      "quick_guide": "虚拟的用 virtual/simulated，数字的用 digital，在线的用 online，接近的用 near。"
+    }
+  },
+  {
+    "name": "definition",
+    "symbol": "/ˌdefɪˈnɪʃn/",
+    "chn": "n. 定义;释义,解释",
+    "example_en": "The dictionary provides a clear definition of the word.",
+    "example_cn": "词典提供了这个词的清晰定义。",
+    "word_family": "define (v. 定义), definitive (adj. 决定性的)",
+    "memory_tips": "记忆技巧：'definition' 来自 'define'，联想为 stating meaning。词源来自拉丁语。",
+    "difficulty": "3",
+    "collocations": "high definition, definition of, by definition",
+    "image_prompt": "一本打开词典，页面显示单词定义，有放大镜强调。",
+    "synonym_diff": {
+      "words": "explanation, meaning, description, interpretation",
+      "quick_guide": "定义用 definition/explanation，意义用 meaning，描述用 description，解释用 interpretation。"
+    }
+  },
+  {
+    "name": "headset",
+    "symbol": "/ˈhedset/",
+    "chn": "n. 头戴式耳机",
+    "example_en": "She uses a headset for online meetings.",
+    "example_cn": "她使用头戴式耳机进行在线会议。",
+    "word_family": "headphone (n. 耳机), headset microphone (n. 头戴麦克风)",
+    "memory_tips": "记忆技巧：'headset' 拆分为 'head'（头） + 'set'（设置），联想为戴在头上的设备。",
+    "difficulty": "3",
+    "collocations": "wireless headset, gaming headset, Bluetooth headset",
+    "image_prompt": "一个人戴头戴式耳机在电脑前进行视频通话，屏幕显示会议界面。",
+    "synonym_diff": {
+      "words": "headphone, earphone, headgear, audio device",
+      "quick_guide": "头戴式耳机用 headset/headphone，耳塞用 earphone，头饰用 headgear，音频设备用 audio device。"
+    }
+  },
+  {
+    "name": "sensor",
+    "symbol": "/ˈsensə(r)/",
+    "chn": "n. 传感器,敏感元件",
+    "example_en": "The sensor detects motion and triggers the alarm.",
+    "example_cn": "传感器检测运动并触发警报。",
+    "word_family": "sensory (adj. 感觉的), sensation (n. 感觉)",
+    "memory_tips": "记忆技巧：'sensor' 来自 'sense'，联想为检测设备。词源来自拉丁语。",
+    "difficulty": "4",
+    "collocations": "motion sensor, temperature sensor, sensor technology",
+    "image_prompt": "一个安全摄像头有红色感应灯，检测周围运动，表示传感器工作。",
+    "synonym_diff": {
+      "words": "detector, transducer, probe, gauge",
+      "quick_guide": "传感器用 sensor/detector，转换器用 transducer，探针用 probe，仪表用 gauge。"
+    }
+  },
+  {
+    "name": "practical",
+    "symbol": "/ˈpræktɪkl/",
+    "chn": "adj. 实际的,真实的;切实可行的;有用的;实事求是的",
+    "example_en": "She offered practical advice for solving the problem.",
+    "example_cn": "她提供了解决问题的实用建议。",
+    "word_family": "practice (n. 实践), practically (adv. 实际上)",
+    "memory_tips": "记忆技巧：'practical' 来自 'practice'，联想为基于经验。词源来自希腊语。",
+    "difficulty": "3",
+    "collocations": "practical skills, practical joke, practical application",
+    "image_prompt": "一个 workshop 中，人们使用工具进行实际操作，显示实用性。",
+    "synonym_diff": {
+      "words": "functional, useful, realistic, pragmatic",
+      "quick_guide": "实用的用 practical/functional，有用的用 useful，现实的用 realistic，务实的用 pragmatic。"
+    }
+  },
+  {
+    "name": "academic",
+    "symbol": "/ˌækəˈdemɪk/",
+    "chn": "adj. 教学的,学术的;学习良好的;纯理论的 n. 学者",
+    "example_en": "His academic achievements earned him a scholarship.",
+    "example_cn": "他的学术成就为他赢得了奖学金。",
+    "word_family": "academy (n. 学院), academically (adv. 学术上)",
+    "memory_tips": "记忆技巧：'academic' 来自 'academy'，联想为教育相关。词源来自希腊语。",
+    "difficulty": "4",
+    "collocations": "academic year, academic performance, academic research",
+    "image_prompt": "一个学生在图书馆学习，桌上有书籍和论文，显示学术氛围。",
+    "synonym_diff": {
+      "words": "scholarly, educational, theoretical, intellectual",
+      "quick_guide": "学术的用 academic/scholarly，教育的用 educational，理论的用 theoretical，智力的用 intellectual。"
+    }
+  },
+  {
+    "name": "immersive",
+    "symbol": "/ɪˈmɜːsɪv/",
+    "chn": "adj. (计算机系统或图像) 沉浸式虚拟现实的",
+    "example_en": "The game offers an immersive experience with realistic graphics.",
+    "example_cn": "这个游戏提供具有真实图形的沉浸式体验。",
+    "word_family": "immerse (v. 沉浸), immersion (n. 沉浸)",
+    "memory_tips": "记忆技巧：'immersive' 来自 'immerse'，联想为深入其中。词源来自拉丁语。",
+    "difficulty": "5",
+    "collocations": "immersive technology, immersive learning, immersive virtual reality",
+    "image_prompt": "一个人戴VR头显，完全沉浸在虚拟世界中，周围有数字景观。",
+    "synonym_diff": {
+      "words": "engaging, absorbing, enveloping, realistic",
+      "quick_guide": "沉浸的用 immersive/engaging，吸引人的用 absorbing，包围的用 enveloping，真实的用 realistic。"
+    }
+  },
+  {
+    "name": "engage",
+    "symbol": "/ɪnˈɡeɪdʒ/",
+    "chn": "vt. & vi. 吸引住(注意力、兴趣);雇用,聘用;与…建立密切关系",
+    "example_en": "The teacher uses games to engage students in learning.",
+    "example_cn": "老师使用游戏吸引学生参与学习。",
+    "word_family": "engagement (n. 订婚;预约), engaging (adj. 吸引人的)",
+    "memory_tips": "记忆技巧：'engage' 来自法语 'engager'，意为承诺。联想为 involved。词源来自拉丁语。",
+    "difficulty": "4",
+    "collocations": "engage in, engage someone's attention, engage a service",
+    "image_prompt": "一个课堂中，学生积极参与游戏，老师 smiling，显示互动。",
+    "synonym_diff": {
+      "words": "involve, hire, attract, participate",
+      "quick_guide": "吸引用 engage/attract，雇用用 hire，参与用 involve/participate。"
+    }
+  },
+  {
+    "name": "twin",
+    "symbol": "/twɪn/",
+    "chn": "n. 双胞胎之一;一对相像的事物之一 adj. 双胞胎之一的;成对的,成双的",
+    "example_en": "The twin sisters look almost identical.",
+    "example_cn": "这对双胞胎姐妹看起来几乎一模一样。",
+    "word_family": "twinned (adj. 成对的), twinhood (n. 双胞胎状态)",
+    "memory_tips": "记忆技巧：'twin' 来自古英语 'twinn'，意为两个。联想为 paired。",
+    "difficulty": "2",
+    "collocations": "identical twin, twin brother, twin peaks",
+    "image_prompt": "两个穿着相似的双胞胎站在一起微笑，背景有镜子效果。",
+    "synonym_diff": {
+      "words": "double, duplicate, pair, match",
+      "quick_guide": "双胞胎用 twin，双重用 double，复制品用 duplicate，一对用 pair/match。"
+    }
+  },
+  {
+    "name": "clone",
+    "symbol": "/kləʊn/",
+    "chn": "n. 好像一模一样的人,复制品;克隆动物(或植物) vt. 克隆,以无性繁殖技术复制",
+    "example_en": "Scientists successfully cloned a sheep named Dolly.",
+    "example_cn": "科学家成功克隆了一只名为多利的羊。",
+    "word_family": "cloning (n. 克隆), clonal (adj. 克隆的)",
+    "memory_tips": "记忆技巧：'clone' 来自希腊语 'klōn'，意为嫩枝。联想为 genetic copy。",
+    "difficulty": "5",
+    "collocations": "human clone, clone technology, clone wars",
+    "image_prompt": "一个实验室中，科学家看着培养皿中的克隆细胞，有DNA链图标。",
+    "synonym_diff": {
+      "words": "copy, replica, duplicate, reproduce",
+      "quick_guide": "克隆用 clone/copy，复制品用 replica/duplicate，繁殖用 reproduce。"
+    }
+  },
+  {
+    "name": "barrier",
+    "symbol": "/ˈbæriə(r)/",
+    "chn": "n. 障碍,阻力;屏障,障碍物;分界线,隔阂",
+    "example_en": "Language can be a barrier to communication in foreign countries.",
+    "example_cn": "语言可能是在外国沟通的障碍。",
+    "word_family": "barricade (n. 路障), bar (v. 阻挡)",
+    "memory_tips": "记忆技巧：'barrier' 来自 'bar'，意为阻挡。联想为 obstacle。词源来自法语。",
+    "difficulty": "4",
+    "collocations": "trade barrier, barrier reef, break down barriers",
+    "image_prompt": "一个人试图与外国人沟通，有语言气泡和问号，表示障碍。",
+    "synonym_diff": {
+      "words": "obstacle, hurdle, blockade, impediment",
+      "quick_guide": "障碍用 barrier/obstacle，栏架用 hurdle，封锁用 blockade，阻碍用 impediment。"
+    }
+  },
+  {
+    "name": "initial",
+    "symbol": "/ɪˈnɪʃl/",
+    "chn": "adj. 最初的,开始的 n. 首字母",
+    "example_en": "The initial plan was later revised.",
+    "example_cn": "最初的计划后来被修订了。",
+    "word_family": "initiate (v. 开始), initially (adv. 最初)",
+    "memory_tips": "记忆技巧：'initial' 来自拉丁语 'initialis'，意为开始。联想为 first。",
+    "difficulty": "3",
+    "collocations": "initial stage, initial public offering, initial response",
+    "image_prompt": "一个项目计划书的第一页，有首字母缩写，显示开始阶段。",
+    "synonym_diff": {
+      "words": "first, primary, beginning, original",
+      "quick_guide": "最初的用 initial/first，主要的用 primary，开始的用 beginning，原始的用 original。"
+    }
+  },
+  {
+    "name": "optimistic",
+    "symbol": "/ˌɒptɪˈmɪstɪk/",
+    "chn": "adj. 乐观的,抱乐观看法的",
+    "example_en": "She remains optimistic about the future despite challenges.",
+    "example_cn": "尽管有挑战，她对未来保持乐观。",
+    "word_family": "optimism (n. 乐观), optimist (n. 乐观主义者)",
+    "memory_tips": "记忆技巧：'optimistic' 来自拉丁语 'optimus'，意为最好。联想为 positive outlook。",
+    "difficulty": "4",
+    "collocations": "cautiously optimistic, optimistic attitude, optimistic forecast",
+    "image_prompt": "一个人 smiling 看向日出，表示乐观和希望。",
+    "synonym_diff": {
+      "words": "positive, hopeful, sanguine, cheerful",
+      "quick_guide": "乐观的用 optimistic/positive，充满希望的用 hopeful，乐天的用 sanguine，愉快的用 cheerful。"
+    }
+  },
+  {
+    "name": "annoy",
+    "symbol": "/əˈnɔɪ/",
+    "chn": "vt. 使恼怒,使生气;打扰,骚扰",
+    "example_en": "Loud noises annoy me when I'm trying to concentrate.",
+    "example_cn": "当我试图集中注意力时，大声的噪音让我恼怒。",
+    "word_family": "annoying (adj. 令人生气的), annoyance (n. 烦恼)",
+    "memory_tips": "记忆技巧：'annoy' 来自拉丁语 'inodiare'，意为使讨厌。联想为 irritate。",
+    "difficulty": "3",
+    "collocations": "annoy someone, easily annoyed, stop annoying",
+    "image_prompt": "一个人 trying to study, 但周围有嘈杂声音，表情 frustrated。",
+    "synonym_diff": {
+      "words": "irritate, bother, disturb, vex",
+      "quick_guide": "恼怒用 annoy/irritate，打扰用 bother/disturb，使烦恼用 vex。"
+    }
+  },
+  {
+    "name": "weed",
+    "symbol": "/wiːd/",
+    "chn": "n. 杂草,野草",
+    "example_en": "Gardeners need to remove weeds to help plants grow.",
+    "example_cn": "园丁需要移除杂草以帮助植物生长。",
+    "word_family": "weedy (adj. 多杂草的), weedkill (v. 除草)",
+    "memory_tips": "记忆技巧：'weed' 发音类似 'weed'，联想为 unwanted plants。词源来自古英语。",
+    "difficulty": "2",
+    "collocations": "pull weeds, weed control, marijuana weed",
+    "image_prompt": "一个园丁在花园中拔杂草，有植物和工具。",
+    "synonym_diff": {
+      "words": "plant, herb, marijuana, unwanted growth",
+      "quick_guide": "杂草用 weed，植物用 plant，药草用 herb，大麻用 marijuana。"
+    }
+  },
+  {
+    "name": "globe",
+    "symbol": "/ɡləʊb/",
+    "chn": "n. 球体,球状物;地球仪;地球,世界",
+    "example_en": "The globe on the desk shows all the continents.",
+    "example_cn": "桌上的地球仪显示所有大陆。",
+    "word_family": "global (adj. 全球的), globalization (n. 全球化)",
+    "memory_tips": "记忆技巧：'globe' 来自拉丁语 'globus'，意为球。联想为 spherical object。",
+    "difficulty": "3",
+    "collocations": "around the globe, globe trotter, terrestrial globe",
+    "image_prompt": "一个书房中的地球仪，手指 pointing to a country, 表示世界范围。",
+    "synonym_diff": {
+      "words": "sphere, orb, earth, world",
+      "quick_guide": "球体用 globe/sphere， orb 是诗意词，地球用 earth/world。"
+    }
+  },
+  {
+    "name": "satellite",
+    "symbol": "/ˈsætəlaɪt/",
+    "chn": "n. 人造卫星;卫星",
+    "example_en": "The satellite orbits the Earth, sending back data.",
+    "example_cn": "卫星绕地球轨道运行，发回数据。",
+    "word_family": "satellited (adj. 有卫星的), satellization (n. 卫星化)",
+    "memory_tips": "记忆技巧：'satellite' 来自拉丁语 'satelles'，意为 attendant。联想为 orbiting body。",
+    "difficulty": "4",
+    "collocations": "communication satellite, satellite dish, satellite image",
+    "image_prompt": "一个人造卫星在太空轨道上，地球在背景，有信号线表示数据传输。",
+    "synonym_diff": {
+      "words": "moon, orbiter, spacecraft, companion",
+      "quick_guide": "卫星用 satellite/moon，轨道器用 orbiter，航天器用 spacecraft，伴星用 companion。"
+    }
+  },
+  {
+    "name": "expense",
+    "symbol": "/ɪkˈspens/",
+    "chn": "n. 费用;开销;开支",
+    "example_en": "Business trips are a significant expense for the company.",
+    "example_cn": "商务旅行是公司的一大开销。",
+    "word_family": "expensive (adj. 昂贵的), expend (v. 花费)",
+    "memory_tips": "记忆技巧：'expense' 来自拉丁语 'expensa'，意为支出。联想为 cost。",
+    "difficulty": "3",
+    "collocations": "at great expense, expense account, cut expenses",
+    "image_prompt": "一个商务人士 reviewing financial reports, 有货币符号和计算器。",
+    "synonym_diff": {
+      "words": "cost, expenditure, outlay, charge",
+      "quick_guide": "费用用 expense/cost，支出用 expenditure/outlay，收费用 charge。"
+    }
+  },
+  {
+    "name": "gender",
+    "symbol": "/ˈdʒendə(r)/",
+    "chn": "n. 性别",
+    "example_en": "The survey collected data on age and gender.",
+    "example_cn": "调查收集了关于年龄和性别的数据。",
+    "word_family": "gendered (adj. 性别的), genderless (adj. 无性别的)",
+    "memory_tips": "记忆技巧：'gender' 来自拉丁语 'genus'，意为种类。联想为 social sex。",
+    "difficulty": "3",
+    "collocations": "gender equality, gender identity, gender roles",
+    "image_prompt": "一个表格显示性别和年龄数据，有男性和女性符号。",
+    "synonym_diff": {
+      "words": "sex, identity, masculinity, femininity",
+      "quick_guide": "性别用 gender/sex，身份用 identity，男性气概用 masculinity，女性气质用 femininity。"
+    }
+  },
+  {
+    "name": "envy",
+    "symbol": "/ˈenvi/",
+    "chn": "n. & vt. 羡慕,忌妒",
+    "example_en": "I envy her ability to speak multiple languages.",
+    "example_cn": "我羡慕她能说多种语言的能力。",
+    "word_family": "envious (adj. 羡慕的), enviable (adj. 令人羡慕的)",
+    "memory_tips": "记忆技巧：'envy' 来自拉丁语 'invidia'，意为嫉妒。联想为 green-eyed。",
+    "difficulty": "3",
+    "collocations": "green with envy, envy of, feel envy",
+    "image_prompt": "一个人看着别人成功，表情混合羡慕和嫉妒，有绿色色调隐喻。",
+    "synonym_diff": {
+      "words": "jealousy, covet, desire, resent",
+      "quick_guide": "羡慕用 envy，嫉妒用 jealousy，渴望用 covet/desire，怨恨用 resent。"
+    }
+  },
+  {
+    "name": "pub",
+    "symbol": "/pʌb/",
+    "chn": "n. 酒吧,酒馆",
+    "example_en": "We met at the local pub for a drink.",
+    "example_cn": "我们在当地酒吧见面喝一杯。",
+    "word_family": "public house (n. 酒吧), pub crawl (n. 串酒吧)",
+    "memory_tips": "记忆技巧：'pub' 是 'public house' 的缩写，联想为社交饮酒场所。词源来自英语。",
+    "difficulty": "2",
+    "collocations": "Irish pub, pub food, pub quiz",
+    "image_prompt": "一个温馨的酒吧内部，人们坐在吧台喝酒聊天，有啤酒杯和灯光。",
+    "synonym_diff": {
+      "words": "bar, tavern, inn, saloon",
+      "quick_guide": "酒吧用 pub/bar，酒馆用 tavern，客栈用 inn，沙龙用 saloon。"
+    }
+  }
+]

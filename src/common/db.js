@@ -24,14 +24,19 @@ db.version(DB_VERSION).stores({
     // --- Task (原 Mistakes) 模块表 ---
     // &uuid: 主键
     // subject, *tags, analysis.reason_for_error, review.due: 索引
-    task_tasks: '&uuid, subject, *tags, analysis.reason_for_error, review.due',
+    task_tasks: '&uuid, listId, *tags, status, review.due',
     
     // --- Agent 模块表 ---
     agent_apiConfigs: '&id, name',
-    agent_agents: '&id, name',
+    agent_agents: '&id, name, *tags', // [MODIFIED] Add index for tags
     agent_topics: '&id, agentId, createdAt',
     agent_history: '&id, topicId, timestamp, agentId',
     
     // --- Global/App 状态表 ---
     global_appState: '&key',
+    
+    // [新增] 全局标签表
+    // &name 表示标签名是主键，且必须唯一
+    global_tags: '&name', 
+    global_taskLists: '&id, &name', // [NEW]
 });

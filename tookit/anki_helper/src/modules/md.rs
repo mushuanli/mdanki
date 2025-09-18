@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
+use serde_json::Value; // <--- 引入 serde_json::Value
 
 // --- 数据结构定义 (已更新，增加 Serialize 和所有字段) ---
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -48,6 +49,23 @@ struct WordEntry {
     #[serde(skip_serializing_if = "Option::is_none")]
     synonym_diff: Option<SynonymDiff>,
 }
+
+
+// --- 新增一个更灵活的结构体，专门用于解析 word_json/*.json 文件 ---
+#[derive(Deserialize, Debug)]
+struct WordDetailFromFile {
+    // 包含所有 WordEntry 的字段，但对易变字段使用更通用的类型
+    symbol: Option<String>,
+    example_en: Option<String>,
+    example_cn: Option<String>,
+    word_family: Option<String>,
+    memory_tips: Option<String>,
+    difficulty: Option<Value>, // 使用 Value 以兼容 "2" 或 2
+    collocations: Option<String>,
+    image_prompt: Option<Value>, // 使用 Value 来同时兼容字符串和对象
+    synonym_diff: Option<SynonymDiff>,
+}
+
 
 // 引用您在 cli.rs 中定义的 MdArgs 结构体
 pub use crate::cli::MdArgs;
@@ -111,18 +129,14 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
 
         // --- [FIXED] 修正作用域问题 ---
         // 1. 在循环的顶部声明 unit_num_str
-        let unit_num_str: String;
-
-        // 2. 使用 match 语句为 unit_num_str 赋值
-        match &current_unit_num {
-            Some(num) => {
-                unit_num_str = num.clone();
-            }
+        let unit_num_str = match &current_unit_num {
+            Some(num) => num.clone(),
             None => {
                 eprintln!("[!] 警告: 单词 '{}' 找不到所属单元，已跳过。", item.name);
                 continue;
             }
         };
+
 
         // 5. 如果缺少例句 (example_en)，则从 word_json 加载并合并数据
         if item.example_en.is_none() {
@@ -137,20 +151,47 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
 
             match fs::read_to_string(&detail_json_path) {
                 Ok(content) => {
-                    // 文件读取成功，现在解析它
-                    match serde_json::from_str::<WordEntry>(&content) {
+                    // --- [!!! 关键修正 !!!] ---
+                    // 使用我们为此场景专门创建的 WordDetailFromFile 结构体进行解析
+                    match serde_json::from_str::<WordDetailFromFile>(&content) {
                         Ok(detail_data) => {
-                            // 合并所有可能缺失的字段
-                            item.symbol.clone_from(&detail_data.symbol);
-                            item.example_en.clone_from(&detail_data.example_en);
-                            item.example_cn.clone_from(&detail_data.example_cn);
-                            item.word_family.clone_from(&detail_data.word_family);
-                            item.memory_tips.clone_from(&detail_data.memory_tips);
-                            item.difficulty.clone_from(&detail_data.difficulty);
-                            item.collocations.clone_from(&detail_data.collocations);
-                            item.image_prompt.clone_from(&detail_data.image_prompt);
-                            if item.synonym_diff.is_none() {
-                                item.synonym_diff = detail_data.synonym_diff;
+                            // --- [核心修改] ---
+                            // 逐个字段检查并补充，确保 index.json 的现有数据拥有更高优先级。
+                            // 只有当 item (来自 index.json) 的字段为 None 时，才从 detail_data (来自 word_json) 补充。
+                            if item.symbol.is_none() { item.symbol = detail_data.symbol; }
+                            if item.example_en.is_none() { item.example_en = detail_data.example_en; }
+                            if item.example_cn.is_none() { item.example_cn = detail_data.example_cn; }
+                            if item.word_family.is_none() { item.word_family = detail_data.word_family; }
+                            if item.memory_tips.is_none() { item.memory_tips = detail_data.memory_tips; }
+                            if item.collocations.is_none() { item.collocations = detail_data.collocations; }
+                            if item.synonym_diff.is_none() { item.synonym_diff = detail_data.synonym_diff; }
+                            
+                            // 处理 difficulty (从 Value -> String)
+                            if item.difficulty.is_none() {
+                                if let Some(d_val) = detail_data.difficulty {
+                                    if d_val.is_string() {
+                                        // 如果是 "2" 这种字符串
+                                        item.difficulty = Some(d_val.as_str().unwrap().to_string());
+                                    } else {
+                                        // 如果是 2 这种数字或其他类型
+                                        item.difficulty = Some(d_val.to_string());
+                                    }
+                                }
+                            }
+                            
+                            // 处理 image_prompt (从 Value -> String)
+                            if item.image_prompt.is_none() {
+                                if let Some(prompt_value) = detail_data.image_prompt {
+                                    if let Some(s) = prompt_value.as_str() {
+                                        // 如果是字符串，直接使用
+                                        item.image_prompt = Some(s.to_string());
+                                    } else if let Some(obj) = prompt_value.as_object() {
+                                        // 如果是对象，尝试提取 "main_image"
+                                        if let Some(main_img) = obj.get("main_image").and_then(|v| v.as_str()) {
+                                            item.image_prompt = Some(main_img.to_string());
+                                        }
+                                    }
+                                }
                             }
                         },
                         Err(e) => {
@@ -227,24 +268,20 @@ pub fn handle_md_command(args: MdArgs) -> Result<()> {
         // 构建“词族、词组、记忆”部分，能优雅地处理字段缺失
         let mut extra_info_parts = Vec::new();
         if let Some(wf) = &item.word_family {
-            let formatted_wf = wf.replace('\n', " ¶ ").replace('|', ",");
-            extra_info_parts.push(format!("词族: {}", formatted_wf));
+            extra_info_parts.push(format!("词族: {}", wf.replace('\n', " ¶ ").replace('|', ",")));
         }
         if let Some(c) = &item.collocations {
-            let formatted_c = c.replace('\n', " ¶ ").replace('|', ",");
-            extra_info_parts.push(format!("词组: {}", formatted_c));
+            extra_info_parts.push(format!("词组: {}", c.replace('\n', " ¶ ").replace('|', ",")));
         }
         if let Some(mt) = &item.memory_tips {
-            let formatted_mt = mt.replace('\n', " ¶ ");
-            extra_info_parts.push(format!("记忆: {}", formatted_mt));
+            extra_info_parts.push(format!("记忆: {}", mt.replace('\n', " ¶ ")));
         }
         let extra_info_block = extra_info_parts.join(" ¶ ");
 
         // 构建“辨析”部分
         let synonym_block = item.synonym_diff.as_ref().map(|sd| {
             // [MODIFIED] 对辨析部分也进行换行符替换
-            let formatted_guide = sd.quick_guide.trim().replace('\n', " ¶ ");
-            format!("辨析: {}", formatted_guide)
+            format!("辨析: {}", sd.quick_guide.trim().replace('\n', " ¶ "))
         }).unwrap_or_default();
 
         // 准备音频部分的内容
